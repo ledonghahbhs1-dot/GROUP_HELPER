@@ -40,25 +40,25 @@ SPAM_INTERVAL_SEC: int = 5         # Within interval (seconds)
 SPAM_DUPLICATE_LIMIT: int = 3      # Identical messages in a row
 SPAM_DUPLICATE_INTERVAL: int = 30  # Seconds
 
-# Telegram Premium Custom Emoji IDs — ID CHÍNH XÁC DO @wolfmodyt CUNG CẤP
+# Telegram Premium Custom Emoji IDs — ID CÔNG KHAI XÁC MINH TỪ @TgEmojis
 DEFAULT_EMOJIS: Dict[str, Dict[str, str]] = {
-    "tele_logo": {"id": os.getenv("EMOJI_TELE_LOGO", "5211129162206560202"), "fallback": "✈️"},
-    "clock":     {"id": os.getenv("EMOJI_CLOCK",    "5382194935057372936"), "fallback": "⏳"},
-    "warn":      {"id": os.getenv("EMOJI_WARN",     "5202101484547766658"), "fallback": "⚠️"},
-    "vip":       {"id": os.getenv("EMOJI_VIP",      "5217822164362739968"), "fallback": "👑"},
-    "shield":    {"id": os.getenv("EMOJI_SHIELD",   "5197288647275071607"), "fallback": "🛡️"},
-    "ban":       {"id": os.getenv("EMOJI_BAN",      "5240241223632954241"), "fallback": "🚫"},
-    "mute":      {"id": os.getenv("EMOJI_MUTE",     "5422440410708451610"), "fallback": "🔇"},
-    "link":      {"id": os.getenv("EMOJI_LINK",     "4967826519087907994"), "fallback": "🔗"},
-    "bot":       {"id": os.getenv("EMOJI_BOT",      "5197288647275071607"), "fallback": "🛡️"},
-    "spam":      {"id": os.getenv("EMOJI_SPAM",     "5424972470023104089"), "fallback": "🔥"},
-    "success":   {"id": os.getenv("EMOJI_SUCCESS",  "5438496463044752972"), "fallback": "⭐"},
-    "error":     {"id": os.getenv("EMOJI_ERROR",    "5213460324425935151"), "fallback": "❌"},
-    "settings":  {"id": os.getenv("EMOJI_SETTINGS", "5341715473882955310"), "fallback": "⚙️"},
-    "setting":   {"id": os.getenv("EMOJI_SETTINGS", "5341715473882955310"), "fallback": "⚙️"},
-    "diamond":   {"id": os.getenv("EMOJI_DIAMOND",  "5427168083074628963"), "fallback": "💎"},
-    "star":      {"id": os.getenv("EMOJI_STAR",     "5438496463044752972"), "fallback": "⭐"},
-    "lock":      {"id": os.getenv("EMOJI_LOCK",     "5197288647275071607"), "fallback": "🛡️"},
-    "bell":      {"id": os.getenv("EMOJI_BELL",     "5215372534060428125"), "fallback": "🔔"},
+    "tele_logo": {"id": os.getenv("EMOJI_TELE_LOGO", "5211129162206560202"), "fallback": "✈️"},   # ✈️ confirmed working
+    "clock":     {"id": os.getenv("EMOJI_CLOCK",    "5386367538735104399"), "fallback": "⌛"},    # ⌛ @TgEmojis #11
+    "warn":      {"id": os.getenv("EMOJI_WARN",     "5213205860498549992"), "fallback": "⚠️"},    # ⚠️ @TgEmojis #3
+    "vip":       {"id": os.getenv("EMOJI_VIP",      "5217822164362739968"), "fallback": "👑"},    # 👑 @TgEmojis #1
+    "shield":    {"id": os.getenv("EMOJI_SHIELD",   "5251203410396458957"), "fallback": "🛡"},    # 🛡 @TgEmojis #4
+    "ban":       {"id": os.getenv("EMOJI_BAN",      "5240241223632954241"), "fallback": "🚫"},    # 🚫 @TgEmojis #5
+    "mute":      {"id": os.getenv("EMOJI_MUTE",     "5386367538735104399"), "fallback": "⌛"},    # ⌛ @TgEmojis #11
+    "link":      {"id": os.getenv("EMOJI_LINK",     "5271604874419647061"), "fallback": "🔗"},    # 🔗 @TgEmojis #6
+    "bot":       {"id": os.getenv("EMOJI_BOT",      "5251203410396458957"), "fallback": "🛡"},    # 🛡 @TgEmojis #4
+    "spam":      {"id": os.getenv("EMOJI_SPAM",     "5424972470023104089"), "fallback": "🔥"},    # 🔥 @TgEmojis #7
+    "success":   {"id": os.getenv("EMOJI_SUCCESS",  "5438496463044752972"), "fallback": "⭐"},    # ⭐ @TgEmojis #2
+    "error":     {"id": os.getenv("EMOJI_ERROR",    "5213460324425935151"), "fallback": "❌"},    # ❌ @TgEmojis #8
+    "settings":  {"id": os.getenv("EMOJI_SETTINGS", "5341715473882955310"), "fallback": "⚙️"},   # ⚙️ @TgEmojis #9
+    "setting":   {"id": os.getenv("EMOJI_SETTINGS", "5341715473882955310"), "fallback": "⚙️"},   # ⚙️ @TgEmojis #9
+    "diamond":   {"id": os.getenv("EMOJI_DIAMOND",  "5438496463044752972"), "fallback": "⭐"},    # ⭐ @TgEmojis #2 (dùng tạm ⭐)
+    "star":      {"id": os.getenv("EMOJI_STAR",     "5438496463044752972"), "fallback": "⭐"},    # ⭐ @TgEmojis #2
+    "lock":      {"id": os.getenv("EMOJI_LOCK",     "5251203410396458957"), "fallback": "🛡"},    # 🛡 @TgEmojis #4
+    "bell":      {"id": os.getenv("EMOJI_BELL",     "6152132290324468688"), "fallback": "🔔"},    # 🔔 @TgEmojis #10
 }
 
