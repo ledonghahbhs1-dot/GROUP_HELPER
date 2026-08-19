@@ -95,8 +95,9 @@ async def test():
     
     script_text = get_script_tool_info_text()
     assert "wolfmod.xyz/dragon-city" in script_text
-    assert "DRAGON CITY TOOL & SCRIPT" in script_text
+    assert "DRAGON CITY TOOL AND SCRIPT" in script_text
     print("Script detector tests passed ✅")
+
     
     print("\n==========================================")
     print("ALL TESTS PASSED WITH 100% SUCCESS! ✅")
