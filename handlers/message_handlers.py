@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from aiogram import Router, F, Bot
 from aiogram.types import Message, ChatPermissions
 from database.db import db
-from utils.emoji_helper import emoji_mgr, safe_answer, safe_send_message
+from utils.emoji_helper import emoji_mgr, safe_answer, safe_send_message, schedule_auto_delete
 from utils.auth import is_user_allowed_private, is_admin_or_owner
 from utils.logger import logger
 from filters.spam_filter import spam_filter
@@ -204,12 +204,8 @@ async def inspect_message(message: Message, bot: Bot):
 
         try:
             sent_msg = await safe_send_message(bot, chat_id, final_text, parse_mode="HTML")
-            # Tự động xoá sau 30 giây
+            # Tự động xoá thông báo sau 30 giây (giữ thông báo hiện đủ 30 giây)
             if settings.get("auto_delete_logs", 1):
-                await asyncio.sleep(config.AUTO_DELETE_LOGS_SEC)
-                try:
-                    await sent_msg.delete()
-                except Exception:
-                    pass
+                schedule_auto_delete(sent_msg, config.AUTO_DELETE_LOGS_SEC)
         except Exception as e:
             logger.error("Failed to send warning alert in chat %s: %s", chat_id, e)

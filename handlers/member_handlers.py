@@ -4,7 +4,7 @@ from aiogram import Router, F, Bot
 from aiogram.types import ChatMemberUpdated, Message, ChatPermissions
 from aiogram.filters.chat_member_updated import ChatMemberUpdatedFilter, MEMBER, KICKED, LEFT, RESTRICTED
 from database.db import db
-from utils.emoji_helper import emoji_mgr, safe_send_message, safe_answer
+from utils.emoji_helper import emoji_mgr, safe_send_message, safe_answer, schedule_auto_delete
 from utils.auth import is_admin_or_owner
 from utils.logger import logger
 import config
@@ -56,14 +56,9 @@ async def on_user_or_bot_join(event: ChatMemberUpdated, bot: Bot):
                     )
                     final_text = emoji_mgr.format_msg(alert_text)
                     msg = await safe_send_message(bot, chat_id, final_text, parse_mode="HTML")
-
-                    # Auto-delete notification after 30s
+                    # Tự động xoá thông báo sau 30 giây (giữ thông báo hiện đủ 30 giây)
                     if settings.get("auto_delete_logs", 1):
-                        await asyncio.sleep(config.AUTO_DELETE_LOGS_SEC)
-                        try:
-                            await msg.delete()
-                        except Exception:
-                            pass
+                        schedule_auto_delete(msg, config.AUTO_DELETE_LOGS_SEC)
 
                 except Exception as e:
                     logger.error("Failed to kick unauthorized bot %s: %s", new_user.id, e)
@@ -110,10 +105,6 @@ async def on_new_chat_members(message: Message, bot: Bot):
                     final_text = emoji_mgr.format_msg(alert_text)
                     sent = await safe_answer(message, final_text, parse_mode="HTML")
                     if settings.get("auto_delete_logs", 1):
-                        await asyncio.sleep(config.AUTO_DELETE_LOGS_SEC)
-                        try:
-                            await sent.delete()
-                        except Exception:
-                            pass
+                        schedule_auto_delete(sent, config.AUTO_DELETE_LOGS_SEC)
                 except Exception as e:
                     logger.error("Error auto-kicking bot: %s", e)

@@ -150,3 +150,18 @@ async def safe_send_message(bot, chat_id: int, text: str, **kwargs):
             clean_text = emoji_mgr.strip_tg_emojis(text)
             return await bot.send_message(chat_id, clean_text, **kwargs)
         raise e
+
+async def _delayed_delete(msg, delay: int):
+    try:
+        import asyncio
+        await asyncio.sleep(delay)
+        await msg.delete()
+    except Exception:
+        pass
+
+def schedule_auto_delete(msg, delay_sec: int = 30):
+    """Schedules a non-blocking background task to auto-delete msg after delay_sec seconds"""
+    if msg:
+        import asyncio
+        asyncio.create_task(_delayed_delete(msg, delay_sec))
+
