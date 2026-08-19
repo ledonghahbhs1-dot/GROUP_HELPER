@@ -139,23 +139,54 @@ from utils.logger import logger
 emoji_mgr = EmojiManager()
 
 async def safe_answer(message, text: str, **kwargs):
-    """Safely answers a message, falling back to clean text if Telegram rejects custom emojis"""
+    """Safely answers a message, preserving all working VIP custom emojis even if one is invalid"""
     try:
         return await message.answer(text, **kwargs)
     except TelegramBadRequest as e:
-        logger.warning("safe_answer caught TelegramBadRequest: %s", e)
-        if "DOCUMENT_INVALID" in str(e) or "Bad Request" in str(e) or "can't parse" in str(e):
+        err_str = str(e)
+        logger.warning("safe_answer caught TelegramBadRequest: %s", err_str)
+        if "DOCUMENT_INVALID" in err_str or "Bad Request" in err_str or "can't parse" in err_str:
+            # Try to strip tags individually to preserve valid ones
+            emojis = list(re.finditer(r'<tg-emoji emoji-id="([^"]+)">([^<]*)</tg-emoji>', text))
+            if emojis:
+                current_text = text
+                for match in emojis:
+                    tag = match.group(0)
+                    fb = match.group(2)
+                    temp_text = current_text.replace(tag, fb, 1)
+                    try:
+                        res = await message.answer(temp_text, **kwargs)
+                        logger.info("Successfully sent message after stripping invalid custom emoji tag: %s", tag)
+                        return res
+                    except TelegramBadRequest:
+                        current_text = temp_text
+            
             clean_text = emoji_mgr.strip_tg_emojis(text)
             return await message.answer(clean_text, **kwargs)
         raise e
 
 async def safe_send_message(bot, chat_id: int, text: str, **kwargs):
-    """Safely sends a message to chat_id, falling back to clean text if custom emoji is invalid"""
+    """Safely sends a message to chat_id, preserving all working VIP custom emojis even if one is invalid"""
     try:
         return await bot.send_message(chat_id, text, **kwargs)
     except TelegramBadRequest as e:
-        logger.warning("safe_send_message caught TelegramBadRequest: %s", e)
-        if "DOCUMENT_INVALID" in str(e) or "Bad Request" in str(e) or "can't parse" in str(e):
+        err_str = str(e)
+        logger.warning("safe_send_message caught TelegramBadRequest: %s", err_str)
+        if "DOCUMENT_INVALID" in err_str or "Bad Request" in err_str or "can't parse" in err_str:
+            emojis = list(re.finditer(r'<tg-emoji emoji-id="([^"]+)">([^<]*)</tg-emoji>', text))
+            if emojis:
+                current_text = text
+                for match in emojis:
+                    tag = match.group(0)
+                    fb = match.group(2)
+                    temp_text = current_text.replace(tag, fb, 1)
+                    try:
+                        res = await bot.send_message(chat_id, temp_text, **kwargs)
+                        logger.info("Successfully sent message after stripping invalid custom emoji tag: %s", tag)
+                        return res
+                    except TelegramBadRequest:
+                        current_text = temp_text
+
             clean_text = emoji_mgr.strip_tg_emojis(text)
             return await bot.send_message(chat_id, clean_text, **kwargs)
         raise e
