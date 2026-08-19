@@ -57,7 +57,7 @@ async def require_admin(message: Message, bot: Bot) -> bool:
             warn_txt = (
                 f"{emoji_mgr.error} <b>ACCESS DENIED</b> {emoji_mgr.vip}\n\n"
                 f"{emoji_mgr.warn} Regular members are <b>not permitted</b> to use Administrator commands!\n"
-                f"{emoji_mgr.shield} Only Group Admins & {emoji_mgr.vip} :@wolfmodyt can perform this action."
+                f"{emoji_mgr.admin} Only Group Admins & {emoji_mgr.vip} :@wolfmodyt can perform this action."
             )
             err_msg = await safe_answer(message, emoji_mgr.format_msg(warn_txt), parse_mode="HTML")
             schedule_auto_delete(err_msg, 30)
@@ -305,7 +305,7 @@ async def cmd_warn(message: Message, command: CommandObject, bot: Bot):
         text = (
             f"{emoji_mgr.warn} <b>MEMBER WARNED ({new_warns}/{max_warns})</b> {emoji_mgr.vip}\n\n"
             f"{emoji_mgr.warn} <b>Member:</b> {target_mention}\n"
-            f"{emoji_mgr.shield} <b>Admin:</b> {admin_mention}\n"
+            f"{emoji_mgr.admin} <b>Admin:</b> {admin_mention}\n"
             f"{emoji_mgr.error} <b>Reason:</b> {html.escape(reason)}\n"
             f"{emoji_mgr.star} <b>Warnings:</b> <code>{new_warns}/{max_warns}</code>\n"
             f"{emoji_mgr.diamond} <i>Max 2 warnings allowed. Exceeding 2 warnings will result in a BAN!</i>"

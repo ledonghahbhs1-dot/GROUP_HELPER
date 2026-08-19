@@ -52,7 +52,7 @@ async def on_user_or_bot_join(event: ChatMemberUpdated, bot: Bot):
                         f"{emoji_mgr.bot} <b>Bot Detected:</b> {bot_name} ({bot_username})\n"
                         f"{emoji_mgr.warn} <b>Added By:</b> {inviter_mention}\n"
                         f"{emoji_mgr.ban} <b>Action:</b> <i>Unauthorized bot has been automatically expelled from the group!</i>\n\n"
-                        f"{emoji_mgr.diamond} <i>Only Group Administrators are permitted to add bots.</i>"
+                        f"{emoji_mgr.admin} <i>Only Group Administrators are permitted to add bots.</i>"
                     )
                     final_text = emoji_mgr.format_msg(alert_text)
                     msg = await safe_send_message(bot, chat_id, final_text, parse_mode="HTML")

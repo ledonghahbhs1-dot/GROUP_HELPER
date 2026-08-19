@@ -129,6 +129,11 @@ class EmojiManager:
     def bell(self) -> str:
         return self.get("bell", "🔔")
 
+    @property
+    def admin(self) -> str:
+        """Returns VIP Crown icon for Administrators"""
+        return self.get("vip", "👑")
+
 emoji_mgr = EmojiManager()
 
 async def safe_answer(message, text: str, **kwargs):
