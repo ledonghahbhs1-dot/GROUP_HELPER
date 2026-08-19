@@ -216,8 +216,8 @@ async def cmd_debug_script(message: Message, bot: Bot):
         return
     await emoji_mgr.load_emojis()
     parts = [
-        ("header_1emoji",  f"{emoji_mgr.diamond} DRAGON CITY TOOL AND SCRIPT"),
-        ("header_2emoji",  f"{emoji_mgr.diamond} DRAGON CITY TOOL AND SCRIPT {emoji_mgr.vip}"),
+        ("header_1emoji",  f"{emoji_mgr.vip} DRAGON CITY TOOL AND SCRIPT"),
+        ("header_2emoji",  f"{emoji_mgr.vip} DRAGON CITY TOOL AND SCRIPT {emoji_mgr.vip}"),
         ("star_plain",     f"{emoji_mgr.star} Access Tools"),
         ("link_dquote",    f"{emoji_mgr.star} <a href=\"https://www.wolfmod.xyz/dragon-city\">wolfmod.xyz</a>"),
         ("shield_no_amp",  f"{emoji_mgr.warn} Key and VIP Features"),
@@ -226,6 +226,7 @@ async def cmd_debug_script(message: Message, bot: Bot):
         ("footer_3emoji",  f"{emoji_mgr.star} DM {emoji_mgr.vip} :@wolfmodyt {emoji_mgr.vip}"),
         ("sig",            emoji_mgr.signature),
     ]
+
     for name, part in parts:
         try:
             await message.answer(f"[{name}]: {part}", parse_mode="HTML", disable_web_page_preview=True)

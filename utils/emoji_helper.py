@@ -140,8 +140,7 @@ emoji_mgr = EmojiManager()
 async def _try_send_stripping_bad_emojis(send_fn, text: str, **kwargs):
     """
     Attempts to send `text`. If Telegram rejects it (DOCUMENT_INVALID),
-    strips one bad <tg-emoji> tag at a time (re-scanning after each strip)
-    until the message sends or all custom emojis are stripped.
+    strips one bad <tg-emoji> tag at a time until message sends or all custom emojis are stripped.
     """
     TG_EMOJI_RE = re.compile(r'<tg-emoji emoji-id=["\']([^"\']+)["\']>([^<]*)</tg-emoji>')
     current_text = text
@@ -155,42 +154,61 @@ async def _try_send_stripping_bad_emojis(send_fn, text: str, **kwargs):
             if "DOCUMENT_INVALID" not in err_str and "can't parse" not in err_str:
                 raise
 
-            # Find first emoji ID not yet known to be bad
             match = TG_EMOJI_RE.search(current_text)
             if not match:
-                # No more tg-emoji tags — last resort: strip all
                 return await send_fn(emoji_mgr.strip_tg_emojis(text), **kwargs)
 
-            # Binary: strip only THIS tag and retry
             bad_id = match.group(1)
-            fallback = match.group(2)
             if bad_id not in bad_ids:
                 bad_ids.add(bad_id)
                 logger.warning("Custom emoji ID %s caused DOCUMENT_INVALID — stripping it", bad_id)
 
-            # Replace ALL occurrences of this specific ID in current_text
             current_text = re.sub(
                 r'<tg-emoji emoji-id=["\']' + re.escape(bad_id) + r'["\']>([^<]*)</tg-emoji>',
                 r'\1',
                 current_text
             )
 
-
-async def safe_answer(message, text: str, **kwargs):
-    """Safely answers a message, stripping only invalid VIP custom emoji IDs to keep all valid ones"""
-    return await _try_send_stripping_bad_emojis(message.answer, text, **kwargs)
-
-
-async def safe_send_message(bot, chat_id: int, text: str, **kwargs):
-    """Safely sends a message, stripping only invalid VIP custom emoji IDs to keep all valid ones"""
-    import functools
-    send_fn = functools.partial(bot.send_message, chat_id)
-    return await _try_send_stripping_bad_emojis(send_fn, text, **kwargs)
-
-async def _delayed_delete(msg, delay: int):
+async def safe_answer(message, text: str, delay_sec: int = 0, **kwargs):
+    """Helper to reply to a message safely handling tg-emoji tags with auto-retry and auto-delete"""
+    msg = None
     try:
+        msg = await _try_send_stripping_bad_emojis(message.answer, text, **kwargs)
+    except Exception as e:
+        logger.error(f"Error in safe_answer: {e}")
+        try:
+            msg = await message.answer(emoji_mgr.strip_tg_emojis(text), parse_mode="HTML", **kwargs)
+        except Exception:
+            pass
+
+    if msg and delay_sec > 0:
         import asyncio
-        await asyncio.sleep(delay)
+        asyncio.create_task(_delayed_delete(msg, delay_sec))
+    return msg
+
+async def safe_send_message(bot, chat_id: int, text: str, delay_sec: int = 0, **kwargs):
+    """Helper to send a message to a chat safely handling tg-emoji tags with auto-retry and auto-delete"""
+    msg = None
+    try:
+        async def _sender(t, **kw):
+            return await bot.send_message(chat_id=chat_id, text=t, **kw)
+        msg = await _try_send_stripping_bad_emojis(_sender, text, **kwargs)
+    except Exception as e:
+        logger.error(f"Error in safe_send_message: {e}")
+        try:
+            msg = await bot.send_message(chat_id=chat_id, text=emoji_mgr.strip_tg_emojis(text), parse_mode="HTML", **kwargs)
+        except Exception:
+            pass
+
+    if msg and delay_sec > 0:
+        import asyncio
+        asyncio.create_task(_delayed_delete(msg, delay_sec))
+    return msg
+
+async def _delayed_delete(msg, delay_sec: int):
+    import asyncio
+    await asyncio.sleep(delay_sec)
+    try:
         await msg.delete()
     except Exception:
         pass
@@ -204,7 +222,7 @@ def schedule_auto_delete(msg, delay_sec: int = 30):
 def get_payment_info_text() -> str:
     """Returns formatted VIP Payment Methods message using exclusively Premium VIP custom emojis"""
     return (
-        f"{emoji_mgr.diamond} <b>PAYMENT METHODS</b> {emoji_mgr.vip}\n\n"
+        f"{emoji_mgr.vip} <b>PAYMENT METHODS</b> {emoji_mgr.vip}\n\n"
         f"{emoji_mgr.star} <b>PayPal [GLOBAL]:</b> <code>paypal.me/WolfmodYT197</code>\n"
         f"   └ <b>GMAIL PAYPAL:</b> <code>ledongha2k7@gmail.com</code>\n\n"
         f"{emoji_mgr.star} <b>Binance ID [GLOBAL]:</b> <code>1158594960</code>\n"
@@ -214,14 +232,14 @@ def get_payment_info_text() -> str:
         f"━━━━━━━━━━━━━━━━━━━━\n"
         f"{emoji_mgr.warn} <i>Please send the correct information.</i>\n"
         f"{emoji_mgr.warn} <i>Please send by <b>FRIENDS AND FAMILY OPTION</b> !</i>\n"
-        f"{emoji_mgr.diamond} <b>Note:</b> You can also redeem codes via <a href=\"https://rewarble.com/\">rewarble.com</a>\n\n"
+        f"{emoji_mgr.star} <b>Note:</b> You can also redeem codes via <a href=\"https://rewarble.com/\">rewarble.com</a>\n\n"
         f"{emoji_mgr.star} <b>After sending, please DM</b> {emoji_mgr.vip} :@wolfmodyt {emoji_mgr.vip} <b>to confirm.</b>"
     )
 
 def get_script_tool_info_text() -> str:
     """Returns formatted VIP Dragon City Tool and Script instructions in English"""
     return (
-        f"{emoji_mgr.diamond} <b>DRAGON CITY TOOL AND SCRIPT</b> {emoji_mgr.vip}\n\n"
+        f"{emoji_mgr.vip} <b>DRAGON CITY TOOL AND SCRIPT</b> {emoji_mgr.vip}\n\n"
         f"{emoji_mgr.star} <b>Access Tools, Scripts and VIP Keys here:</b>\n"
         f"{emoji_mgr.star} <a href=\"https://www.wolfmod.xyz/dragon-city\">https://www.wolfmod.xyz/dragon-city</a>\n\n"
         f"━━━━━━━━━━━━━━━━━━━━\n"
@@ -231,3 +249,4 @@ def get_script_tool_info_text() -> str:
         f"{emoji_mgr.warn} <i>Visit the link above to get your key or purchase VIP access!</i>\n\n"
         f"{emoji_mgr.star} <b>To Buy VIP directly:</b> Type <code>/pay</code> or DM {emoji_mgr.vip} :@wolfmodyt {emoji_mgr.vip}"
     )
+

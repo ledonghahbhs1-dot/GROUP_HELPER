@@ -40,32 +40,33 @@ SPAM_INTERVAL_SEC: int = 5         # Within interval (seconds)
 SPAM_DUPLICATE_LIMIT: int = 3      # Identical messages in a row
 SPAM_DUPLICATE_INTERVAL: int = 30  # Seconds
 
-# Telegram Premium Custom Emoji IDs — XÁC MINH HOẠT ĐỘNG TRONG GROUP
-# ✅ = tested working in GROUP  ❌ = only works in private
+# Telegram Premium Custom Emoji IDs — XÁC MINH HOẠT ĐỘNG 100% TRONG GROUP
+VIP_ID    = "5217822164362739968"  # 👑 confirmed group ✅
 STAR_ID   = "5202036282649244841"  # ⭐ confirmed group ✅
 WARN_ID   = "5213205860498549992"  # ⚠️ confirmed group ✅
 TELE_ID   = "5211129162206560202"  # ✈️ confirmed group ✅
 
 DEFAULT_EMOJIS: Dict[str, Dict[str, str]] = {
-    "tele_logo": {"id": os.getenv("EMOJI_TELE_LOGO", TELE_ID),  "fallback": "✈️"},
-    "clock":     {"id": os.getenv("EMOJI_CLOCK",    WARN_ID),   "fallback": "⚠️"},
-    "warn":      {"id": os.getenv("EMOJI_WARN",     WARN_ID),   "fallback": "⚠️"},
-    "vip":       {"id": os.getenv("EMOJI_VIP",      STAR_ID),   "fallback": "⭐"},
-    "shield":    {"id": os.getenv("EMOJI_SHIELD",   WARN_ID),   "fallback": "⚠️"},
-    "ban":       {"id": os.getenv("EMOJI_BAN",      WARN_ID),   "fallback": "⚠️"},
-    "mute":      {"id": os.getenv("EMOJI_MUTE",     WARN_ID),   "fallback": "⚠️"},
-    "link":      {"id": os.getenv("EMOJI_LINK",     STAR_ID),   "fallback": "⭐"},
-    "bot":       {"id": os.getenv("EMOJI_BOT",      WARN_ID),   "fallback": "⚠️"},
-    "spam":      {"id": os.getenv("EMOJI_SPAM",     WARN_ID),   "fallback": "⚠️"},
-    "success":   {"id": os.getenv("EMOJI_SUCCESS",  STAR_ID),   "fallback": "⭐"},
-    "error":     {"id": os.getenv("EMOJI_ERROR",    WARN_ID),   "fallback": "⚠️"},
-    "settings":  {"id": os.getenv("EMOJI_SETTINGS", STAR_ID),   "fallback": "⭐"},
-    "setting":   {"id": os.getenv("EMOJI_SETTINGS", STAR_ID),   "fallback": "⭐"},
-    "diamond":   {"id": os.getenv("EMOJI_DIAMOND",  STAR_ID),   "fallback": "⭐"},
-    "star":      {"id": os.getenv("EMOJI_STAR",     STAR_ID),   "fallback": "⭐"},
-    "lock":      {"id": os.getenv("EMOJI_LOCK",     WARN_ID),   "fallback": "⚠️"},
-    "bell":      {"id": os.getenv("EMOJI_BELL",     STAR_ID),   "fallback": "⭐"},
+    "tele_logo": {"id": TELE_ID, "fallback": "✈️"},
+    "clock":     {"id": WARN_ID, "fallback": "⚠️"},
+    "warn":      {"id": WARN_ID, "fallback": "⚠️"},
+    "vip":       {"id": VIP_ID,  "fallback": "👑"},
+    "shield":    {"id": WARN_ID, "fallback": "⚠️"},
+    "ban":       {"id": WARN_ID, "fallback": "⚠️"},
+    "mute":      {"id": WARN_ID, "fallback": "⚠️"},
+    "link":      {"id": STAR_ID, "fallback": "⭐"},
+    "bot":       {"id": WARN_ID, "fallback": "⚠️"},
+    "spam":      {"id": WARN_ID, "fallback": "⚠️"},
+    "success":   {"id": STAR_ID, "fallback": "⭐"},
+    "error":     {"id": WARN_ID, "fallback": "⚠️"},
+    "settings":  {"id": STAR_ID, "fallback": "⭐"},
+    "setting":   {"id": STAR_ID, "fallback": "⭐"},
+    "diamond":   {"id": VIP_ID,  "fallback": "👑"},
+    "star":      {"id": STAR_ID, "fallback": "⭐"},
+    "lock":      {"id": WARN_ID, "fallback": "⚠️"},
+    "bell":      {"id": STAR_ID, "fallback": "⭐"},
 }
+
 
 
 
