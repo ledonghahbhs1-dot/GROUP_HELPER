@@ -6,7 +6,14 @@ from aiogram import Router, F, Bot
 from aiogram.types import Message, ChatPermissions, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.filters import Command, CommandObject
 from database.db import db
-from utils.emoji_helper import emoji_mgr, safe_answer, safe_send_message, get_payment_info_text, get_script_tool_info_text
+from utils.emoji_helper import (
+    emoji_mgr,
+    safe_answer,
+    safe_send_message,
+    schedule_auto_delete,
+    get_payment_info_text,
+    get_script_tool_info_text
+)
 from utils.auth import is_user_allowed_private, is_admin_or_owner
 from utils.logger import logger
 import config
@@ -33,6 +40,29 @@ def parse_time_duration(time_str: str) -> int:
     elif time_str.isdigit():
         return int(time_str) * 60
     return 3600
+
+async def require_admin(message: Message, bot: Bot) -> bool:
+    """
+    Ensures that only @wolfmodyt, Owner IDs, and Group Administrators
+    can execute administrative/moderation commands.
+    If a regular member attempts, delete command and send a 30s auto-delete warning.
+    """
+    chat_id = message.chat.id
+    if not await is_admin_or_owner(chat_id, message.from_user, bot):
+        try:
+            await message.delete()
+        except Exception:
+            pass
+        if message.chat.type != "private":
+            warn_txt = (
+                f"{emoji_mgr.error} <b>ACCESS DENIED</b> {emoji_mgr.vip}\n\n"
+                f"{emoji_mgr.warn} Regular members are <b>not permitted</b> to use Administrator commands!\n"
+                f"{emoji_mgr.shield} Only Group Admins & {emoji_mgr.vip} :@wolfmodyt can perform this action."
+            )
+            err_msg = await safe_answer(message, emoji_mgr.format_msg(warn_txt), parse_mode="HTML")
+            schedule_auto_delete(err_msg, 30)
+        return False
+    return True
 
 # -------------------------------------------------------------
 # START & HELP COMMANDS (Bilingual: VN in private, EN in group)
@@ -89,6 +119,7 @@ async def cmd_help(message: Message):
             f"{emoji_mgr.settings} <b>CÀI ĐẶT & BẢO VỆ:</b>\n"
             f"• <code>/settings</code> - Mở bảng điều khiển cài đặt bảo vệ nhóm\n"
             f"• <code>/pay</code> - Xem thông tin thanh toán (Payment Methods)\n"
+            f"• <code>/script</code> - Xem thông tin Tool & Script Dragon City\n"
             f"• <code>/stats</code> - Xem thống kê số lần bot đã chặn vi phạm\n\n"
             f"{emoji_mgr.warn} <b>CẢNH CÁO & XỬ PHẠT (Tối đa 2 lần vi phạm -> BAN):</b>\n"
             f"• <code>/warn [lý do]</code> (Reply tin nhắn) - Cảnh cáo thành viên\n"
@@ -118,6 +149,7 @@ async def cmd_help(message: Message):
             f"{emoji_mgr.settings} <b>SETTINGS & STATS:</b>\n"
             f"• <code>/settings</code> - Open interactive group security panel\n"
             f"• <code>/pay</code> - View Payment Methods\n"
+            f"• <code>/script</code> - View Dragon City Tool & Script Link\n"
             f"• <code>/stats</code> - View security and violation statistics\n\n"
             f"{emoji_mgr.warn} <b>MODERATION (Max 2 Warnings -> BAN):</b>\n"
             f"• <code>/warn [reason]</code> (Reply message) - Warn member\n"
@@ -167,7 +199,7 @@ async def cmd_script(message: Message):
     await safe_answer(message, emoji_mgr.format_msg(text), parse_mode="HTML", disable_web_page_preview=True)
 
 # -------------------------------------------------------------
-# SETTINGS PANEL
+# SETTINGS PANEL (ADMIN ONLY)
 # -------------------------------------------------------------
 @router.message(Command("settings"))
 async def cmd_settings(message: Message, bot: Bot):
@@ -180,8 +212,7 @@ async def cmd_settings(message: Message, bot: Bot):
         await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.warn} Vui lòng sử dụng lệnh này bên trong nhóm mà bạn muốn cấu hình!"))
         return
 
-    if not await is_admin_or_owner(chat_id, message.from_user, bot):
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.error} You must be a Group Administrator to use this command!"))
+    if not await require_admin(message, bot):
         return
 
     settings = await db.get_chat_settings(chat_id)
@@ -222,29 +253,31 @@ async def cmd_settings(message: Message, bot: Bot):
     await safe_answer(message, emoji_mgr.format_msg(text), reply_markup=keyboard, parse_mode="HTML")
 
 # -------------------------------------------------------------
-# WARN / UNWARN / WARNS
+# WARN / UNWARN / WARNS (ADMIN ONLY)
 # -------------------------------------------------------------
 @router.message(Command("warn"))
 async def cmd_warn(message: Message, command: CommandObject, bot: Bot):
     chat_id = message.chat.id
-    is_private = message.chat.type == "private"
-    if is_private:
+    if message.chat.type == "private":
         return
 
-    if not await is_admin_or_owner(chat_id, message.from_user, bot):
+    if not await require_admin(message, bot):
         return
 
     if not message.reply_to_message or not message.reply_to_message.from_user:
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.warn} Please reply to the user's message to warn them!"))
+        err_msg = await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.warn} Please reply to the user's message to warn them!"))
+        schedule_auto_delete(err_msg, 30)
         return
 
     target = message.reply_to_message.from_user
     if target.id == (await bot.get_me()).id:
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.error} Cannot warn the bot!"))
+        err_msg = await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.error} Cannot warn the bot!"))
+        schedule_auto_delete(err_msg, 30)
         return
 
     if await is_admin_or_owner(chat_id, target, bot):
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.error} Cannot warn another Administrator!"))
+        err_msg = await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.error} Cannot warn another Administrator!"))
+        schedule_auto_delete(err_msg, 30)
         return
 
     reason = command.args or "Group rules violation"
@@ -277,18 +310,21 @@ async def cmd_warn(message: Message, command: CommandObject, bot: Bot):
             f"{emoji_mgr.star} <b>Warnings:</b> <code>{new_warns}/{max_warns}</code>\n"
             f"{emoji_mgr.diamond} <i>Max 2 warnings allowed. Exceeding 2 warnings will result in a BAN!</i>"
         )
-    await safe_answer(message, emoji_mgr.format_msg(text), parse_mode="HTML")
+    sent_msg = await safe_answer(message, emoji_mgr.format_msg(text), parse_mode="HTML")
+    if settings.get("auto_delete_logs", 1):
+        schedule_auto_delete(sent_msg, config.AUTO_DELETE_LOGS_SEC)
 
 @router.message(Command("unwarn"))
 async def cmd_unwarn(message: Message, bot: Bot):
     chat_id = message.chat.id
     if message.chat.type == "private":
         return
-    if not await is_admin_or_owner(chat_id, message.from_user, bot):
+    if not await require_admin(message, bot):
         return
 
     if not message.reply_to_message or not message.reply_to_message.from_user:
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.warn} Please reply to the user's message to remove a warning!"))
+        err_msg = await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.warn} Please reply to the user's message to remove a warning!"))
+        schedule_auto_delete(err_msg, 30)
         return
 
     target = message.reply_to_message.from_user
@@ -298,10 +334,12 @@ async def cmd_unwarn(message: Message, bot: Bot):
     target_mention = f"<a href='tg://user?id={target.id}'>{html.escape(target.full_name)}</a>"
 
     text = (
-        f"{emoji_mgr.success} Removed 1 warning for {target_mention}!\n"
+        f"{emoji_mgr.star} Removed 1 warning for {target_mention}!\n"
         f"{emoji_mgr.star} Current Warnings: <code>{new_warns}/{max_warns}</code>"
     )
-    await safe_answer(message, emoji_mgr.format_msg(text), parse_mode="HTML")
+    sent_msg = await safe_answer(message, emoji_mgr.format_msg(text), parse_mode="HTML")
+    if settings.get("auto_delete_logs", 1):
+        schedule_auto_delete(sent_msg, config.AUTO_DELETE_LOGS_SEC)
 
 @router.message(Command("warns"))
 async def cmd_warns(message: Message, bot: Bot):
@@ -328,26 +366,30 @@ async def cmd_warns(message: Message, bot: Bot):
             f"• Member: {target_mention}\n"
             f"• Warnings: <code>{warn_count}/{max_warns}</code>"
         )
-    await safe_answer(message, emoji_mgr.format_msg(text), parse_mode="HTML")
+    sent_msg = await safe_answer(message, emoji_mgr.format_msg(text), parse_mode="HTML")
+    if not is_private and settings.get("auto_delete_logs", 1):
+        schedule_auto_delete(sent_msg, config.AUTO_DELETE_LOGS_SEC)
 
 # -------------------------------------------------------------
-# MUTE & UNMUTE
+# MUTE & UNMUTE (ADMIN ONLY)
 # -------------------------------------------------------------
 @router.message(Command("mute"))
 async def cmd_mute(message: Message, command: CommandObject, bot: Bot):
     chat_id = message.chat.id
     if message.chat.type == "private":
         return
-    if not await is_admin_or_owner(chat_id, message.from_user, bot):
+    if not await require_admin(message, bot):
         return
 
     if not message.reply_to_message or not message.reply_to_message.from_user:
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.warn} Please reply to the user message with duration (e.g. <code>/mute 30m Spam</code>)!"))
+        err_msg = await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.warn} Please reply to the user message with duration (e.g. <code>/mute 30m Spam</code>)!"))
+        schedule_auto_delete(err_msg, 30)
         return
 
     target = message.reply_to_message.from_user
     if await is_admin_or_owner(chat_id, target, bot):
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.error} Cannot mute an Administrator!"))
+        err_msg = await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.error} Cannot mute an Administrator!"))
+        schedule_auto_delete(err_msg, 30)
         return
 
     args = (command.args or "").split(maxsplit=1)
@@ -380,11 +422,12 @@ async def cmd_unmute(message: Message, bot: Bot):
     chat_id = message.chat.id
     if message.chat.type == "private":
         return
-    if not await is_admin_or_owner(chat_id, message.from_user, bot):
+    if not await require_admin(message, bot):
         return
 
     if not message.reply_to_message or not message.reply_to_message.from_user:
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.warn} Please reply to the user message to unmute!"))
+        err_msg = await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.warn} Please reply to the user message to unmute!"))
+        schedule_auto_delete(err_msg, 30)
         return
 
     target = message.reply_to_message.from_user
@@ -397,28 +440,30 @@ async def cmd_unmute(message: Message, bot: Bot):
     try:
         await bot.restrict_chat_member(chat_id, target.id, permissions=permissions)
         target_mention = f"<a href='tg://user?id={target.id}'>{html.escape(target.full_name)}</a>"
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.success} Unmuted {target_mention} successfully!"), parse_mode="HTML")
+        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.star} Unmuted {target_mention} successfully!"), parse_mode="HTML")
     except Exception as e:
         await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.error} Error unmuting user: {e}"))
 
 # -------------------------------------------------------------
-# KICK & BAN & UNBAN
+# KICK & BAN & UNBAN (ADMIN ONLY)
 # -------------------------------------------------------------
 @router.message(Command("kick"))
 async def cmd_kick(message: Message, command: CommandObject, bot: Bot):
     chat_id = message.chat.id
     if message.chat.type == "private":
         return
-    if not await is_admin_or_owner(chat_id, message.from_user, bot):
+    if not await require_admin(message, bot):
         return
 
     if not message.reply_to_message or not message.reply_to_message.from_user:
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.warn} Please reply to the user message to kick!"))
+        err_msg = await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.warn} Please reply to the user message to kick!"))
+        schedule_auto_delete(err_msg, 30)
         return
 
     target = message.reply_to_message.from_user
     if await is_admin_or_owner(chat_id, target, bot):
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.error} Cannot kick an Administrator!"))
+        err_msg = await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.error} Cannot kick an Administrator!"))
+        schedule_auto_delete(err_msg, 30)
         return
 
     reason = command.args or "Kicked by Administrator"
@@ -440,16 +485,18 @@ async def cmd_ban(message: Message, command: CommandObject, bot: Bot):
     chat_id = message.chat.id
     if message.chat.type == "private":
         return
-    if not await is_admin_or_owner(chat_id, message.from_user, bot):
+    if not await require_admin(message, bot):
         return
 
     if not message.reply_to_message or not message.reply_to_message.from_user:
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.warn} Please reply to the user message to ban!"))
+        err_msg = await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.warn} Please reply to the user message to ban!"))
+        schedule_auto_delete(err_msg, 30)
         return
 
     target = message.reply_to_message.from_user
     if await is_admin_or_owner(chat_id, target, bot):
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.error} Cannot ban an Administrator!"))
+        err_msg = await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.error} Cannot ban an Administrator!"))
+        schedule_auto_delete(err_msg, 30)
         return
 
     reason = command.args or "Banned by Administrator"
@@ -470,28 +517,29 @@ async def cmd_unban(message: Message, command: CommandObject, bot: Bot):
     chat_id = message.chat.id
     if message.chat.type == "private":
         return
-    if not await is_admin_or_owner(chat_id, message.from_user, bot):
+    if not await require_admin(message, bot):
         return
 
     if not command.args or not command.args.strip().isdigit():
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.warn} Usage: <code>/unban [user_id]</code> (e.g. <code>/unban 123456789</code>)!"))
+        err_msg = await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.warn} Usage: <code>/unban [user_id]</code> (e.g. <code>/unban 123456789</code>)!"))
+        schedule_auto_delete(err_msg, 30)
         return
 
     target_id = int(command.args.strip())
     try:
         await bot.unban_chat_member(chat_id, target_id)
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.success} Unbanned ID <code>{target_id}</code> successfully!"), parse_mode="HTML")
+        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.star} Unbanned ID <code>{target_id}</code> successfully!"), parse_mode="HTML")
     except Exception as e:
         await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.error} Error unbanning: {e}"))
 
 # -------------------------------------------------------------
-# BANNED WORDS MANAGEMENT
+# BANNED WORDS MANAGEMENT (ADMIN ONLY)
 # -------------------------------------------------------------
 @router.message(Command("addword"))
 async def cmd_addword(message: Message, command: CommandObject, bot: Bot):
     chat_id = message.chat.id
     is_private = message.chat.type == "private"
-    if not await is_admin_or_owner(chat_id, message.from_user, bot):
+    if not await require_admin(message, bot):
         return
     if not command.args:
         usage_msg = "Cú pháp: <code>/addword [từ cấm]</code>" if is_private else "Usage: <code>/addword [word]</code>"
@@ -501,7 +549,7 @@ async def cmd_addword(message: Message, command: CommandObject, bot: Bot):
     success = await db.add_banned_word(chat_id, word, message.from_user.id if message.from_user else 0)
     if success:
         ok_msg = f"Đã thêm từ <b>{html.escape(word)}</b> vào danh sách cấm!" if is_private else f"Added <b>{html.escape(word)}</b> to banned words list!"
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.success} {ok_msg}"), parse_mode="HTML")
+        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.star} {ok_msg}"), parse_mode="HTML")
     else:
         dup_msg = "Từ này đã có trong danh sách cấm!" if is_private else "This word is already in the blacklist!"
         await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.warn} {dup_msg}"))
@@ -510,7 +558,7 @@ async def cmd_addword(message: Message, command: CommandObject, bot: Bot):
 async def cmd_delword(message: Message, command: CommandObject, bot: Bot):
     chat_id = message.chat.id
     is_private = message.chat.type == "private"
-    if not await is_admin_or_owner(chat_id, message.from_user, bot):
+    if not await require_admin(message, bot):
         return
     if not command.args:
         usage_msg = "Cú pháp: <code>/delword [từ cần xoá]</code>" if is_private else "Usage: <code>/delword [word]</code>"
@@ -520,7 +568,7 @@ async def cmd_delword(message: Message, command: CommandObject, bot: Bot):
     success = await db.remove_banned_word(chat_id, word)
     if success:
         ok_msg = f"Đã xoá từ <b>{html.escape(word)}</b> khỏi danh sách cấm!" if is_private else f"Removed <b>{html.escape(word)}</b> from blacklist!"
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.success} {ok_msg}"), parse_mode="HTML")
+        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.star} {ok_msg}"), parse_mode="HTML")
     else:
         err_msg = "Không tìm thấy từ này trong danh sách cấm!" if is_private else "Word not found in blacklist!"
         await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.error} {err_msg}"))
@@ -529,7 +577,7 @@ async def cmd_delword(message: Message, command: CommandObject, bot: Bot):
 async def cmd_listwords(message: Message, bot: Bot):
     chat_id = message.chat.id
     is_private = message.chat.type == "private"
-    if not await is_admin_or_owner(chat_id, message.from_user, bot):
+    if not await require_admin(message, bot):
         return
     words = await db.get_banned_words(chat_id)
     if not words:
@@ -542,13 +590,13 @@ async def cmd_listwords(message: Message, bot: Bot):
     await safe_answer(message, emoji_mgr.format_msg(text), parse_mode="HTML")
 
 # -------------------------------------------------------------
-# WHITELIST LINK MANAGEMENT
+# WHITELIST LINK MANAGEMENT (ADMIN ONLY)
 # -------------------------------------------------------------
 @router.message(Command("addlink"))
 async def cmd_addlink(message: Message, command: CommandObject, bot: Bot):
     chat_id = message.chat.id
     is_private = message.chat.type == "private"
-    if not await is_admin_or_owner(chat_id, message.from_user, bot):
+    if not await require_admin(message, bot):
         return
     if not command.args:
         usage_msg = "Cú pháp: <code>/addlink [tên miền]</code> (vd: <code>/addlink youtube.com</code>)" if is_private else "Usage: <code>/addlink [domain]</code> (e.g. <code>/addlink youtube.com</code>)"
@@ -558,7 +606,7 @@ async def cmd_addlink(message: Message, command: CommandObject, bot: Bot):
     success = await db.add_whitelist_link(chat_id, domain)
     if success:
         ok_msg = f"Đã thêm <b>{html.escape(domain)}</b> vào whitelist!" if is_private else f"Added <b>{html.escape(domain)}</b> to whitelist!"
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.success} {ok_msg}"), parse_mode="HTML")
+        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.star} {ok_msg}"), parse_mode="HTML")
     else:
         dup_msg = "Tên miền này đã có trong whitelist!" if is_private else "Domain is already in whitelist!"
         await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.warn} {dup_msg}"))
@@ -567,7 +615,7 @@ async def cmd_addlink(message: Message, command: CommandObject, bot: Bot):
 async def cmd_dellink(message: Message, command: CommandObject, bot: Bot):
     chat_id = message.chat.id
     is_private = message.chat.type == "private"
-    if not await is_admin_or_owner(chat_id, message.from_user, bot):
+    if not await require_admin(message, bot):
         return
     if not command.args:
         usage_msg = "Cú pháp: <code>/dellink [tên miền]</code>" if is_private else "Usage: <code>/dellink [domain]</code>"
@@ -577,7 +625,7 @@ async def cmd_dellink(message: Message, command: CommandObject, bot: Bot):
     success = await db.remove_whitelist_link(chat_id, domain)
     if success:
         ok_msg = f"Đã xoá <b>{html.escape(domain)}</b> khỏi whitelist!" if is_private else f"Removed <b>{html.escape(domain)}</b> from whitelist!"
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.success} {ok_msg}"), parse_mode="HTML")
+        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.star} {ok_msg}"), parse_mode="HTML")
     else:
         err_msg = "Không tìm thấy tên miền trong whitelist!" if is_private else "Domain not found in whitelist!"
         await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.error} {err_msg}"))
@@ -586,7 +634,7 @@ async def cmd_dellink(message: Message, command: CommandObject, bot: Bot):
 async def cmd_listlinks(message: Message, bot: Bot):
     chat_id = message.chat.id
     is_private = message.chat.type == "private"
-    if not await is_admin_or_owner(chat_id, message.from_user, bot):
+    if not await require_admin(message, bot):
         return
     links = await db.get_whitelist_links(chat_id)
     if not links:
@@ -602,11 +650,10 @@ async def cmd_listlinks(message: Message, bot: Bot):
 # TELEGRAM PREMIUM CUSTOM EMOJI TOOLS (Accessible to @wolfmodyt)
 # -------------------------------------------------------------
 @router.message(Command("get_emoji", "getemoji"))
-async def cmd_get_emoji(message: Message):
-    """
-    Scans the message or replied message for Telegram Premium Custom Emoji entities
-    and returns their IDs for easy copying!
-    """
+async def cmd_get_emoji(message: Message, bot: Bot):
+    if not await require_admin(message, bot):
+        return
+
     target_msg = message.reply_to_message if message.reply_to_message else message
     entities = (target_msg.entities or []) + (target_msg.caption_entities or [])
     full_text = target_msg.text or target_msg.caption or ""
@@ -641,18 +688,16 @@ async def cmd_get_emoji(message: Message):
 
 @router.message(Command("set_emoji", "setemoji"))
 async def cmd_set_emoji(message: Message, command: CommandObject, bot: Bot):
-    # @wolfmodyt, Owner IDs, and Group Admins are authorized
-    if not await is_admin_or_owner(message.chat.id, message.from_user, bot):
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.error} Bạn không có quyền thực hiện lệnh này!"))
+    if not await require_admin(message, bot):
         return
 
     if not command.args:
         text = (
             f"{emoji_mgr.settings} <b>CÀI ĐẶT VIP CUSTOM EMOJI</b>\n\n"
             f"Cú pháp: <code>/set_emoji [key] [emoji_id] [kí tự fallback]</code>\n"
-            f"Ví dụ: <code>/set_emoji vip 5211129162206560202 👑</code>\n\n"
+            f"Ví dụ: <code>/set_emoji vip 5217822164362739968 👑</code>\n\n"
             f"<b>Các key hợp lệ:</b>\n"
-            f"<code>vip</code>, <code>shield</code>, <code>warn</code>, <code>ban</code>, <code>mute</code>, <code>link</code>, <code>bot</code>, <code>spam</code>, <code>clock</code>, <code>tele_logo</code>, <code>success</code>, <code>error</code>, <code>diamond</code>, <code>settings</code>"
+            f"<code>vip</code>, <code>shield</code>, <code>warn</code>, <code>ban</code>, <code>mute</code>, <code>link</code>, <code>spam</code>, <code>clock</code>, <code>tele_logo</code>, <code>error</code>, <code>diamond</code>, <code>star</code>, <code>bell</code>, <code>settings</code>"
         )
         await safe_answer(message, emoji_mgr.format_msg(text), parse_mode="HTML")
         return
@@ -674,20 +719,20 @@ async def cmd_set_emoji(message: Message, command: CommandObject, bot: Bot):
     await emoji_mgr.load_emojis()
 
     text = (
-        f"{emoji_mgr.success} Đã cập nhật Custom Emoji cho key <b>{html.escape(key)}</b> thành công!\n"
+        f"{emoji_mgr.star} Đã cập nhật Custom Emoji cho key <b>{html.escape(key)}</b> thành công!\n"
         f"• Xem trước: <tg-emoji emoji-id='{emoji_id}'>{fallback}</tg-emoji> (ID: <code>{emoji_id}</code>)"
     )
     await safe_answer(message, emoji_mgr.format_msg(text), parse_mode="HTML")
 
 @router.message(Command("list_emojis", "listemojis"))
 async def cmd_list_emojis(message: Message, bot: Bot):
-    if not await is_admin_or_owner(message.chat.id, message.from_user, bot):
+    if not await require_admin(message, bot):
         return
 
     await emoji_mgr.load_emojis()
     lines = [f"{emoji_mgr.vip} <b>DANH SÁCH KEY CUSTOM EMOJI ĐANG DÙNG:</b>\n"]
 
-    all_keys = ["tele_logo", "clock", "vip", "shield", "warn", "ban", "mute", "link", "bot", "spam", "success", "error", "settings", "diamond"]
+    all_keys = ["tele_logo", "clock", "vip", "shield", "warn", "ban", "mute", "link", "spam", "error", "settings", "diamond", "star", "bell"]
     for k in all_keys:
         icon_rendered = emoji_mgr.get(k)
         conf_id = config.DEFAULT_EMOJIS.get(k, {}).get("id", "")
@@ -699,7 +744,7 @@ async def cmd_list_emojis(message: Message, bot: Bot):
     await safe_answer(message, emoji_mgr.format_msg("\n".join(lines)), parse_mode="HTML")
 
 # -------------------------------------------------------------
-# STATS COMMAND
+# STATS COMMAND (ADMIN ONLY)
 # -------------------------------------------------------------
 @router.message(Command("stats"))
 async def cmd_stats(message: Message, bot: Bot):
@@ -707,7 +752,7 @@ async def cmd_stats(message: Message, bot: Bot):
     is_private = message.chat.type == "private"
     if is_private and not is_user_allowed_private(message.from_user):
         return
-    if not is_private and not await is_admin_or_owner(chat_id, message.from_user, bot):
+    if not is_private and not await require_admin(message, bot):
         return
 
     stats = await db.get_stats(chat_id)
@@ -723,9 +768,9 @@ async def cmd_stats(message: Message, bot: Bot):
             f"• {emoji_mgr.spam} <b>Spam & Flood đã chặn:</b> <code>{spam_count}</code>\n"
             f"• {emoji_mgr.link} <b>Link trái phép đã xoá:</b> <code>{link_count}</code>\n"
             f"• {emoji_mgr.error} <b>Ngôn từ lăng mạ đã xử lý:</b> <code>{badwords_count}</code>\n"
-            f"• {emoji_mgr.bot} <b>Bot lạ đã trục xuất:</b> <code>{bot_count}</code>\n"
-            f"➖➖➖➖➖➖➖➖\n"
-            f"🏆 <b>Tổng số vi phạm đã ngăn chặn:</b> <code>{total}</code>"
+            f"• {emoji_mgr.shield} <b>Bot lạ đã trục xuất:</b> <code>{bot_count}</code>\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"{emoji_mgr.star} <b>Tổng số vi phạm đã ngăn chặn:</b> <code>{total}</code>"
         )
     else:
         text = (
@@ -733,8 +778,12 @@ async def cmd_stats(message: Message, bot: Bot):
             f"• {emoji_mgr.spam} <b>Spam & Flood blocked:</b> <code>{spam_count}</code>\n"
             f"• {emoji_mgr.link} <b>Unauthorized Links removed:</b> <code>{link_count}</code>\n"
             f"• {emoji_mgr.error} <b>Profanity filtered:</b> <code>{badwords_count}</code>\n"
-            f"• {emoji_mgr.bot} <b>Unauthorized Bots blocked:</b> <code>{bot_count}</code>\n"
-            f"➖➖➖➖➖➖➖➖\n"
-            f"🏆 <b>Total violations prevented:</b> <code>{total}</code>"
+            f"• {emoji_mgr.shield} <b>Unauthorized Bots blocked:</b> <code>{bot_count}</code>\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"{emoji_mgr.star} <b>Total violations prevented:</b> <code>{total}</code>"
         )
-    await safe_answer(message, emoji_mgr.format_msg(text), parse_mode="HTML")
+    sent_msg = await safe_answer(message, emoji_mgr.format_msg(text), parse_mode="HTML")
+    if not is_private:
+        settings = await db.get_chat_settings(chat_id)
+        if settings.get("auto_delete_logs", 1):
+            schedule_auto_delete(sent_msg, config.AUTO_DELETE_LOGS_SEC)
