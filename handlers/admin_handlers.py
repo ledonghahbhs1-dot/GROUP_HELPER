@@ -199,6 +199,44 @@ async def cmd_script(message: Message):
     await safe_answer(message, emoji_mgr.format_msg(text), parse_mode="HTML", disable_web_page_preview=True)
 
 # -------------------------------------------------------------
+# GET CHAT ID / USER ID COMMAND (/id, /chatid, /info)
+# -------------------------------------------------------------
+@router.message(Command("id", "chatid", "info"))
+async def cmd_id(message: Message, bot: Bot):
+    chat = message.chat
+    user = message.from_user
+    sender_chat = message.sender_chat
+    reply = message.reply_to_message
+
+    lines = [f"{emoji_mgr.shield} <b>TELEGRAM ID INFORMATION</b> {emoji_mgr.vip}\n"]
+    
+    if chat.type in ["group", "supergroup", "channel"]:
+        lines.append(f"• {emoji_mgr.star} <b>Group / Chat Title:</b> {html.escape(chat.title or 'Group')}")
+        lines.append(f"• {emoji_mgr.star} <b>Group Chat ID:</b> <code>{chat.id}</code>")
+        if message.message_thread_id:
+            lines.append(f"• {emoji_mgr.star} <b>Topic ID:</b> <code>{message.message_thread_id}</code>")
+    else:
+        lines.append(f"• {emoji_mgr.star} <b>Chat Type:</b> Private Chat")
+
+    if sender_chat:
+        lines.append(f"• {emoji_mgr.admin} <b>Sender (Anonymous/Channel):</b> {html.escape(sender_chat.title or '')} (ID: <code>{sender_chat.id}</code>)")
+    elif user:
+        uname = f" (@{user.username})" if user.username else ""
+        lines.append(f"• {emoji_mgr.admin} <b>Your User ID:</b> <code>{user.id}</code>{uname}")
+
+    if reply:
+        r_user = reply.from_user
+        r_sender = reply.sender_chat
+        if r_sender:
+            lines.append(f"• {emoji_mgr.diamond} <b>Replied Chat/Channel:</b> {html.escape(r_sender.title or '')} (ID: <code>{r_sender.id}</code>)")
+        elif r_user:
+            r_uname = f" (@{r_user.username})" if r_user.username else ""
+            lines.append(f"• {emoji_mgr.diamond} <b>Replied User ID:</b> <code>{r_user.id}</code> ({html.escape(r_user.full_name)}){r_uname}")
+
+    text = "\n".join(lines)
+    await safe_answer(message, emoji_mgr.format_msg(text), parse_mode="HTML")
+
+# -------------------------------------------------------------
 # SETTINGS PANEL (ADMIN ONLY)
 # -------------------------------------------------------------
 @router.message(Command("settings"))
