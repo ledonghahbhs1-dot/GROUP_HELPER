@@ -10,11 +10,13 @@ BASE_DIR = Path(__file__).resolve().parent
 
 BOT_TOKEN: str = os.getenv("BOT_TOKEN", "")
 
-# Admin/Owner IDs
-raw_owners = os.getenv("OWNER_IDS", "")
+# Admin/Owner IDs (Includes user IDs and Super-Admin Channel/Group IDs)
+raw_owners = os.getenv("OWNER_IDS", "-1002070376940")
 OWNER_IDS: List[int] = [
-    int(x.strip()) for x in raw_owners.split(",") if x.strip().isdigit()
+    int(x.strip()) for x in raw_owners.split(",") if x.strip().lstrip("-").isdigit()
 ]
+# WOLF Team Owner Channel/Sender Chat IDs
+OWNER_SENDER_CHAT_IDS: List[int] = [-1002070376940]
 
 # Whitelist username allowed to message the bot directly in private chat
 ALLOWED_PRIVATE_USERNAMES: List[str] = [
