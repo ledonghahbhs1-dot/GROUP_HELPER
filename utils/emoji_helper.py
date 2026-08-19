@@ -166,7 +166,7 @@ def schedule_auto_delete(msg, delay_sec: int = 30):
         asyncio.create_task(_delayed_delete(msg, delay_sec))
 
 def get_payment_info_text() -> str:
-    """Returns formatted VIP Payment Methods message"""
+    """Returns formatted VIP Payment Methods message using exclusively Premium VIP custom emojis"""
     return (
         f"{emoji_mgr.diamond} <b>PAYMENT METHODS</b> {emoji_mgr.vip}\n\n"
         f"{emoji_mgr.star} <b>PayPal [GLOBAL]:</b> <code>paypal.me/WolfmodYT197</code>\n"
@@ -178,7 +178,7 @@ def get_payment_info_text() -> str:
         f"━━━━━━━━━━━━━━━━━━━━\n"
         f"{emoji_mgr.warn} <i>Please send the correct information.</i>\n"
         f"{emoji_mgr.shield} <i>Please send by <b>FRIENDS AND FAMILY OPTION</b> !</i>\n\n"
-        f"💬 <b>After sending, please DM</b> {emoji_mgr.tele_logo} :@wolfmodyt <b>to confirm your submission.</b>"
+        f"{emoji_mgr.diamond} <b>After sending, please DM</b> {emoji_mgr.vip} :@wolfmodyt {emoji_mgr.vip} <b>to confirm your submission.</b>"
     )
 
 
