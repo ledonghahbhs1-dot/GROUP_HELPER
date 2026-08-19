@@ -1,0 +1,126 @@
+import html
+from typing import Dict, List, Optional
+import config
+from database.db import db
+
+class EmojiManager:
+    """
+    Helper to render Telegram Premium Custom Emojis using <tg-emoji emoji-id="ID">Fallback</tg-emoji>
+    """
+    def __init__(self):
+        self._db_emojis: Dict[str, Dict[str, str]] = {}
+
+    async def load_emojis(self):
+        """Loads customized emojis from DB and merges with config"""
+        try:
+            self._db_emojis = await db.get_all_custom_emojis()
+        except Exception:
+            self._db_emojis = {}
+
+    def get(self, key: str, fallback_override: Optional[str] = None) -> str:
+        """
+        Returns formatted HTML tg-emoji tag or standard emoji fallback
+        """
+        key_lower = key.lower().strip()
+        emoji_id = ""
+        fallback = fallback_override or ""
+
+        # Check DB first
+        if key_lower in self._db_emojis:
+            emoji_id = self._db_emojis[key_lower].get("id", "").strip()
+            if not fallback:
+                fallback = self._db_emojis[key_lower].get("fallback", "")
+
+        # Fallback to config
+        if not emoji_id and key_lower in config.DEFAULT_EMOJIS:
+            emoji_id = config.DEFAULT_EMOJIS[key_lower].get("id", "").strip()
+            if not fallback:
+                fallback = config.DEFAULT_EMOJIS[key_lower].get("fallback", "")
+
+        if not fallback:
+            fallback = "✨"
+
+        if emoji_id and emoji_id.isdigit():
+            return f'<tg-emoji emoji-id="{emoji_id}">{fallback}</tg-emoji>'
+        return fallback
+
+    # Custom Emojis requested by user
+    @property
+    def tele_logo(self) -> str:
+        return self.get("tele_logo", "✈️")
+
+    @property
+    def clock(self) -> str:
+        return self.get("clock", "⏳")
+
+    @property
+    def signature(self) -> str:
+        """Required footer for every message: [5211129162206560202] :@wolfmodyt"""
+        return f"\n\n{self.tele_logo} :@wolfmodyt"
+
+    def format_msg(self, text: str) -> str:
+        """Appends the mandatory signature to the message"""
+        return f"{text}{self.signature}"
+
+    # Convenient VIP Emoji methods
+    @property
+    def vip(self) -> str:
+        return self.get("vip", "👑")
+
+    @property
+    def shield(self) -> str:
+        return self.get("shield", "🛡️")
+
+    @property
+    def warn(self) -> str:
+        return self.get("warn", "⚠️")
+
+    @property
+    def ban(self) -> str:
+        return self.get("ban", "🚫")
+
+    @property
+    def mute(self) -> str:
+        return self.get("mute", "🔇")
+
+    @property
+    def link(self) -> str:
+        return self.get("link", "🔗")
+
+    @property
+    def bot(self) -> str:
+        return self.get("bot", "🤖")
+
+    @property
+    def spam(self) -> str:
+        return self.get("spam", "🔥")
+
+    @property
+    def success(self) -> str:
+        return self.get("success", "✅")
+
+    @property
+    def error(self) -> str:
+        return self.get("error", "❌")
+
+    @property
+    def settings(self) -> str:
+        return self.get("settings", "⚙️")
+
+    @property
+    def diamond(self) -> str:
+        return self.get("diamond", "💎")
+
+    @property
+    def star(self) -> str:
+        return self.get("star", "⭐")
+
+    @property
+    def lock(self) -> str:
+        return self.get("lock", "🔒")
+
+    @property
+    def bell(self) -> str:
+        return self.get("bell", "🔔")
+
+emoji_mgr = EmojiManager()
