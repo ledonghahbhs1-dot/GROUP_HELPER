@@ -7,9 +7,8 @@ from aiogram.types import Message, ChatPermissions, InlineKeyboardMarkup, Inline
 from aiogram.filters import Command, CommandObject
 from database.db import db
 from utils.emoji_helper import emoji_mgr, safe_answer, safe_send_message
+from utils.auth import is_user_allowed_private, is_admin_or_owner
 from utils.logger import logger
-from handlers.member_handlers import is_user_admin
-from handlers.message_handlers import is_user_allowed_private
 import config
 
 router = Router(name="admin_handlers")
@@ -36,62 +35,109 @@ def parse_time_duration(time_str: str) -> int:
     return 3600
 
 # -------------------------------------------------------------
-# START & HELP COMMANDS
+# START & HELP COMMANDS (Bilingual: VN in private, EN in group)
 # -------------------------------------------------------------
 @router.message(Command("start"))
 async def cmd_start(message: Message, bot: Bot):
-    # If private chat, only respond to @wolfmodyt
-    if message.chat.type == "private" and not is_user_allowed_private(message.from_user):
+    is_private = message.chat.type == "private"
+    if is_private and not is_user_allowed_private(message.from_user):
         return
 
     bot_info = await bot.get_me()
-    text = (
-        f"{emoji_mgr.shield} <b>XIN CHÀO! TÔI LÀ {bot_info.full_name}</b> {emoji_mgr.vip}\n\n"
-        f"Bot hỗ trợ bảo vệ nhóm toàn diện, tự động hoá kiểm duyệt:\n"
-        f"• {emoji_mgr.spam} <b>Chống Spam & Flood tin nhắn</b>\n"
-        f"• {emoji_mgr.link} <b>Chặn gửi Link & Invite Telegram trái phép</b>\n"
-        f"• {emoji_mgr.bot} <b>Chống người lạ thêm Bot khác vào Group</b>\n"
-        f"• {emoji_mgr.error} <b>Chống ngôn từ lăng mạ, chửi bậy, xúc phạm</b>\n"
-        f"• {emoji_mgr.ban} <b>Cảnh cáo tối đa 2 lần - Quá 2 lần tự động BAN</b>\n"
-        f"• {emoji_mgr.clock} <b>Tự động xoá cảnh báo sau 30 giây</b>\n"
-        f"• {emoji_mgr.diamond} <b>Hỗ trợ Icon VIP Telegram Premium Custom Emoji</b>\n\n"
-        f"👉 <b>Cách sử dụng:</b> Thêm bot vào nhóm và cấp quyền <b>Quản trị viên (Admin)</b> với các quyền xoá tin nhắn và cấm thành viên.\n\n"
-        f"Gõ /help để xem danh sách toàn bộ câu lệnh quản trị!"
-    )
+
+    if is_private:
+        # Tiếng Việt trong tin nhắn riêng
+        text = (
+            f"{emoji_mgr.shield} <b>XIN CHÀO! TÔI LÀ {bot_info.full_name}</b> {emoji_mgr.vip}\n\n"
+            f"Bot hỗ trợ bảo vệ nhóm toàn diện, tự động hoá kiểm duyệt:\n"
+            f"• {emoji_mgr.spam} <b>Chống Spam & Flood tin nhắn</b>\n"
+            f"• {emoji_mgr.link} <b>Chặn gửi Link & Invite Telegram trái phép</b>\n"
+            f"• {emoji_mgr.bot} <b>Chống người lạ thêm Bot khác vào Group</b>\n"
+            f"• {emoji_mgr.error} <b>Chống ngôn từ lăng mạ, chửi bậy, xúc phạm</b>\n"
+            f"• {emoji_mgr.ban} <b>Cảnh cáo tối đa 2 lần - Quá 2 lần tự động BAN</b>\n"
+            f"• {emoji_mgr.clock} <b>Tự động xoá cảnh báo sau 30 giây</b>\n"
+            f"• {emoji_mgr.diamond} <b>Hỗ trợ Icon VIP Telegram Premium Custom Emoji</b>\n\n"
+            f"👉 <b>Cách sử dụng:</b> Thêm bot vào nhóm và cấp quyền <b>Quản trị viên (Admin)</b> với các quyền xoá tin nhắn và cấm thành viên.\n\n"
+            f"Gõ <code>/help</code> để xem danh sách toàn bộ câu lệnh quản trị!"
+        )
+    else:
+        # English in Group
+        text = (
+            f"{emoji_mgr.shield} <b>HELLO! I AM {bot_info.full_name}</b> {emoji_mgr.vip}\n\n"
+            f"Advanced Group Security & Anti-Spam Guard Bot:\n"
+            f"• {emoji_mgr.spam} <b>Anti-Spam & Message Flood Protection</b>\n"
+            f"• {emoji_mgr.link} <b>Anti-Link & Unauthorized Telegram Invites</b>\n"
+            f"• {emoji_mgr.bot} <b>Anti-Bot (Unauthorized bot invites blocked)</b>\n"
+            f"• {emoji_mgr.error} <b>Anti-Profanity & Toxicity Filter</b>\n"
+            f"• {emoji_mgr.ban} <b>Max 2 Warnings - Exceeding 2 results in BAN</b>\n"
+            f"• {emoji_mgr.clock} <b>Auto-delete violation logs after 30 seconds</b>\n"
+            f"• {emoji_mgr.diamond} <b>Telegram Premium VIP Custom Emoji support</b>\n\n"
+            f"👉 <b>Admin Guide:</b> Type <code>/help</code> for available commands and <code>/settings</code> to configure group rules."
+        )
     await safe_answer(message, emoji_mgr.format_msg(text), parse_mode="HTML")
 
 @router.message(Command("help"))
 async def cmd_help(message: Message):
-    # If private chat, only respond to @wolfmodyt
-    if message.chat.type == "private" and not is_user_allowed_private(message.from_user):
+    is_private = message.chat.type == "private"
+    if is_private and not is_user_allowed_private(message.from_user):
         return
 
-    text = (
-        f"{emoji_mgr.shield} <b>DANH SÁCH LỆNH QUẢN TRỊ VIÊN</b> {emoji_mgr.vip}\n\n"
-        f"⚙️ <b>CÀI ĐẶT & BẢO VỆ:</b>\n"
-        f"• <code>/settings</code> - Mở bảng điều khiển cài đặt bảo vệ nhóm\n"
-        f"• <code>/stats</code> - Xem thống kê số lần bot đã chặn vi phạm\n\n"
-        f"⚠️ <b>CẢNH CÁO & XỬ PHẠT (Tối đa 2 lần vi phạm -> BAN):</b>\n"
-        f"• <code>/warn [lý do]</code> (Reply tin nhắn) - Cảnh cáo thành viên\n"
-        f"• <code>/unwarn</code> (Reply tin nhắn) - Giảm 1 lần cảnh cáo\n"
-        f"• <code>/warns</code> (Reply tin nhắn) - Xem số lần bị cảnh cáo\n"
-        f"• <code>/mute [thời gian] [lý do]</code> - Cấm chat (vd: <code>/mute 30m</code>, <code>/mute 2h</code>, <code>/mute 1d</code>)\n"
-        f"• <code>/unmute</code> (Reply tin nhắn) - Mở cấm chat cho thành viên\n"
-        f"• <code>/kick [lý do]</code> (Reply tin nhắn) - Trục xuất khỏi nhóm\n"
-        f"• <code>/ban [lý do]</code> (Reply tin nhắn) - Cấm vĩnh viễn khỏi nhóm\n"
-        f"• <code>/unban [user_id]</code> - Gỡ cấm cho người dùng\n\n"
-        f"📝 <b>TỪ CẤM & LIÊN KẾT CHO PHÉP:</b>\n"
-        f"• <code>/addword [từ]</code> - Thêm từ cấm riêng cho nhóm\n"
-        f"• <code>/delword [từ]</code> - Xoá từ cấm khỏi nhóm\n"
-        f"• <code>/listwords</code> - Xem danh sách từ cấm nhóm\n"
-        f"• <code>/addlink [tên miền]</code> - Cho phép gửi link từ web này (vd: <code>/addlink youtube.com</code>)\n"
-        f"• <code>/dellink [tên miền]</code> - Xoá tên miền khỏi whitelist\n"
-        f"• <code>/listlinks</code> - Xem danh sách tên miền được phép\n\n"
-        f"👑 <b>TELEGRAM PREMIUM VIP CUSTOM EMOJI:</b>\n"
-        f"• <code>/get_emoji</code> (Gửi kèm hoặc reply emoji VIP) - Lấy Custom Emoji ID\n"
-        f"• <code>/set_emoji [key] [emoji_id]</code> - Cài đặt Custom Emoji cho bot\n"
-        f"• <code>/list_emojis</code> - Xem danh sách key emoji & ID hiện hành"
-    )
+    if is_private:
+        # Tiếng Việt trong tin nhắn riêng
+        text = (
+            f"{emoji_mgr.shield} <b>DANH SÁCH LỆNH QUẢN TRỊ VIÊN</b> {emoji_mgr.vip}\n\n"
+            f"⚙️ <b>CÀI ĐẶT & BẢO VỆ:</b>\n"
+            f"• <code>/settings</code> - Mở bảng điều khiển cài đặt bảo vệ nhóm\n"
+            f"• <code>/stats</code> - Xem thống kê số lần bot đã chặn vi phạm\n\n"
+            f"⚠️ <b>CẢNH CÁO & XỬ PHẠT (Tối đa 2 lần vi phạm -> BAN):</b>\n"
+            f"• <code>/warn [lý do]</code> (Reply tin nhắn) - Cảnh cáo thành viên\n"
+            f"• <code>/unwarn</code> (Reply tin nhắn) - Giảm 1 lần cảnh cáo\n"
+            f"• <code>/warns</code> (Reply tin nhắn) - Xem số lần bị cảnh cáo\n"
+            f"• <code>/mute [thời gian] [lý do]</code> - Cấm chat (vd: <code>/mute 30m</code>, <code>/mute 2h</code>, <code>/mute 1d</code>)\n"
+            f"• <code>/unmute</code> (Reply tin nhắn) - Mở cấm chat cho thành viên\n"
+            f"• <code>/kick [lý do]</code> (Reply tin nhắn) - Trục xuất khỏi nhóm\n"
+            f"• <code>/ban [lý do]</code> (Reply tin nhắn) - Cấm vĩnh viễn khỏi nhóm\n"
+            f"• <code>/unban [user_id]</code> - Gỡ cấm cho người dùng\n\n"
+            f"📝 <b>TỪ CẤM & LIÊN KẾT CHO PHÉP:</b>\n"
+            f"• <code>/addword [từ]</code> - Thêm từ cấm riêng cho nhóm\n"
+            f"• <code>/delword [từ]</code> - Xoá từ cấm khỏi nhóm\n"
+            f"• <code>/listwords</code> - Xem danh sách từ cấm nhóm\n"
+            f"• <code>/addlink [tên miền]</code> - Cho phép gửi link từ web này (vd: <code>/addlink youtube.com</code>)\n"
+            f"• <code>/dellink [tên miền]</code> - Xoá tên miền khỏi whitelist\n"
+            f"• <code>/listlinks</code> - Xem danh sách tên miền được phép\n\n"
+            f"👑 <b>TELEGRAM PREMIUM VIP CUSTOM EMOJI:</b>\n"
+            f"• <code>/get_emoji</code> (Gửi kèm hoặc reply emoji VIP) - Lấy Custom Emoji ID\n"
+            f"• <code>/set_emoji [key] [emoji_id]</code> - Cài đặt Custom Emoji cho bot\n"
+            f"• <code>/list_emojis</code> - Xem danh sách key emoji & ID hiện hành"
+        )
+    else:
+        # English in Group
+        text = (
+            f"{emoji_mgr.shield} <b>ADMINISTRATOR COMMANDS LIST</b> {emoji_mgr.vip}\n\n"
+            f"⚙️ <b>SETTINGS & STATS:</b>\n"
+            f"• <code>/settings</code> - Open interactive group security panel\n"
+            f"• <code>/stats</code> - View security and violation statistics\n\n"
+            f"⚠️ <b>MODERATION (Max 2 Warnings -> BAN):</b>\n"
+            f"• <code>/warn [reason]</code> (Reply message) - Warn member\n"
+            f"• <code>/unwarn</code> (Reply message) - Remove 1 warning\n"
+            f"• <code>/warns</code> (Reply message) - Check warnings count\n"
+            f"• <code>/mute [duration] [reason]</code> - Mute user (e.g. <code>/mute 30m</code>, <code>/mute 2h</code>)\n"
+            f"• <code>/unmute</code> (Reply message) - Unmute member\n"
+            f"• <code>/kick [reason]</code> (Reply message) - Kick member from group\n"
+            f"• <code>/ban [reason]</code> (Reply message) - Ban member permanently\n"
+            f"• <code>/unban [user_id]</code> - Unban user by ID\n\n"
+            f"📝 <b>CUSTOM BLACKLIST & WHITELIST:</b>\n"
+            f"• <code>/addword [word]</code> - Add banned word\n"
+            f"• <code>/delword [word]</code> - Remove banned word\n"
+            f"• <code>/listwords</code> - View banned words list\n"
+            f"• <code>/addlink [domain]</code> - Whitelist domain (e.g. <code>/addlink youtube.com</code>)\n"
+            f"• <code>/dellink [domain]</code> - Remove domain from whitelist\n"
+            f"• <code>/listlinks</code> - View whitelisted domains\n\n"
+            f"👑 <b>VIP CUSTOM EMOJIS:</b>\n"
+            f"• <code>/get_emoji</code> - Extract Telegram Premium Custom Emoji IDs\n"
+            f"• <code>/set_emoji [key] [id]</code> - Configure custom emoji icon\n"
+            f"• <code>/list_emojis</code> - View active custom emoji IDs"
+        )
     await safe_answer(message, emoji_mgr.format_msg(text), parse_mode="HTML")
 
 # -------------------------------------------------------------
@@ -100,25 +146,25 @@ async def cmd_help(message: Message):
 @router.message(Command("settings"))
 async def cmd_settings(message: Message, bot: Bot):
     chat_id = message.chat.id
-    user_id = message.from_user.id if message.from_user else 0
+    is_private = message.chat.type == "private"
 
-    if message.chat.type in ["private"]:
+    if is_private:
         if not is_user_allowed_private(message.from_user):
             return
         await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.warn} Vui lòng sử dụng lệnh này bên trong nhóm mà bạn muốn cấu hình!"))
         return
 
-    if not await is_user_admin(chat_id, user_id, bot):
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.error} Bạn phải là Quản trị viên của nhóm để sử dụng lệnh này!"))
+    if not await is_admin_or_owner(chat_id, message.from_user, bot):
+        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.error} You must be a Group Administrator to use this command!"))
         return
 
     settings = await db.get_chat_settings(chat_id)
 
-    spam_status = "BẬT ✅" if settings.get("anti_spam", 1) else "TẮT ❌"
-    link_status = "BẬT ✅" if settings.get("anti_link", 1) else "TẮT ❌"
-    bot_status = "BẬT ✅" if settings.get("anti_bot", 1) else "TẮT ❌"
-    badwords_status = "BẬT ✅" if settings.get("anti_badwords", 1) else "TẮT ❌"
-    auto_del_status = "BẬT (30s) ✅" if settings.get("auto_delete_logs", 1) else "TẮT ❌"
+    spam_status = "ON ✅" if settings.get("anti_spam", 1) else "OFF ❌"
+    link_status = "ON ✅" if settings.get("anti_link", 1) else "OFF ❌"
+    bot_status = "ON ✅" if settings.get("anti_bot", 1) else "OFF ❌"
+    badwords_status = "ON ✅" if settings.get("anti_badwords", 1) else "OFF ❌"
+    auto_del_status = "ON (30s) ✅" if settings.get("auto_delete_logs", 1) else "OFF ❌"
     max_warns = settings.get("max_warns", config.DEFAULT_MAX_WARNS)
     warn_action = settings.get("warn_action", config.DEFAULT_WARN_ACTION).upper()
 
@@ -129,23 +175,23 @@ async def cmd_settings(message: Message, bot: Bot):
         ],
         [
             InlineKeyboardButton(text=f"🤖 Anti-Bot: {bot_status}", callback_data="toggle_anti_bot"),
-            InlineKeyboardButton(text=f"🤬 Anti-Chửi bậy: {badwords_status}", callback_data="toggle_anti_badwords")
+            InlineKeyboardButton(text=f"🤬 Anti-Profanity: {badwords_status}", callback_data="toggle_anti_badwords")
         ],
         [
-            InlineKeyboardButton(text=f"⚠️ Giới hạn Cảnh cáo: [{max_warns}]", callback_data="cycle_max_warns"),
-            InlineKeyboardButton(text=f"⚡ Hình phạt: [{warn_action}]", callback_data="cycle_warn_action")
+            InlineKeyboardButton(text=f"⚠️ Max Warnings: [{max_warns}]", callback_data="cycle_max_warns"),
+            InlineKeyboardButton(text=f"⚡ Punishment: [{warn_action}]", callback_data="cycle_warn_action")
         ],
         [
-            InlineKeyboardButton(text=f"🗑️ Tự xoá tin 30s: {auto_del_status}", callback_data="toggle_auto_del")
+            InlineKeyboardButton(text=f"🗑️ Auto-delete 30s: {auto_del_status}", callback_data="toggle_auto_del")
         ],
         [
-            InlineKeyboardButton(text="❌ Đóng bảng cài đặt", callback_data="close_settings")
+            InlineKeyboardButton(text="❌ Close Settings", callback_data="close_settings")
         ]
     ])
 
     text = (
-        f"{emoji_mgr.settings} <b>BẢNG CÀI ĐẶT BẢO VỆ NHÓM</b> {emoji_mgr.vip}\n\n"
-        f"Nhấn vào các nút bên dưới để Bật/Tắt tính năng hoặc thay đổi giới hạn phạt của Bot:"
+        f"{emoji_mgr.settings} <b>GROUP SECURITY SETTINGS PANEL</b> {emoji_mgr.vip}\n\n"
+        f"Click the buttons below to toggle security modules or change punishment rules:"
     )
     await safe_answer(message, emoji_mgr.format_msg(text), reply_markup=keyboard, parse_mode="HTML")
 
@@ -155,27 +201,27 @@ async def cmd_settings(message: Message, bot: Bot):
 @router.message(Command("warn"))
 async def cmd_warn(message: Message, command: CommandObject, bot: Bot):
     chat_id = message.chat.id
-    user_id = message.from_user.id if message.from_user else 0
-
-    if message.chat.type in ["private"]:
+    is_private = message.chat.type == "private"
+    if is_private:
         return
-    if not await is_user_admin(chat_id, user_id, bot):
+
+    if not await is_admin_or_owner(chat_id, message.from_user, bot):
         return
 
     if not message.reply_to_message or not message.reply_to_message.from_user:
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.warn} Vui lòng reply tin nhắn của người cần cảnh cáo!"))
+        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.warn} Please reply to the user's message to warn them!"))
         return
 
     target = message.reply_to_message.from_user
     if target.id == (await bot.get_me()).id:
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.error} Không thể cảnh cáo bot!"))
+        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.error} Cannot warn the bot!"))
         return
 
-    if await is_user_admin(chat_id, target.id, bot):
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.error} Không thể cảnh cáo Quản trị viên khác!"))
+    if await is_admin_or_owner(chat_id, target, bot):
+        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.error} Cannot warn another Administrator!"))
         return
 
-    reason = command.args or "Vi phạm nội quy nhóm"
+    reason = command.args or "Group rules violation"
     settings = await db.get_chat_settings(chat_id)
     max_warns = settings.get("max_warns", config.DEFAULT_MAX_WARNS)
     warn_action = settings.get("warn_action", config.DEFAULT_WARN_ACTION)
@@ -183,42 +229,40 @@ async def cmd_warn(message: Message, command: CommandObject, bot: Bot):
 
     new_warns = await db.add_warn(chat_id, target.id, reason)
     target_mention = f"<a href='tg://user?id={target.id}'>{html.escape(target.full_name)}</a>"
-    admin_mention = f"<a href='tg://user?id={user_id}'>{html.escape(message.from_user.full_name)}</a>"
+    admin_mention = f"<a href='tg://user?id={message.from_user.id}'>{html.escape(message.from_user.full_name)}</a>"
 
     if new_warns >= max_warns:
         from handlers.message_handlers import apply_punishment
         punish_msg = await apply_punishment(bot, chat_id, target.id, target.full_name, warn_action, mute_dur, reason)
         await db.reset_warns(chat_id, target.id)
         text = (
-            f"{emoji_mgr.shield} <b>CẢNH CÁO ĐẠT GIỚI HẠN</b> {emoji_mgr.vip}\n\n"
-            f"{emoji_mgr.warn} <b>Thành viên:</b> {target_mention}\n"
-            f"{emoji_mgr.error} <b>Lý do:</b> {html.escape(reason)}\n"
-            f"{emoji_mgr.star} <b>Cảnh cáo:</b> <code>{new_warns}/{max_warns}</code>\n"
+            f"{emoji_mgr.shield} <b>MAX WARNINGS REACHED</b> {emoji_mgr.vip}\n\n"
+            f"{emoji_mgr.warn} <b>Member:</b> {target_mention}\n"
+            f"{emoji_mgr.error} <b>Reason:</b> {html.escape(reason)}\n"
+            f"{emoji_mgr.star} <b>Warnings:</b> <code>{new_warns}/{max_warns}</code>\n"
             f"{punish_msg}"
         )
     else:
         text = (
-            f"{emoji_mgr.warn} <b>CẢNH CÁO THÀNH VIÊN ({new_warns}/{max_warns})</b> {emoji_mgr.vip}\n\n"
-            f"{emoji_mgr.warn} <b>Thành viên:</b> {target_mention}\n"
-            f"{emoji_mgr.shield} <b>Quản trị viên:</b> {admin_mention}\n"
-            f"{emoji_mgr.error} <b>Lý do:</b> {html.escape(reason)}\n"
-            f"{emoji_mgr.star} <b>Số lần cảnh cáo:</b> <code>{new_warns}/{max_warns}</code>\n"
-            f"{emoji_mgr.diamond} <i>Tối đa 2 lần cảnh cáo, quá 2 lần sẽ bị BAN!</i>"
+            f"{emoji_mgr.warn} <b>MEMBER WARNED ({new_warns}/{max_warns})</b> {emoji_mgr.vip}\n\n"
+            f"{emoji_mgr.warn} <b>Member:</b> {target_mention}\n"
+            f"{emoji_mgr.shield} <b>Admin:</b> {admin_mention}\n"
+            f"{emoji_mgr.error} <b>Reason:</b> {html.escape(reason)}\n"
+            f"{emoji_mgr.star} <b>Warnings:</b> <code>{new_warns}/{max_warns}</code>\n"
+            f"{emoji_mgr.diamond} <i>Max 2 warnings allowed. Exceeding 2 warnings will result in a BAN!</i>"
         )
     await safe_answer(message, emoji_mgr.format_msg(text), parse_mode="HTML")
 
 @router.message(Command("unwarn"))
 async def cmd_unwarn(message: Message, bot: Bot):
     chat_id = message.chat.id
-    user_id = message.from_user.id if message.from_user else 0
-
-    if message.chat.type in ["private"]:
+    if message.chat.type == "private":
         return
-    if not await is_user_admin(chat_id, user_id, bot):
+    if not await is_admin_or_owner(chat_id, message.from_user, bot):
         return
 
     if not message.reply_to_message or not message.reply_to_message.from_user:
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.warn} Vui lòng reply tin nhắn của người cần xoá cảnh cáo!"))
+        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.warn} Please reply to the user's message to remove a warning!"))
         return
 
     target = message.reply_to_message.from_user
@@ -228,17 +272,17 @@ async def cmd_unwarn(message: Message, bot: Bot):
     target_mention = f"<a href='tg://user?id={target.id}'>{html.escape(target.full_name)}</a>"
 
     text = (
-        f"{emoji_mgr.success} Đã giảm 1 lần cảnh cáo cho {target_mention}!\n"
-        f"{emoji_mgr.star} Cảnh cáo hiện tại: <code>{new_warns}/{max_warns}</code>"
+        f"{emoji_mgr.success} Removed 1 warning for {target_mention}!\n"
+        f"{emoji_mgr.star} Current Warnings: <code>{new_warns}/{max_warns}</code>"
     )
     await safe_answer(message, emoji_mgr.format_msg(text), parse_mode="HTML")
 
 @router.message(Command("warns"))
 async def cmd_warns(message: Message, bot: Bot):
     chat_id = message.chat.id
-    if message.chat.type in ["private"]:
-        if not is_user_allowed_private(message.from_user):
-            return
+    is_private = message.chat.type == "private"
+    if is_private and not is_user_allowed_private(message.from_user):
+        return
 
     target = message.reply_to_message.from_user if message.reply_to_message else message.from_user
     warn_count = await db.get_warns(chat_id, target.id)
@@ -246,11 +290,18 @@ async def cmd_warns(message: Message, bot: Bot):
     max_warns = settings.get("max_warns", config.DEFAULT_MAX_WARNS)
     target_mention = f"<a href='tg://user?id={target.id}'>{html.escape(target.full_name)}</a>"
 
-    text = (
-        f"{emoji_mgr.star} <b>THÔNG TIN CẢNH CÁO</b>\n"
-        f"• Thành viên: {target_mention}\n"
-        f"• Số lần cảnh cáo: <code>{warn_count}/{max_warns}</code>"
-    )
+    if is_private:
+        text = (
+            f"{emoji_mgr.star} <b>THÔNG TIN CẢNH CÁO</b>\n"
+            f"• Thành viên: {target_mention}\n"
+            f"• Số lần cảnh cáo: <code>{warn_count}/{max_warns}</code>"
+        )
+    else:
+        text = (
+            f"{emoji_mgr.star} <b>WARNING STATUS</b>\n"
+            f"• Member: {target_mention}\n"
+            f"• Warnings: <code>{warn_count}/{max_warns}</code>"
+        )
     await safe_answer(message, emoji_mgr.format_msg(text), parse_mode="HTML")
 
 # -------------------------------------------------------------
@@ -259,25 +310,23 @@ async def cmd_warns(message: Message, bot: Bot):
 @router.message(Command("mute"))
 async def cmd_mute(message: Message, command: CommandObject, bot: Bot):
     chat_id = message.chat.id
-    user_id = message.from_user.id if message.from_user else 0
-
-    if message.chat.type in ["private"]:
+    if message.chat.type == "private":
         return
-    if not await is_user_admin(chat_id, user_id, bot):
+    if not await is_admin_or_owner(chat_id, message.from_user, bot):
         return
 
     if not message.reply_to_message or not message.reply_to_message.from_user:
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.warn} Vui lòng reply tin nhắn của người cần cấm chat kèm thời gian (vd: <code>/mute 30m Spam</code>)!"))
+        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.warn} Please reply to the user message with duration (e.g. <code>/mute 30m Spam</code>)!"))
         return
 
     target = message.reply_to_message.from_user
-    if await is_user_admin(chat_id, target.id, bot):
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.error} Không thể cấm chat Quản trị viên!"))
+    if await is_admin_or_owner(chat_id, target, bot):
+        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.error} Cannot mute an Administrator!"))
         return
 
     args = (command.args or "").split(maxsplit=1)
     duration_str = args[0] if len(args) > 0 else "1h"
-    reason = args[1] if len(args) > 1 else "Vi phạm quy định nhóm"
+    reason = args[1] if len(args) > 1 else "Group rules violation"
     duration_sec = parse_time_duration(duration_str)
 
     until_date = datetime.now() + timedelta(seconds=duration_sec)
@@ -291,27 +340,25 @@ async def cmd_mute(message: Message, command: CommandObject, bot: Bot):
         await bot.restrict_chat_member(chat_id, target.id, permissions=permissions, until_date=until_date)
         target_mention = f"<a href='tg://user?id={target.id}'>{html.escape(target.full_name)}</a>"
         text = (
-            f"{emoji_mgr.clock} {emoji_mgr.mute} <b>ĐÃ CẤM CHAT (TIME LIMIT)</b> {emoji_mgr.vip}\n\n"
-            f"• Thành viên: {target_mention}\n"
-            f"• Thời hạn: <b>{duration_str}</b>\n"
-            f"• Lý do: {html.escape(reason)}"
+            f"{emoji_mgr.clock} {emoji_mgr.mute} <b>MEMBER MUTED (TIME LIMIT)</b> {emoji_mgr.vip}\n\n"
+            f"• Member: {target_mention}\n"
+            f"• Duration: <b>{duration_str}</b>\n"
+            f"• Reason: {html.escape(reason)}"
         )
         await safe_answer(message, emoji_mgr.format_msg(text), parse_mode="HTML")
     except Exception as e:
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.error} Lỗi khi cấm chat: {e}"))
+        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.error} Error muting user: {e}"))
 
 @router.message(Command("unmute"))
 async def cmd_unmute(message: Message, bot: Bot):
     chat_id = message.chat.id
-    user_id = message.from_user.id if message.from_user else 0
-
-    if message.chat.type in ["private"]:
+    if message.chat.type == "private":
         return
-    if not await is_user_admin(chat_id, user_id, bot):
+    if not await is_admin_or_owner(chat_id, message.from_user, bot):
         return
 
     if not message.reply_to_message or not message.reply_to_message.from_user:
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.warn} Vui lòng reply tin nhắn của người cần mở cấm chat!"))
+        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.warn} Please reply to the user message to unmute!"))
         return
 
     target = message.reply_to_message.from_user
@@ -324,9 +371,9 @@ async def cmd_unmute(message: Message, bot: Bot):
     try:
         await bot.restrict_chat_member(chat_id, target.id, permissions=permissions)
         target_mention = f"<a href='tg://user?id={target.id}'>{html.escape(target.full_name)}</a>"
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.success} Đã gỡ cấm chat cho {target_mention}!"), parse_mode="HTML")
+        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.success} Unmuted {target_mention} successfully!"), parse_mode="HTML")
     except Exception as e:
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.error} Lỗi khi gỡ cấm chat: {e}"))
+        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.error} Error unmuting user: {e}"))
 
 # -------------------------------------------------------------
 # KICK & BAN & UNBAN
@@ -334,88 +381,82 @@ async def cmd_unmute(message: Message, bot: Bot):
 @router.message(Command("kick"))
 async def cmd_kick(message: Message, command: CommandObject, bot: Bot):
     chat_id = message.chat.id
-    user_id = message.from_user.id if message.from_user else 0
-
-    if message.chat.type in ["private"]:
+    if message.chat.type == "private":
         return
-    if not await is_user_admin(chat_id, user_id, bot):
+    if not await is_admin_or_owner(chat_id, message.from_user, bot):
         return
 
     if not message.reply_to_message or not message.reply_to_message.from_user:
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.warn} Vui lòng reply tin nhắn của người cần kick!"))
+        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.warn} Please reply to the user message to kick!"))
         return
 
     target = message.reply_to_message.from_user
-    if await is_user_admin(chat_id, target.id, bot):
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.error} Không thể kick Quản trị viên!"))
+    if await is_admin_or_owner(chat_id, target, bot):
+        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.error} Cannot kick an Administrator!"))
         return
 
-    reason = command.args or "Bị kick bởi Quản trị viên"
+    reason = command.args or "Kicked by Administrator"
     try:
         await bot.ban_chat_member(chat_id, target.id)
         await bot.unban_chat_member(chat_id, target.id)
         target_mention = f"<a href='tg://user?id={target.id}'>{html.escape(target.full_name)}</a>"
         text = (
-            f"{emoji_mgr.ban} <b>ĐÃ KICK THÀNH VIÊN</b>\n"
-            f"• Thành viên: {target_mention}\n"
-            f"• Lý do: {html.escape(reason)}"
+            f"{emoji_mgr.ban} <b>MEMBER KICKED</b>\n"
+            f"• Member: {target_mention}\n"
+            f"• Reason: {html.escape(reason)}"
         )
         await safe_answer(message, emoji_mgr.format_msg(text), parse_mode="HTML")
     except Exception as e:
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.error} Lỗi khi kick: {e}"))
+        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.error} Error kicking user: {e}"))
 
 @router.message(Command("ban"))
 async def cmd_ban(message: Message, command: CommandObject, bot: Bot):
     chat_id = message.chat.id
-    user_id = message.from_user.id if message.from_user else 0
-
-    if message.chat.type in ["private"]:
+    if message.chat.type == "private":
         return
-    if not await is_user_admin(chat_id, user_id, bot):
+    if not await is_admin_or_owner(chat_id, message.from_user, bot):
         return
 
     if not message.reply_to_message or not message.reply_to_message.from_user:
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.warn} Vui lòng reply tin nhắn của người cần cấm vĩnh viễn!"))
+        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.warn} Please reply to the user message to ban!"))
         return
 
     target = message.reply_to_message.from_user
-    if await is_user_admin(chat_id, target.id, bot):
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.error} Không thể ban Quản trị viên!"))
+    if await is_admin_or_owner(chat_id, target, bot):
+        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.error} Cannot ban an Administrator!"))
         return
 
-    reason = command.args or "Bị cấm bởi Quản trị viên"
+    reason = command.args or "Banned by Administrator"
     try:
         await bot.ban_chat_member(chat_id, target.id)
         target_mention = f"<a href='tg://user?id={target.id}'>{html.escape(target.full_name)}</a>"
         text = (
-            f"{emoji_mgr.ban} <b>ĐÃ CẤM VĨNH VIỄN (BAN)</b> {emoji_mgr.vip}\n"
-            f"• Thành viên: {target_mention}\n"
-            f"• Lý do: {html.escape(reason)}"
+            f"{emoji_mgr.ban} <b>PERMANENTLY BANNED</b> {emoji_mgr.vip}\n\n"
+            f"• Member: {target_mention}\n"
+            f"• Reason: {html.escape(reason)}"
         )
         await safe_answer(message, emoji_mgr.format_msg(text), parse_mode="HTML")
     except Exception as e:
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.error} Lỗi khi cấm thành viên: {e}"))
+        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.error} Error banning user: {e}"))
 
 @router.message(Command("unban"))
 async def cmd_unban(message: Message, command: CommandObject, bot: Bot):
     chat_id = message.chat.id
-    user_id = message.from_user.id if message.from_user else 0
-
-    if message.chat.type in ["private"]:
+    if message.chat.type == "private":
         return
-    if not await is_user_admin(chat_id, user_id, bot):
+    if not await is_admin_or_owner(chat_id, message.from_user, bot):
         return
 
     if not command.args or not command.args.strip().isdigit():
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.warn} Vui lòng nhập User ID cần gỡ cấm (vd: <code>/unban 123456789</code>)!"))
+        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.warn} Usage: <code>/unban [user_id]</code> (e.g. <code>/unban 123456789</code>)!"))
         return
 
     target_id = int(command.args.strip())
     try:
         await bot.unban_chat_member(chat_id, target_id)
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.success} Đã gỡ cấm thành công cho ID <code>{target_id}</code>!"), parse_mode="HTML")
+        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.success} Unbanned ID <code>{target_id}</code> successfully!"), parse_mode="HTML")
     except Exception as e:
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.error} Lỗi khi gỡ cấm: {e}"))
+        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.error} Error unbanning: {e}"))
 
 # -------------------------------------------------------------
 # BANNED WORDS MANAGEMENT
@@ -423,47 +464,55 @@ async def cmd_unban(message: Message, command: CommandObject, bot: Bot):
 @router.message(Command("addword"))
 async def cmd_addword(message: Message, command: CommandObject, bot: Bot):
     chat_id = message.chat.id
-    user_id = message.from_user.id if message.from_user else 0
-    if not await is_user_admin(chat_id, user_id, bot):
+    is_private = message.chat.type == "private"
+    if not await is_admin_or_owner(chat_id, message.from_user, bot):
         return
     if not command.args:
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.warn} Cú pháp: <code>/addword [từ cấm]</code>"))
+        usage_msg = "Cú pháp: <code>/addword [từ cấm]</code>" if is_private else "Usage: <code>/addword [word]</code>"
+        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.warn} {usage_msg}"))
         return
     word = command.args.strip().lower()
-    success = await db.add_banned_word(chat_id, word, user_id)
+    success = await db.add_banned_word(chat_id, word, message.from_user.id if message.from_user else 0)
     if success:
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.success} Đã thêm từ <b>{html.escape(word)}</b> vào danh sách cấm của nhóm!"), parse_mode="HTML")
+        ok_msg = f"Đã thêm từ <b>{html.escape(word)}</b> vào danh sách cấm!" if is_private else f"Added <b>{html.escape(word)}</b> to banned words list!"
+        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.success} {ok_msg}"), parse_mode="HTML")
     else:
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.warn} Từ này đã có trong danh sách cấm!"))
+        dup_msg = "Từ này đã có trong danh sách cấm!" if is_private else "This word is already in the blacklist!"
+        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.warn} {dup_msg}"))
 
 @router.message(Command("delword"))
 async def cmd_delword(message: Message, command: CommandObject, bot: Bot):
     chat_id = message.chat.id
-    user_id = message.from_user.id if message.from_user else 0
-    if not await is_user_admin(chat_id, user_id, bot):
+    is_private = message.chat.type == "private"
+    if not await is_admin_or_owner(chat_id, message.from_user, bot):
         return
     if not command.args:
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.warn} Cú pháp: <code>/delword [từ cần xoá]</code>"))
+        usage_msg = "Cú pháp: <code>/delword [từ cần xoá]</code>" if is_private else "Usage: <code>/delword [word]</code>"
+        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.warn} {usage_msg}"))
         return
     word = command.args.strip().lower()
     success = await db.remove_banned_word(chat_id, word)
     if success:
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.success} Đã xoá từ <b>{html.escape(word)}</b> khỏi danh sách cấm!"), parse_mode="HTML")
+        ok_msg = f"Đã xoá từ <b>{html.escape(word)}</b> khỏi danh sách cấm!" if is_private else f"Removed <b>{html.escape(word)}</b> from blacklist!"
+        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.success} {ok_msg}"), parse_mode="HTML")
     else:
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.error} Không tìm thấy từ này trong danh sách cấm!"))
+        err_msg = "Không tìm thấy từ này trong danh sách cấm!" if is_private else "Word not found in blacklist!"
+        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.error} {err_msg}"))
 
 @router.message(Command("listwords"))
 async def cmd_listwords(message: Message, bot: Bot):
     chat_id = message.chat.id
-    user_id = message.from_user.id if message.from_user else 0
-    if not await is_user_admin(chat_id, user_id, bot):
+    is_private = message.chat.type == "private"
+    if not await is_admin_or_owner(chat_id, message.from_user, bot):
         return
     words = await db.get_banned_words(chat_id)
     if not words:
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.shield} Nhóm đang dùng danh sách từ cấm mặc định."))
+        empty_msg = "Nhóm đang dùng danh sách từ cấm mặc định." if is_private else "Using default global blacklist."
+        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.shield} {empty_msg}"))
         return
     words_str = ", ".join([f"<code>{html.escape(w)}</code>" for w in words[:50]])
-    text = f"{emoji_mgr.shield} <b>DANH SÁCH TỪ CẤM NHÓM ({len(words)} từ):</b>\n{words_str}"
+    title_msg = f"DANH SÁCH TỪ CẤM ({len(words)} từ):" if is_private else f"BANNED WORDS LIST ({len(words)} words):"
+    text = f"{emoji_mgr.shield} <b>{title_msg}</b>\n{words_str}"
     await safe_answer(message, emoji_mgr.format_msg(text), parse_mode="HTML")
 
 # -------------------------------------------------------------
@@ -472,51 +521,59 @@ async def cmd_listwords(message: Message, bot: Bot):
 @router.message(Command("addlink"))
 async def cmd_addlink(message: Message, command: CommandObject, bot: Bot):
     chat_id = message.chat.id
-    user_id = message.from_user.id if message.from_user else 0
-    if not await is_user_admin(chat_id, user_id, bot):
+    is_private = message.chat.type == "private"
+    if not await is_admin_or_owner(chat_id, message.from_user, bot):
         return
     if not command.args:
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.warn} Cú pháp: <code>/addlink [tên miền]</code> (vd: <code>/addlink youtube.com</code>)"))
+        usage_msg = "Cú pháp: <code>/addlink [tên miền]</code> (vd: <code>/addlink youtube.com</code>)" if is_private else "Usage: <code>/addlink [domain]</code> (e.g. <code>/addlink youtube.com</code>)"
+        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.warn} {usage_msg}"))
         return
     domain = command.args.strip().lower()
     success = await db.add_whitelist_link(chat_id, domain)
     if success:
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.success} Đã thêm <b>{html.escape(domain)}</b> vào whitelist!"), parse_mode="HTML")
+        ok_msg = f"Đã thêm <b>{html.escape(domain)}</b> vào whitelist!" if is_private else f"Added <b>{html.escape(domain)}</b> to whitelist!"
+        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.success} {ok_msg}"), parse_mode="HTML")
     else:
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.warn} Tên miền này đã có trong whitelist!"))
+        dup_msg = "Tên miền này đã có trong whitelist!" if is_private else "Domain is already in whitelist!"
+        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.warn} {dup_msg}"))
 
 @router.message(Command("dellink"))
 async def cmd_dellink(message: Message, command: CommandObject, bot: Bot):
     chat_id = message.chat.id
-    user_id = message.from_user.id if message.from_user else 0
-    if not await is_user_admin(chat_id, user_id, bot):
+    is_private = message.chat.type == "private"
+    if not await is_admin_or_owner(chat_id, message.from_user, bot):
         return
     if not command.args:
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.warn} Cú pháp: <code>/dellink [tên miền]</code>"))
+        usage_msg = "Cú pháp: <code>/dellink [tên miền]</code>" if is_private else "Usage: <code>/dellink [domain]</code>"
+        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.warn} {usage_msg}"))
         return
     domain = command.args.strip().lower()
     success = await db.remove_whitelist_link(chat_id, domain)
     if success:
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.success} Đã xoá <b>{html.escape(domain)}</b> khỏi whitelist!"), parse_mode="HTML")
+        ok_msg = f"Đã xoá <b>{html.escape(domain)}</b> khỏi whitelist!" if is_private else f"Removed <b>{html.escape(domain)}</b> from whitelist!"
+        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.success} {ok_msg}"), parse_mode="HTML")
     else:
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.error} Không tìm thấy tên miền trong whitelist!"))
+        err_msg = "Không tìm thấy tên miền trong whitelist!" if is_private else "Domain not found in whitelist!"
+        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.error} {err_msg}"))
 
 @router.message(Command("listlinks"))
 async def cmd_listlinks(message: Message, bot: Bot):
     chat_id = message.chat.id
-    user_id = message.from_user.id if message.from_user else 0
-    if not await is_user_admin(chat_id, user_id, bot):
+    is_private = message.chat.type == "private"
+    if not await is_admin_or_owner(chat_id, message.from_user, bot):
         return
     links = await db.get_whitelist_links(chat_id)
     if not links:
-        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.link} Whitelist liên kết đang trống (tất cả link bên ngoài đều bị chặn)."))
+        empty_msg = "Whitelist liên kết đang trống (tất cả link bên ngoài đều bị chặn)." if is_private else "Link whitelist is empty (all external links blocked)."
+        await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.link} {empty_msg}"))
         return
     links_str = "\n".join([f"• <code>{html.escape(l)}</code>" for l in links])
-    text = f"{emoji_mgr.link} <b>DANH SÁCH LIÊN KẾT ĐƯỢC PHÉP ({len(links)}):</b>\n{links_str}"
+    title_msg = f"DANH SÁCH LIÊN KẾT ĐƯỢC PHÉP ({len(links)}):" if is_private else f"WHITELISTED DOMAINS ({len(links)}):"
+    text = f"{emoji_mgr.link} <b>{title_msg}</b>\n{links_str}"
     await safe_answer(message, emoji_mgr.format_msg(text), parse_mode="HTML")
 
 # -------------------------------------------------------------
-# TELEGRAM PREMIUM CUSTOM EMOJI TOOLS
+# TELEGRAM PREMIUM CUSTOM EMOJI TOOLS (Accessible to @wolfmodyt)
 # -------------------------------------------------------------
 @router.message(Command("get_emoji", "getemoji"))
 async def cmd_get_emoji(message: Message):
@@ -558,8 +615,8 @@ async def cmd_get_emoji(message: Message):
 
 @router.message(Command("set_emoji", "setemoji"))
 async def cmd_set_emoji(message: Message, command: CommandObject, bot: Bot):
-    user_id = message.from_user.id if message.from_user else 0
-    if user_id not in config.OWNER_IDS and not await is_user_admin(message.chat.id, user_id, bot):
+    # @wolfmodyt, Owner IDs, and Group Admins are authorized
+    if not await is_admin_or_owner(message.chat.id, message.from_user, bot):
         await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.error} Bạn không có quyền thực hiện lệnh này!"))
         return
 
@@ -567,7 +624,7 @@ async def cmd_set_emoji(message: Message, command: CommandObject, bot: Bot):
         text = (
             f"{emoji_mgr.settings} <b>CÀI ĐẶT VIP CUSTOM EMOJI</b>\n\n"
             f"Cú pháp: <code>/set_emoji [key] [emoji_id] [kí tự fallback]</code>\n"
-            f"Ví dụ: <code>/set_emoji vip 5368324170671202286 👑</code>\n\n"
+            f"Ví dụ: <code>/set_emoji vip 5211129162206560202 👑</code>\n\n"
             f"<b>Các key hợp lệ:</b>\n"
             f"<code>vip</code>, <code>shield</code>, <code>warn</code>, <code>ban</code>, <code>mute</code>, <code>link</code>, <code>bot</code>, <code>spam</code>, <code>clock</code>, <code>tele_logo</code>, <code>success</code>, <code>error</code>, <code>diamond</code>, <code>settings</code>"
         )
@@ -597,14 +654,17 @@ async def cmd_set_emoji(message: Message, command: CommandObject, bot: Bot):
     await safe_answer(message, emoji_mgr.format_msg(text), parse_mode="HTML")
 
 @router.message(Command("list_emojis", "listemojis"))
-async def cmd_list_emojis(message: Message):
+async def cmd_list_emojis(message: Message, bot: Bot):
+    if not await is_admin_or_owner(message.chat.id, message.from_user, bot):
+        return
+
     await emoji_mgr.load_emojis()
     lines = [f"{emoji_mgr.vip} <b>DANH SÁCH KEY CUSTOM EMOJI ĐANG DÙNG:</b>\n"]
 
     all_keys = ["tele_logo", "clock", "vip", "shield", "warn", "ban", "mute", "link", "bot", "spam", "success", "error", "settings", "diamond"]
     for k in all_keys:
         icon_rendered = emoji_mgr.get(k)
-        conf_id = config.DEFAULT_EMOJIS.get(k, {}).get("id", "Mặc định")
+        conf_id = config.DEFAULT_EMOJIS.get(k, {}).get("id", "")
         db_val = emoji_mgr._db_emojis.get(k, {}).get("id")
         current_id = db_val if db_val else (conf_id if conf_id else "Chưa gán ID")
         lines.append(f"• <b>{k.upper()}:</b> {icon_rendered} | ID: <code>{current_id}</code>")
@@ -618,10 +678,10 @@ async def cmd_list_emojis(message: Message):
 @router.message(Command("stats"))
 async def cmd_stats(message: Message, bot: Bot):
     chat_id = message.chat.id
-    user_id = message.from_user.id if message.from_user else 0
-    if message.chat.type in ["private"]:
+    is_private = message.chat.type == "private"
+    if is_private and not is_user_allowed_private(message.from_user):
         return
-    if not await is_user_admin(chat_id, user_id, bot):
+    if not is_private and not await is_admin_or_owner(chat_id, message.from_user, bot):
         return
 
     stats = await db.get_stats(chat_id)
@@ -631,13 +691,24 @@ async def cmd_stats(message: Message, bot: Bot):
     bot_count = stats.get("bot_blocked", 0)
     total = spam_count + link_count + badwords_count + bot_count
 
-    text = (
-        f"{emoji_mgr.shield} <b>THỐNG KÊ AN NINH NHÓM</b> {emoji_mgr.vip}\n\n"
-        f"• {emoji_mgr.spam} <b>Spam & Flood đã chặn:</b> <code>{spam_count}</code>\n"
-        f"• {emoji_mgr.link} <b>Link trái phép đã xoá:</b> <code>{link_count}</code>\n"
-        f"• {emoji_mgr.error} <b>Ngôn từ lăng mạ đã xử lý:</b> <code>{badwords_count}</code>\n"
-        f"• {emoji_mgr.bot} <b>Bot lạ đã trục xuất:</b> <code>{bot_count}</code>\n"
-        f"➖➖➖➖➖➖➖➖\n"
-        f"🏆 <b>Tổng số vi phạm đã ngăn chặn:</b> <code>{total}</code>"
-    )
+    if is_private:
+        text = (
+            f"{emoji_mgr.shield} <b>THỐNG KÊ AN NINH NHÓM</b> {emoji_mgr.vip}\n\n"
+            f"• {emoji_mgr.spam} <b>Spam & Flood đã chặn:</b> <code>{spam_count}</code>\n"
+            f"• {emoji_mgr.link} <b>Link trái phép đã xoá:</b> <code>{link_count}</code>\n"
+            f"• {emoji_mgr.error} <b>Ngôn từ lăng mạ đã xử lý:</b> <code>{badwords_count}</code>\n"
+            f"• {emoji_mgr.bot} <b>Bot lạ đã trục xuất:</b> <code>{bot_count}</code>\n"
+            f"➖➖➖➖➖➖➖➖\n"
+            f"🏆 <b>Tổng số vi phạm đã ngăn chặn:</b> <code>{total}</code>"
+        )
+    else:
+        text = (
+            f"{emoji_mgr.shield} <b>GROUP SECURITY STATISTICS</b> {emoji_mgr.vip}\n\n"
+            f"• {emoji_mgr.spam} <b>Spam & Flood blocked:</b> <code>{spam_count}</code>\n"
+            f"• {emoji_mgr.link} <b>Unauthorized Links removed:</b> <code>{link_count}</code>\n"
+            f"• {emoji_mgr.error} <b>Profanity filtered:</b> <code>{badwords_count}</code>\n"
+            f"• {emoji_mgr.bot} <b>Unauthorized Bots blocked:</b> <code>{bot_count}</code>\n"
+            f"➖➖➖➖➖➖➖➖\n"
+            f"🏆 <b>Total violations prevented:</b> <code>{total}</code>"
+        )
     await safe_answer(message, emoji_mgr.format_msg(text), parse_mode="HTML")

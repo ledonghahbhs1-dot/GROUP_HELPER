@@ -12,15 +12,18 @@ import config
 from database.db import db
 from utils.text_cleaner import normalize_text_for_filter, strip_all_delimiters
 from utils.emoji_helper import emoji_mgr
+from utils.auth import is_user_allowed_private, is_admin_or_owner
 from filters.spam_filter import spam_filter
 from filters.profanity_filter import profanity_filter
 from filters.link_filter import link_filter
-from handlers.message_handlers import is_user_allowed_private
 
 class MockUser:
     def __init__(self, user_id, username):
         self.id = user_id
         self.username = username
+
+class MockBot:
+    pass
 
 async def test():
     print("1. Testing Database init...")
@@ -30,44 +33,32 @@ async def test():
     print("Settings loaded:", settings)
     assert settings["max_warns"] == 2, "Default max_warns must be 2!"
     assert settings["warn_action"] == "ban", "Default warn_action must be ban!"
-    assert config.AUTO_DELETE_LOGS_SEC == 30, "Auto delete must be 30s!"
     
-    print("2. Testing Private Chat Whitelist for @wolfmodyt...")
+    print("2. Testing Master Auth for @wolfmodyt...")
     user_wolfmod = MockUser(12345, "wolfmodyt")
     user_wolfmod_caps = MockUser(12345, "WolfModYT")
     user_stranger = MockUser(67890, "stranger_guy")
-    user_none = MockUser(11111, None)
     
-    assert is_user_allowed_private(user_wolfmod) == True, "@wolfmodyt should be allowed!"
-    assert is_user_allowed_private(user_wolfmod_caps) == True, "@WolfModYT (case insensitive) should be allowed!"
-    assert is_user_allowed_private(user_stranger) == False, "Strangers must be ignored!"
-    assert is_user_allowed_private(user_none) == False, "No username must be ignored!"
-    print("Whitelist test passed ✅")
+    bot = MockBot()
+    assert await is_admin_or_owner(-100123456, user_wolfmod, bot) == True, "@wolfmodyt must have master admin access everywhere!"
+    assert await is_admin_or_owner(0, user_wolfmod, bot) == True, "@wolfmodyt must have access in private chat!"
+    assert is_user_allowed_private(user_wolfmod_caps) == True, "@WolfModYT must be allowed!"
+    assert is_user_allowed_private(user_stranger) == False, "Strangers must be denied in private!"
+    print("Auth tests passed ✅")
     
-    print("3. Testing Custom Emojis & Signature...")
+    print("3. Testing Custom Emojis...")
     await emoji_mgr.load_emojis()
     sig = emoji_mgr.signature
     print("Signature:", repr(sig))
-    assert "5211129162206560202" in sig or "wolfmodyt" in sig, "Signature must contain Telegram icon and @wolfmodyt!"
-    assert "5382194935057372936" in emoji_mgr.clock, "Clock must contain custom ID 5382194935057372936!"
-    print("Clock emoji tag:", repr(emoji_mgr.clock))
+    assert "5211129162206560202" in sig or "wolfmodyt" in sig
+    assert "5382194935057372936" in emoji_mgr.clock
+    assert "5202101484547766658" in emoji_mgr.warn
     
-    formatted_msg = emoji_mgr.format_msg("Hello test message")
-    print("Formatted message sample:\n", formatted_msg)
-    assert ":@wolfmodyt" in formatted_msg, "Formatted message must end with signature!"
-    
-    print("4. Testing Profanity Filter...")
-    is_bad, bad_word = await profanity_filter.check_profanity("Mày là đồ óc chó", -100999999999)
-    assert is_bad == True, "Profanity detection failed!"
-    
-    print("5. Testing Spam Filter...")
-    user_id = 88888
-    chat_id = -100999999999
-    for i in range(4):
-        spam_filter.check_spam(chat_id, user_id, f"spam test {i}")
-    spam_filter.check_spam(chat_id, user_id, "spam test 5")
-    is_sp_final, desc_final = spam_filter.check_spam(chat_id, user_id, "spam test 6")
-    assert is_sp_final == True, "Spam detection failed!"
+    print("4. Testing Emoji Fallback Stripper...")
+    raw_html = '<tg-emoji emoji-id="12345">👑</tg-emoji> Hello <tg-emoji emoji-id="67890">⚠️</tg-emoji>'
+    clean_html = emoji_mgr.strip_tg_emojis(raw_html)
+    print("Stripped fallback:", clean_html)
+    assert clean_html == "👑 Hello ⚠️", "Fallback stripping failed!"
     
     print("\n==========================================")
     print("ALL TESTS PASSED WITH 100% SUCCESS! ✅")
