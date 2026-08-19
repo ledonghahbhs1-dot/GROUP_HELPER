@@ -216,19 +216,22 @@ async def cmd_debug_script(message: Message, bot: Bot):
         return
     await emoji_mgr.load_emojis()
     parts = [
-        ("header", f"{emoji_mgr.diamond} <b>DRAGON CITY TOOL &amp; SCRIPT</b> {emoji_mgr.vip}"),
-        ("star", f"{emoji_mgr.star} Access Tools"),
-        ("link", f"{emoji_mgr.link} <a href='https://www.wolfmod.xyz/dragon-city'>wolfmod.xyz</a>"),
-        ("shield", f"{emoji_mgr.shield} Key &amp; VIP Features"),
-        ("warn", f"{emoji_mgr.warn} Visit the link above"),
-        ("footer", f"{emoji_mgr.diamond} DM {emoji_mgr.vip} :@wolfmodyt {emoji_mgr.vip}"),
-        ("sig", emoji_mgr.signature),
+        ("header_1emoji",  f"{emoji_mgr.diamond} DRAGON CITY TOOL AND SCRIPT"),
+        ("header_2emoji",  f"{emoji_mgr.diamond} DRAGON CITY TOOL AND SCRIPT {emoji_mgr.vip}"),
+        ("star_plain",     f"{emoji_mgr.star} Access Tools"),
+        ("link_dquote",    f"{emoji_mgr.star} <a href=\"https://www.wolfmod.xyz/dragon-city\">wolfmod.xyz</a>"),
+        ("shield_no_amp",  f"{emoji_mgr.warn} Key and VIP Features"),
+        ("footer_1emoji",  f"{emoji_mgr.star} To Buy VIP directly: DM :@wolfmodyt"),
+        ("footer_2emoji",  f"{emoji_mgr.star} To Buy VIP directly: DM {emoji_mgr.vip} :@wolfmodyt"),
+        ("footer_3emoji",  f"{emoji_mgr.star} DM {emoji_mgr.vip} :@wolfmodyt {emoji_mgr.vip}"),
+        ("sig",            emoji_mgr.signature),
     ]
     for name, part in parts:
         try:
             await message.answer(f"[{name}]: {part}", parse_mode="HTML", disable_web_page_preview=True)
         except TelegramBadRequest as e:
             await message.answer(f"❌ [{name}] FAILED: <code>{html.escape(str(e))}</code>", parse_mode="HTML")
+
 
 
 # -------------------------------------------------------------
