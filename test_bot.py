@@ -50,9 +50,9 @@ async def test():
     await emoji_mgr.load_emojis()
     sig = emoji_mgr.signature
     print("Signature:", repr(sig))
-    assert "5211129162206560202" in sig or "wolfmodyt" in sig
-    assert "5382194935057372936" in emoji_mgr.clock
-    assert "5202101484547766658" in emoji_mgr.warn
+    assert \"5211129162206560202\" in sig or \"wolfmodyt\" in sig
+    assert \"5386367538735104399\" in emoji_mgr.clock   # ⌛ @TgEmojis #11
+    assert \"5213205860498549992\" in emoji_mgr.warn    # ⚠️ @TgEmojis #3
     
     print("4. Testing Emoji Fallback Stripper...")
     raw_html = '<tg-emoji emoji-id="12345">👑</tg-emoji> Hello <tg-emoji emoji-id="67890">⚠️</tg-emoji>'
