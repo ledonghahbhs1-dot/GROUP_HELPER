@@ -210,27 +210,25 @@ def get_payment_info_text() -> str:
         f"   └ <b>GMAIL PAYPAL:</b> <code>ledongha2k7@gmail.com</code>\n\n"
         f"{emoji_mgr.star} <b>Binance ID [GLOBAL]:</b> <code>1158594960</code>\n"
         f"   └ <b>Deposit Address:</b> <code>0xff924e6b692567a4d9462a3bbef33f48a138dd2e</code> (network bep20)\n\n"
-        f"{emoji_mgr.star} <b>SociaBuzz TRIBE:</b> <a href='https://sociabuzz.com/ldh/tribe'>LINK</a>\n\n"
+        f"{emoji_mgr.star} <b>SociaBuzz TRIBE:</b> <a href=\"https://sociabuzz.com/ldh/tribe\">LINK</a>\n\n"
         f"{emoji_mgr.star} <b>VCB (Vietcombank) [VIETNAM]:</b> <code>9382382864</code> | <b>LE DONG HA</b>\n\n"
         f"━━━━━━━━━━━━━━━━━━━━\n"
         f"{emoji_mgr.warn} <i>Please send the correct information.</i>\n"
-        f"{emoji_mgr.shield} <i>Please send by <b>FRIENDS AND FAMILY OPTION</b> !</i>\n"
-        f"{emoji_mgr.diamond} <b>Note:</b> You can also redeem codes via <a href='https://rewarble.com/'>https://rewarble.com/</a>\n\n"
-        f"{emoji_mgr.star} <b>After sending, please DM</b> {emoji_mgr.vip} :@wolfmodyt {emoji_mgr.vip} <b>to confirm your submission.</b>"
+        f"{emoji_mgr.warn} <i>Please send by <b>FRIENDS AND FAMILY OPTION</b> !</i>\n"
+        f"{emoji_mgr.diamond} <b>Note:</b> You can also redeem codes via <a href=\"https://rewarble.com/\">rewarble.com</a>\n\n"
+        f"{emoji_mgr.star} <b>After sending, please DM</b> {emoji_mgr.vip} :@wolfmodyt {emoji_mgr.vip} <b>to confirm.</b>"
     )
 
 def get_script_tool_info_text() -> str:
-    """Returns formatted VIP Dragon City Tool & Script instructions in English using exclusively VIP Custom Emojis"""
+    """Returns formatted VIP Dragon City Tool and Script instructions in English"""
     return (
-        f"{emoji_mgr.diamond} <b>DRAGON CITY TOOL & SCRIPT</b> {emoji_mgr.vip}\n\n"
-        f"{emoji_mgr.star} <b>Access Tools, Scripts & VIP Keys here:</b>\n"
-        f"{emoji_mgr.link} <a href='https://www.wolfmod.xyz/dragon-city'>https://www.wolfmod.xyz/dragon-city</a>\n\n"
+        f"{emoji_mgr.diamond} <b>DRAGON CITY TOOL AND SCRIPT</b> {emoji_mgr.vip}\n\n"
+        f"{emoji_mgr.star} <b>Access Tools, Scripts and VIP Keys here:</b>\n"
+        f"{emoji_mgr.star} <a href=\"https://www.wolfmod.xyz/dragon-city\">https://www.wolfmod.xyz/dragon-city</a>\n\n"
         f"━━━━━━━━━━━━━━━━━━━━\n"
-        f"{emoji_mgr.shield} <b>Key & VIP Features:</b>\n"
+        f"{emoji_mgr.warn} <b>Key and VIP Features:</b>\n"
         f"{emoji_mgr.star} Get <b>Free Daily Keys</b> or activate your <b>VIP Key</b> directly.\n"
         f"{emoji_mgr.star} Auto Heroic Race, Quests, Arenas, Chests, and Breed Bot!\n"
         f"{emoji_mgr.warn} <i>Visit the link above to get your key or purchase VIP access!</i>\n\n"
-        f"{emoji_mgr.diamond} <b>To Buy VIP directly:</b> Type <code>/pay</code> or DM {emoji_mgr.vip} :@wolfmodyt {emoji_mgr.vip}"
+        f"{emoji_mgr.star} <b>To Buy VIP directly:</b> Type <code>/pay</code> or DM {emoji_mgr.vip} :@wolfmodyt {emoji_mgr.vip}"
     )
-
-
