@@ -68,14 +68,14 @@ class EmojiManager:
         """Strips <tg-emoji> tags down to standard fallback emojis in case of invalid custom IDs"""
         return re.sub(r'<tg-emoji[^>]*>(.*?)</tg-emoji>', r'\1', text)
 
-    # Convenient VIP Emoji methods
+    # Convenient VIP Emoji methods — fallback chars: only ⭐ ⚠️ 👑 ✈️ confirmed safe in groups
     @property
     def vip(self) -> str:
         return self.get("vip", "👑")
 
     @property
     def shield(self) -> str:
-        return self.get("shield", "🛡️")
+        return self.get("shield", "⚠️")   # safe fallback
 
     @property
     def warn(self) -> str:
@@ -83,39 +83,39 @@ class EmojiManager:
 
     @property
     def ban(self) -> str:
-        return self.get("ban", "🚫")
+        return self.get("ban", "⚠️")      # safe fallback
 
     @property
     def mute(self) -> str:
-        return self.get("mute", "🔇")
+        return self.get("mute", "⚠️")     # safe fallback
 
     @property
     def link(self) -> str:
-        return self.get("link", "🔗")
+        return self.get("link", "⭐")      # safe fallback
 
     @property
     def bot(self) -> str:
-        return self.get("bot", "🤖")
+        return self.get("bot", "⚠️")      # safe fallback
 
     @property
     def spam(self) -> str:
-        return self.get("spam", "🔥")
+        return self.get("spam", "⚠️")     # safe fallback
 
     @property
     def success(self) -> str:
-        return self.get("success", "✅")
+        return self.get("success", "⭐")   # safe fallback
 
     @property
     def error(self) -> str:
-        return self.get("error", "❌")
+        return self.get("error", "⚠️")    # safe fallback
 
     @property
     def settings(self) -> str:
-        return self.get("settings", "⚙️")
+        return self.get("settings", "⭐")  # safe fallback
 
     @property
     def diamond(self) -> str:
-        return self.get("diamond", "💎")
+        return self.get("diamond", "⭐")   # ⭐ safe — 💎 causes DOCUMENT_INVALID
 
     @property
     def star(self) -> str:
@@ -123,16 +123,17 @@ class EmojiManager:
 
     @property
     def lock(self) -> str:
-        return self.get("lock", "🔒")
+        return self.get("lock", "⚠️")     # safe fallback
 
     @property
     def bell(self) -> str:
-        return self.get("bell", "🔔")
+        return self.get("bell", "⭐")      # safe fallback
 
     @property
     def admin(self) -> str:
         """Returns VIP Crown icon for Administrators"""
         return self.get("vip", "👑")
+
 
 from utils.logger import logger
 
