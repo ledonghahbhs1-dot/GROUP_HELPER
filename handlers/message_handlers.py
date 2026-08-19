@@ -21,8 +21,11 @@ def is_user_allowed_private(user) -> bool:
         return False
     if user.id in config.OWNER_IDS:
         return True
-    if user.username and user.username.lower() in config.ALLOWED_PRIVATE_USERNAMES:
-        return True
+    if user.username:
+        clean_username = user.username.strip().lower().lstrip("@")
+        for allowed in config.ALLOWED_PRIVATE_USERNAMES:
+            if clean_username == allowed.strip().lower().lstrip("@"):
+                return True
     return False
 
 async def apply_punishment(
