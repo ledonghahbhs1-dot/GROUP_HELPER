@@ -114,6 +114,12 @@ async def inspect_message(message: Message, bot: Bot):
     """
     Main moderation pipeline for group messages (in English)
     """
+    # 1. 100% Exempt Anonymous Admins, Group Senders & Channel Senders
+    if message.sender_chat is not None:
+        return
+    if message.from_user and (message.from_user.id in [1087968824, 777000] or getattr(message.from_user, "username", "") == "GroupAnonymousBot"):
+        return
+
     user = message.from_user
     if not user or user.is_bot:
         return
@@ -121,12 +127,6 @@ async def inspect_message(message: Message, bot: Bot):
     chat_id = message.chat.id
     user_id = user.id
     text = message.text or message.caption or ""
-
-    # 1. Exempt Anonymous Admins, Channel Posts & Group Owners
-    if message.sender_chat and message.sender_chat.id == message.chat.id:
-        return
-    if user and user.id in [1087968824, 777000]: # Telegram Anonymous Admin / Service Bot
-        return
 
     # Check Payment Query (Bilingual English/Vietnamese keyword detection)
     if text and payment_detector.is_payment_query(text):
@@ -140,7 +140,7 @@ async def inspect_message(message: Message, bot: Bot):
         await safe_answer(message, emoji_mgr.format_msg(text_script), parse_mode="HTML", disable_web_page_preview=True)
         return
 
-    if await is_admin_or_owner(chat_id, user, bot):
+    if await is_admin_or_owner(chat_id, user, bot, sender_chat=message.sender_chat):
         return
 
     # Load group settings

@@ -48,7 +48,7 @@ async def require_admin(message: Message, bot: Bot) -> bool:
     If a regular member attempts, delete command and send a 30s auto-delete warning.
     """
     chat_id = message.chat.id
-    if not await is_admin_or_owner(chat_id, message.from_user, bot):
+    if not await is_admin_or_owner(chat_id, message.from_user, bot, sender_chat=message.sender_chat):
         try:
             await message.delete()
         except Exception:
@@ -270,12 +270,13 @@ async def cmd_warn(message: Message, command: CommandObject, bot: Bot):
         return
 
     target = message.reply_to_message.from_user
-    if target.id == (await bot.get_me()).id:
+    target_sender_chat = message.reply_to_message.sender_chat
+    if target and target.id == (await bot.get_me()).id:
         err_msg = await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.error} Cannot warn the bot!"))
         schedule_auto_delete(err_msg, 30)
         return
 
-    if await is_admin_or_owner(chat_id, target, bot):
+    if await is_admin_or_owner(chat_id, target, bot, sender_chat=target_sender_chat):
         err_msg = await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.error} Cannot warn another Administrator!"))
         schedule_auto_delete(err_msg, 30)
         return
@@ -286,9 +287,17 @@ async def cmd_warn(message: Message, command: CommandObject, bot: Bot):
     warn_action = settings.get("warn_action", config.DEFAULT_WARN_ACTION)
     mute_dur = settings.get("mute_duration", config.DEFAULT_MUTE_DURATION)
 
-    new_warns = await db.add_warn(chat_id, target.id, reason)
-    target_mention = f"<a href='tg://user?id={target.id}'>{html.escape(target.full_name)}</a>"
-    admin_mention = f"<a href='tg://user?id={message.from_user.id}'>{html.escape(message.from_user.full_name)}</a>"
+    target_id = target.id if target else (target_sender_chat.id if target_sender_chat else 0)
+    target_name = target.full_name if target else (target_sender_chat.title if target_sender_chat else "User")
+    new_warns = await db.add_warn(chat_id, target_id, reason)
+    target_mention = f"<a href='tg://user?id={target_id}'>{html.escape(target_name)}</a>"
+    
+    if message.sender_chat:
+        admin_mention = f"<b>{html.escape(message.sender_chat.title)}</b> ({emoji_mgr.vip} Admin)"
+    elif message.from_user:
+        admin_mention = f"<a href='tg://user?id={message.from_user.id}'>{html.escape(message.from_user.full_name)}</a>"
+    else:
+        admin_mention = f"<b>Group Admin</b>"
 
     if new_warns >= max_warns:
         from handlers.message_handlers import apply_punishment
@@ -387,7 +396,8 @@ async def cmd_mute(message: Message, command: CommandObject, bot: Bot):
         return
 
     target = message.reply_to_message.from_user
-    if await is_admin_or_owner(chat_id, target, bot):
+    target_sender_chat = message.reply_to_message.sender_chat
+    if await is_admin_or_owner(chat_id, target, bot, sender_chat=target_sender_chat):
         err_msg = await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.error} Cannot mute an Administrator!"))
         schedule_auto_delete(err_msg, 30)
         return
@@ -461,16 +471,19 @@ async def cmd_kick(message: Message, command: CommandObject, bot: Bot):
         return
 
     target = message.reply_to_message.from_user
-    if await is_admin_or_owner(chat_id, target, bot):
+    target_sender_chat = message.reply_to_message.sender_chat
+    if await is_admin_or_owner(chat_id, target, bot, sender_chat=target_sender_chat):
         err_msg = await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.error} Cannot kick an Administrator!"))
         schedule_auto_delete(err_msg, 30)
         return
 
     reason = command.args or "Kicked by Administrator"
     try:
-        await bot.ban_chat_member(chat_id, target.id)
-        await bot.unban_chat_member(chat_id, target.id)
-        target_mention = f"<a href='tg://user?id={target.id}'>{html.escape(target.full_name)}</a>"
+        target_id = target.id if target else target_sender_chat.id
+        await bot.ban_chat_member(chat_id, target_id)
+        await bot.unban_chat_member(chat_id, target_id)
+        target_name = target.full_name if target else target_sender_chat.title
+        target_mention = f"<a href='tg://user?id={target_id}'>{html.escape(target_name)}</a>"
         text = (
             f"{emoji_mgr.ban} <b>MEMBER KICKED</b>\n"
             f"• Member: {target_mention}\n"
@@ -488,21 +501,24 @@ async def cmd_ban(message: Message, command: CommandObject, bot: Bot):
     if not await require_admin(message, bot):
         return
 
-    if not message.reply_to_message or not message.reply_to_message.from_user:
+    if not message.reply_to_message or not (message.reply_to_message.from_user or message.reply_to_message.sender_chat):
         err_msg = await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.warn} Please reply to the user message to ban!"))
         schedule_auto_delete(err_msg, 30)
         return
 
     target = message.reply_to_message.from_user
-    if await is_admin_or_owner(chat_id, target, bot):
+    target_sender_chat = message.reply_to_message.sender_chat
+    if await is_admin_or_owner(chat_id, target, bot, sender_chat=target_sender_chat):
         err_msg = await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.error} Cannot ban an Administrator!"))
         schedule_auto_delete(err_msg, 30)
         return
 
     reason = command.args or "Banned by Administrator"
     try:
-        await bot.ban_chat_member(chat_id, target.id)
-        target_mention = f"<a href='tg://user?id={target.id}'>{html.escape(target.full_name)}</a>"
+        target_id = target.id if target else target_sender_chat.id
+        await bot.ban_chat_member(chat_id, target_id)
+        target_name = target.full_name if target else target_sender_chat.title
+        target_mention = f"<a href='tg://user?id={target_id}'>{html.escape(target_name)}</a>"
         text = (
             f"{emoji_mgr.ban} <b>PERMANENTLY BANNED</b> {emoji_mgr.vip}\n\n"
             f"• Member: {target_mention}\n"
