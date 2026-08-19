@@ -13,11 +13,9 @@ class EmojiManager:
         self._db_emojis: Dict[str, Dict[str, str]] = {}
 
     async def load_emojis(self):
-        """Loads customized emojis from DB and merges with config"""
-        try:
-            self._db_emojis = await db.get_all_custom_emojis()
-        except Exception:
-            self._db_emojis = {}
+        """Forces the bot to use hardcoded safe config emojis to prevent DOCUMENT_INVALID bugs"""
+        self._db_emojis = {}
+
 
     def get(self, key: str, fallback_override: Optional[str] = None) -> str:
         """
