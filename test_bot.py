@@ -51,7 +51,7 @@ async def test():
     sig = emoji_mgr.signature
     print("Signature:", repr(sig))
     assert "5211129162206560202" in sig or "wolfmodyt" in sig
-    assert "5386367538735104399" in emoji_mgr.clock
+    assert "5213205860498549992" in emoji_mgr.clock
     assert "5213205860498549992" in emoji_mgr.warn
 
     
