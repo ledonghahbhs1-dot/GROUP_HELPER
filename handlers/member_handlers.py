@@ -78,7 +78,7 @@ async def on_new_chat_members(message: Message, bot: Bot):
 
     bot_info = await bot.get_me()
     inviter = message.from_user
-    is_admin = await is_admin_or_owner(chat_id, inviter, bot)
+    is_admin = await is_admin_or_owner(chat_id, inviter, bot, sender_chat=message.sender_chat)
 
     for member in message.new_chat_members:
         if member.is_bot and member.id != bot_info.id:

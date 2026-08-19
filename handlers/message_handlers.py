@@ -99,13 +99,13 @@ async def handle_private_messages(message: Message):
 
     # Tiếng Việt trong tin nhắn riêng với @wolfmodyt
     text = (
-        f"{emoji_mgr.vip} <b>XIN CHÀO SẾP @wolfmodyt!</b>\n\n"
-        f"Tôi là bot bảo vệ nhóm & chống spam của bạn. Mọi chức năng đang hoạt động bình thường.\n"
-        f"• Thêm bot vào nhóm và cấp quyền Quản trị viên để kích hoạt phòng thủ.\n"
-        f"• Trong nhóm chat, bot sẽ tự động giao tiếp bằng <b>tiếng Anh</b> và xoá tin nhắn vi phạm.\n"
-        f"• Gõ <code>/pay</code> để xem thông tin thanh toán (Payment Methods).\n"
-        f"• Gõ <code>/script</code> để xem thông tin Tool & Script Dragon City.\n"
-        f"• Gõ <code>/help</code> để xem các lệnh quản lý nhóm."
+        f"{emoji_mgr.shield} <b>XIN CHÀO SẾP @wolfmodyt!</b> {emoji_mgr.vip}\n\n"
+        f"Tôi là bot bảo vệ nhóm & chống spam của bạn. Mọi chức năng đang hoạt động bình thường:\n"
+        f"{emoji_mgr.star} Thêm bot vào nhóm và cấp quyền Quản trị viên để kích hoạt phòng thủ.\n"
+        f"{emoji_mgr.star} Trong nhóm chat, bot sẽ tự động giao tiếp bằng <b>tiếng Anh</b> và xoá tin nhắn vi phạm.\n"
+        f"{emoji_mgr.star} Gõ <code>/pay</code> để xem thông tin thanh toán (Payment Methods).\n"
+        f"{emoji_mgr.star} Gõ <code>/script</code> để xem thông tin Tool & Script Dragon City.\n"
+        f"{emoji_mgr.star} Gõ <code>/help</code> để xem các lệnh quản lý nhóm."
     )
     await safe_answer(message, emoji_mgr.format_msg(text), parse_mode="HTML")
 

@@ -403,15 +403,15 @@ async def cmd_warns(message: Message, bot: Bot):
 
     if is_private:
         text = (
-            f"{emoji_mgr.star} <b>THÔNG TIN CẢNH CÁO</b>\n"
-            f"• Thành viên: {target_mention}\n"
-            f"• Số lần cảnh cáo: <code>{warn_count}/{max_warns}</code>"
+            f"{emoji_mgr.shield} <b>THÔNG TIN CẢNH CÁO</b> {emoji_mgr.vip}\n\n"
+            f"{emoji_mgr.star} <b>Thành viên:</b> {target_mention}\n"
+            f"{emoji_mgr.warn} <b>Số lần cảnh cáo:</b> <code>{warn_count}/{max_warns}</code>"
         )
     else:
         text = (
-            f"{emoji_mgr.star} <b>WARNING STATUS</b>\n"
-            f"• Member: {target_mention}\n"
-            f"• Warnings: <code>{warn_count}/{max_warns}</code>"
+            f"{emoji_mgr.shield} <b>WARNING STATUS</b> {emoji_mgr.vip}\n\n"
+            f"{emoji_mgr.star} <b>Member:</b> {target_mention}\n"
+            f"{emoji_mgr.warn} <b>Warnings:</b> <code>{warn_count}/{max_warns}</code>"
         )
     sent_msg = await safe_answer(message, emoji_mgr.format_msg(text), parse_mode="HTML")
     if not is_private and settings.get("auto_delete_logs", 1):
@@ -457,9 +457,9 @@ async def cmd_mute(message: Message, command: CommandObject, bot: Bot):
         target_mention = f"<a href='tg://user?id={target.id}'>{html.escape(target.full_name)}</a>"
         text = (
             f"{emoji_mgr.clock} {emoji_mgr.mute} <b>MEMBER MUTED (TIME LIMIT)</b> {emoji_mgr.vip}\n\n"
-            f"• Member: {target_mention}\n"
-            f"• Duration: <b>{duration_str}</b>\n"
-            f"• Reason: {html.escape(reason)}"
+            f"{emoji_mgr.star} <b>Member:</b> {target_mention}\n"
+            f"{emoji_mgr.clock} <b>Duration:</b> <b>{duration_str}</b>\n"
+            f"{emoji_mgr.error} <b>Reason:</b> {html.escape(reason)}"
         )
         await safe_answer(message, emoji_mgr.format_msg(text), parse_mode="HTML")
     except Exception as e:
@@ -523,9 +523,9 @@ async def cmd_kick(message: Message, command: CommandObject, bot: Bot):
         target_name = target.full_name if target else target_sender_chat.title
         target_mention = f"<a href='tg://user?id={target_id}'>{html.escape(target_name)}</a>"
         text = (
-            f"{emoji_mgr.ban} <b>MEMBER KICKED</b>\n"
-            f"• Member: {target_mention}\n"
-            f"• Reason: {html.escape(reason)}"
+            f"{emoji_mgr.ban} <b>MEMBER KICKED</b> {emoji_mgr.vip}\n\n"
+            f"{emoji_mgr.star} <b>Member:</b> {target_mention}\n"
+            f"{emoji_mgr.error} <b>Reason:</b> {html.escape(reason)}"
         )
         await safe_answer(message, emoji_mgr.format_msg(text), parse_mode="HTML")
     except Exception as e:
@@ -559,8 +559,8 @@ async def cmd_ban(message: Message, command: CommandObject, bot: Bot):
         target_mention = f"<a href='tg://user?id={target_id}'>{html.escape(target_name)}</a>"
         text = (
             f"{emoji_mgr.ban} <b>PERMANENTLY BANNED</b> {emoji_mgr.vip}\n\n"
-            f"• Member: {target_mention}\n"
-            f"• Reason: {html.escape(reason)}"
+            f"{emoji_mgr.star} <b>Member:</b> {target_mention}\n"
+            f"{emoji_mgr.error} <b>Reason:</b> {html.escape(reason)}"
         )
         await safe_answer(message, emoji_mgr.format_msg(text), parse_mode="HTML")
     except Exception as e:
@@ -640,7 +640,7 @@ async def cmd_listwords(message: Message, bot: Bot):
         return
     words_str = ", ".join([f"<code>{html.escape(w)}</code>" for w in words[:50]])
     title_msg = f"DANH SÁCH TỪ CẤM ({len(words)} từ):" if is_private else f"BANNED WORDS LIST ({len(words)} words):"
-    text = f"{emoji_mgr.shield} <b>{title_msg}</b>\n{words_str}"
+    text = f"{emoji_mgr.shield} <b>{title_msg}</b> {emoji_mgr.vip}\n\n{words_str}"
     await safe_answer(message, emoji_mgr.format_msg(text), parse_mode="HTML")
 
 # -------------------------------------------------------------
@@ -695,9 +695,9 @@ async def cmd_listlinks(message: Message, bot: Bot):
         empty_msg = "Whitelist liên kết đang trống (tất cả link bên ngoài đều bị chặn)." if is_private else "Link whitelist is empty (all external links blocked)."
         await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.link} {empty_msg}"))
         return
-    links_str = "\n".join([f"• <code>{html.escape(l)}</code>" for l in links])
+    links_str = "\n".join([f"{emoji_mgr.link} <code>{html.escape(l)}</code>" for l in links])
     title_msg = f"DANH SÁCH LIÊN KẾT ĐƯỢC PHÉP ({len(links)}):" if is_private else f"WHITELISTED DOMAINS ({len(links)}):"
-    text = f"{emoji_mgr.link} <b>{title_msg}</b>\n{links_str}"
+    text = f"{emoji_mgr.link} <b>{title_msg}</b> {emoji_mgr.vip}\n\n{links_str}"
     await safe_answer(message, emoji_mgr.format_msg(text), parse_mode="HTML")
 
 # -------------------------------------------------------------
@@ -720,11 +720,11 @@ async def cmd_get_emoji(message: Message, bot: Bot):
 
     if not found_emojis:
         text = (
-            f"{emoji_mgr.warn} <b>KHÔNG TÌM THẤY CUSTOM EMOJI!</b>\n\n"
+            f"{emoji_mgr.warn} <b>KHÔNG TÌM THẤY CUSTOM EMOJI!</b> {emoji_mgr.vip}\n\n"
             f"💡 <b>Hướng dẫn sử dụng:</b>\n"
-            f"1. Hãy gửi một tin nhắn chứa các icon/sticker động Telegram Premium của bạn.\n"
-            f"2. Reply tin nhắn đó và gõ lệnh: <code>/get_emoji</code>\n"
-            f"Hoặc gõ <code>/get_emoji</code> kèm emoji VIP trong cùng 1 tin nhắn.\n\n"
+            f"{emoji_mgr.star} 1. Hãy gửi một tin nhắn chứa các icon/sticker động Telegram Premium của bạn.\n"
+            f"{emoji_mgr.star} 2. Reply tin nhắn đó và gõ lệnh: <code>/get_emoji</code>\n"
+            f"{emoji_mgr.star} Hoặc gõ <code>/get_emoji</code> kèm emoji VIP trong cùng 1 tin nhắn.\n\n"
             f"Bot sẽ trích xuất mã ID để bạn gán vào bot!"
         )
         await safe_answer(message, emoji_mgr.format_msg(text), parse_mode="HTML")
@@ -734,8 +734,8 @@ async def cmd_get_emoji(message: Message, bot: Bot):
     for idx, (emoji_id, char) in enumerate(found_emojis, 1):
         output_lines.append(
             f"<b>#{idx}</b> <tg-emoji emoji-id='{emoji_id}'>{char}</tg-emoji>\n"
-            f"• <b>Emoji ID:</b> <code>{emoji_id}</code>\n"
-            f"• <b>Mẫu gắn:</b> <code>/set_emoji vip {emoji_id}</code>\n"
+            f"{emoji_mgr.star} <b>Emoji ID:</b> <code>{emoji_id}</code>\n"
+            f"{emoji_mgr.star} <b>Mẫu gắn:</b> <code>/set_emoji vip {emoji_id}</code>\n"
         )
     output_lines.append(f"\n{emoji_mgr.diamond} <i>Bạn có thể dùng lệnh /set_emoji [key] [id] để cập nhật ngay!</i>")
     await safe_answer(message, emoji_mgr.format_msg("\n".join(output_lines)), parse_mode="HTML")
@@ -747,7 +747,7 @@ async def cmd_set_emoji(message: Message, command: CommandObject, bot: Bot):
 
     if not command.args:
         text = (
-            f"{emoji_mgr.settings} <b>CÀI ĐẶT VIP CUSTOM EMOJI</b>\n\n"
+            f"{emoji_mgr.settings} <b>CÀI ĐẶT VIP CUSTOM EMOJI</b> {emoji_mgr.vip}\n\n"
             f"Cú pháp: <code>/set_emoji [key] [emoji_id] [kí tự fallback]</code>\n"
             f"Ví dụ: <code>/set_emoji vip 5217822164362739968 👑</code>\n\n"
             f"<b>Các key hợp lệ:</b>\n"
@@ -773,8 +773,8 @@ async def cmd_set_emoji(message: Message, command: CommandObject, bot: Bot):
     await emoji_mgr.load_emojis()
 
     text = (
-        f"{emoji_mgr.star} Đã cập nhật Custom Emoji cho key <b>{html.escape(key)}</b> thành công!\n"
-        f"• Xem trước: <tg-emoji emoji-id='{emoji_id}'>{fallback}</tg-emoji> (ID: <code>{emoji_id}</code>)"
+        f"{emoji_mgr.star} Đã cập nhật Custom Emoji cho key <b>{html.escape(key)}</b> thành công! {emoji_mgr.vip}\n"
+        f"{emoji_mgr.star} Xem trước: <tg-emoji emoji-id='{emoji_id}'>{fallback}</tg-emoji> (ID: <code>{emoji_id}</code>)"
     )
     await safe_answer(message, emoji_mgr.format_msg(text), parse_mode="HTML")
 
@@ -792,7 +792,7 @@ async def cmd_list_emojis(message: Message, bot: Bot):
         conf_id = config.DEFAULT_EMOJIS.get(k, {}).get("id", "")
         db_val = emoji_mgr._db_emojis.get(k, {}).get("id")
         current_id = db_val if db_val else (conf_id if conf_id else "Chưa gán ID")
-        lines.append(f"• <b>{k.upper()}:</b> {icon_rendered} | ID: <code>{current_id}</code>")
+        lines.append(f"{emoji_mgr.star} <b>{k.upper()}:</b> {icon_rendered} | ID: <code>{current_id}</code>")
 
     lines.append(f"\n💡 <i>Dùng <code>/get_emoji</code> để lấy ID từ tài khoản Telegram Premium.</i>")
     await safe_answer(message, emoji_mgr.format_msg("\n".join(lines)), parse_mode="HTML")
@@ -819,22 +819,22 @@ async def cmd_stats(message: Message, bot: Bot):
     if is_private:
         text = (
             f"{emoji_mgr.shield} <b>THỐNG KÊ AN NINH NHÓM</b> {emoji_mgr.vip}\n\n"
-            f"• {emoji_mgr.spam} <b>Spam & Flood đã chặn:</b> <code>{spam_count}</code>\n"
-            f"• {emoji_mgr.link} <b>Link trái phép đã xoá:</b> <code>{link_count}</code>\n"
-            f"• {emoji_mgr.error} <b>Ngôn từ lăng mạ đã xử lý:</b> <code>{badwords_count}</code>\n"
-            f"• {emoji_mgr.shield} <b>Bot lạ đã trục xuất:</b> <code>{bot_count}</code>\n"
+            f"{emoji_mgr.star} {emoji_mgr.spam} <b>Spam & Flood đã chặn:</b> <code>{spam_count}</code>\n"
+            f"{emoji_mgr.star} {emoji_mgr.link} <b>Link trái phép đã xoá:</b> <code>{link_count}</code>\n"
+            f"{emoji_mgr.star} {emoji_mgr.error} <b>Ngôn từ lăng mạ đã xử lý:</b> <code>{badwords_count}</code>\n"
+            f"{emoji_mgr.star} {emoji_mgr.shield} <b>Bot lạ đã trục xuất:</b> <code>{bot_count}</code>\n"
             f"━━━━━━━━━━━━━━━━━━━━\n"
-            f"{emoji_mgr.star} <b>Tổng số vi phạm đã ngăn chặn:</b> <code>{total}</code>"
+            f"{emoji_mgr.diamond} <b>Tổng số vi phạm đã ngăn chặn:</b> <code>{total}</code>"
         )
     else:
         text = (
             f"{emoji_mgr.shield} <b>GROUP SECURITY STATISTICS</b> {emoji_mgr.vip}\n\n"
-            f"• {emoji_mgr.spam} <b>Spam & Flood blocked:</b> <code>{spam_count}</code>\n"
-            f"• {emoji_mgr.link} <b>Unauthorized Links removed:</b> <code>{link_count}</code>\n"
-            f"• {emoji_mgr.error} <b>Profanity filtered:</b> <code>{badwords_count}</code>\n"
-            f"• {emoji_mgr.shield} <b>Unauthorized Bots blocked:</b> <code>{bot_count}</code>\n"
+            f"{emoji_mgr.star} {emoji_mgr.spam} <b>Spam & Flood blocked:</b> <code>{spam_count}</code>\n"
+            f"{emoji_mgr.star} {emoji_mgr.link} <b>Unauthorized Links removed:</b> <code>{link_count}</code>\n"
+            f"{emoji_mgr.star} {emoji_mgr.error} <b>Profanity filtered:</b> <code>{badwords_count}</code>\n"
+            f"{emoji_mgr.star} {emoji_mgr.shield} <b>Unauthorized Bots blocked:</b> <code>{bot_count}</code>\n"
             f"━━━━━━━━━━━━━━━━━━━━\n"
-            f"{emoji_mgr.star} <b>Total violations prevented:</b> <code>{total}</code>"
+            f"{emoji_mgr.diamond} <b>Total violations prevented:</b> <code>{total}</code>"
         )
     sent_msg = await safe_answer(message, emoji_mgr.format_msg(text), parse_mode="HTML")
     if not is_private:
