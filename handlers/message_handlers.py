@@ -114,7 +114,21 @@ async def inspect_message(message: Message, bot: Bot):
     """
     Main moderation pipeline for group messages (in English)
     """
-    # 1. 100% Exempt Anonymous Admins, Group Senders & Channel Senders
+    text = message.text or message.caption or ""
+
+    # 1. Check Payment Query (Available for everyone: Members, Admins, Anonymous Senders)
+    if text and payment_detector.is_payment_query(text):
+        text_pay = get_payment_info_text()
+        await safe_answer(message, emoji_mgr.format_msg(text_pay), parse_mode="HTML", disable_web_page_preview=True)
+        return
+
+    # 2. Check Script & Tool & VIP Key Query (Available for everyone: Members, Admins, Anonymous Senders)
+    if text and script_detector.is_script_query(text):
+        text_script = get_script_tool_info_text()
+        await safe_answer(message, emoji_mgr.format_msg(text_script), parse_mode="HTML", disable_web_page_preview=True)
+        return
+
+    # 3. 100% Exempt Anonymous Admins, Group Senders & Channel Senders from MODERATION
     if message.sender_chat is not None:
         return
     if message.from_user and (message.from_user.id in [1087968824, 777000] or getattr(message.from_user, "username", "") == "GroupAnonymousBot"):
@@ -126,20 +140,8 @@ async def inspect_message(message: Message, bot: Bot):
 
     chat_id = message.chat.id
     user_id = user.id
-    text = message.text or message.caption or ""
 
-    # Check Payment Query (Bilingual English/Vietnamese keyword detection)
-    if text and payment_detector.is_payment_query(text):
-        text_pay = get_payment_info_text()
-        await safe_answer(message, emoji_mgr.format_msg(text_pay), parse_mode="HTML", disable_web_page_preview=True)
-        return
-
-    # Check Script & Tool & VIP Key Query (Bilingual keyword detection)
-    if text and script_detector.is_script_query(text):
-        text_script = get_script_tool_info_text()
-        await safe_answer(message, emoji_mgr.format_msg(text_script), parse_mode="HTML", disable_web_page_preview=True)
-        return
-
+    # 4. 100% Exempt Group Admins & @wolfmodyt from MODERATION
     if await is_admin_or_owner(chat_id, user, bot, sender_chat=message.sender_chat):
         return
 
