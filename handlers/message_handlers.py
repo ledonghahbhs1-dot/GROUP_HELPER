@@ -87,8 +87,11 @@ async def handle_private_messages(message: Message):
     """
     user = message.from_user
     if not is_user_allowed_private(user):
-        # Silently ignore other users
+        user_info = f"ID: {user.id}, Username: @{user.username}" if user else "Unknown"
+        logger.info("Private message silently ignored from unauthorized user (%s)", user_info)
         return
+
+    logger.info("Private message received from authorized user @%s (%s)", user.username, user.id)
 
     # User is @wolfmodyt or Owner -> respond politely
     text = (
