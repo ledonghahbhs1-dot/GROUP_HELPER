@@ -71,11 +71,13 @@ async def test():
     assert payment_detector.is_payment_query("thanh toan the nao") == True
     assert payment_detector.is_payment_query("paypal me") == True
     assert payment_detector.is_payment_query("vcb le dong ha") == True
+    assert payment_detector.is_payment_query("rewarble code") == True
     assert payment_detector.is_payment_query("hello good morning") == False
     
     pay_text = get_payment_info_text()
     assert "paypal.me/WolfmodYT197" in pay_text
     assert "9382382864" in pay_text
+    assert "rewarble.com" in pay_text
     assert "PAYMENT METHODS" in pay_text
     print("Payment detector tests passed ✅")
     

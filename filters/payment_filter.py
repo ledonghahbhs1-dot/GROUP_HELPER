@@ -16,6 +16,7 @@ PAYMENT_KEYWORDS_RAW = [
     "checkout", "invoice", "bill", "billing", "subscription", "sub price", "renew",
     "vip price", "buy vip", "get vip", "upgrade vip", "vip cost", "premium price",
     "transfer money", "send money", "funds", "pay now", "how to send money",
+    "rewarble", "rewarble.com", "redeem", "redeem code", "gift card", "gift code", "voucher",
     
     # Tiếng Việt có dấu & không dấu (60+ keywords)
     "thanh toan", "thanh toán", "phuong thuc thanh toan", "phương thức thanh toán",
@@ -35,7 +36,8 @@ PAYMENT_KEYWORDS_RAW = [
     "donate", "ung ho", "ủng hộ", "nap", "nạp", "nap the", "nạp thẻ",
     "vietcombank", "vcb", "binance", "paypal", "vi usdt", "ví usdt", "dia chi vi", "địa chỉ ví",
     "thanh toan the nao", "thanh toán thế nào", "tt qua dau", "tt qua đâu", "stk vcb",
-    "chuyen khoan vcb", "chuyển khoản vcb", "xin stk", "xin số tài khoản", "cho xin stk", "cho xin số tài khoản"
+    "chuyen khoan vcb", "chuyển khoản vcb", "xin stk", "xin số tài khoản", "cho xin stk", "cho xin số tài khoản",
+    "ma the", "mã thẻ", "nap the cao", "nạp thẻ cào", "ma code", "mã code", "nhap code", "nhập code"
 ]
 
 class PaymentDetector:

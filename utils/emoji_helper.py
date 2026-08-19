@@ -177,8 +177,9 @@ def get_payment_info_text() -> str:
         f"{emoji_mgr.star} <b>VCB (Vietcombank) [VIETNAM]:</b> <code>9382382864</code> | <b>LE DONG HA</b>\n\n"
         f"━━━━━━━━━━━━━━━━━━━━\n"
         f"{emoji_mgr.warn} <i>Please send the correct information.</i>\n"
-        f"{emoji_mgr.shield} <i>Please send by <b>FRIENDS AND FAMILY OPTION</b> !</i>\n\n"
-        f"{emoji_mgr.diamond} <b>After sending, please DM</b> {emoji_mgr.vip} :@wolfmodyt {emoji_mgr.vip} <b>to confirm your submission.</b>"
+        f"{emoji_mgr.shield} <i>Please send by <b>FRIENDS AND FAMILY OPTION</b> !</i>\n"
+        f"{emoji_mgr.diamond} <b>Note:</b> You can also redeem codes via <a href='https://rewarble.com/'>https://rewarble.com/</a>\n\n"
+        f"{emoji_mgr.star} <b>After sending, please DM</b> {emoji_mgr.vip} :@wolfmodyt {emoji_mgr.vip} <b>to confirm your submission.</b>"
     )
 
 
