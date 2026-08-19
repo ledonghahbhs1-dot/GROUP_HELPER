@@ -49,7 +49,7 @@ DEFAULT_EMOJIS: Dict[str, Dict[str, str]] = {
     # Các icon khác mặc định dùng Unicode Emoji đẹp (hoặc cấu hình thêm qua /set_emoji)
     "vip": {"id": os.getenv("EMOJI_VIP", ""), "fallback": "👑"},
     "shield": {"id": os.getenv("EMOJI_SHIELD", "5197288647275071607"), "fallback": "🛡️"},
-    "ban": {"id": os.getenv("EMOJI_BAN", ""), "fallback": "🚫"},
+    "ban": {"id": os.getenv("EMOJI_BAN", "5240241223632954241"), "fallback": "🚫"},
     "mute": {"id": os.getenv("EMOJI_MUTE", ""), "fallback": "🔇"},
     "link": {"id": os.getenv("EMOJI_LINK", ""), "fallback": "🔗"},
     "bot": {"id": os.getenv("EMOJI_BOT", ""), "fallback": "🤖"},
