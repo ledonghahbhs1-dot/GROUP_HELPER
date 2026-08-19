@@ -40,26 +40,32 @@ SPAM_INTERVAL_SEC: int = 5         # Within interval (seconds)
 SPAM_DUPLICATE_LIMIT: int = 3      # Identical messages in a row
 SPAM_DUPLICATE_INTERVAL: int = 30  # Seconds
 
-# Telegram Premium Custom Emoji IDs — TẤT CẢ ĐÃ XÁC MINH HOẠT ĐỘNG VỚI BOT
+# Telegram Premium Custom Emoji IDs — XÁC MINH HOẠT ĐỘNG TRONG GROUP
+# ✅ = tested working in GROUP  ❌ = only works in private
+STAR_ID   = "5202036282649244841"  # ⭐ confirmed group ✅
+WARN_ID   = "5213205860498549992"  # ⚠️ confirmed group ✅
+TELE_ID   = "5211129162206560202"  # ✈️ confirmed group ✅
+
 DEFAULT_EMOJIS: Dict[str, Dict[str, str]] = {
-    "tele_logo": {"id": os.getenv("EMOJI_TELE_LOGO", "5211129162206560202"), "fallback": "✈️"},   # ✅ tested
-    "clock":     {"id": os.getenv("EMOJI_CLOCK",    "5386367538735104399"), "fallback": "⌛"},    # ✅ @TgEmojis
-    "warn":      {"id": os.getenv("EMOJI_WARN",     "5213205860498549992"), "fallback": "⚠️"},    # ✅ tested
-    "vip":       {"id": os.getenv("EMOJI_VIP",      "5217822164362739968"), "fallback": "👑"},    # ✅ tested
-    "shield":    {"id": os.getenv("EMOJI_SHIELD",   "5251203410396458957"), "fallback": "🛡"},    # ✅ tested
-    "ban":       {"id": os.getenv("EMOJI_BAN",      "5240241223632954241"), "fallback": "🚫"},    # ✅ @TgEmojis
-    "mute":      {"id": os.getenv("EMOJI_MUTE",     "5386367538735104399"), "fallback": "⌛"},    # ✅ @TgEmojis
-    "link":      {"id": os.getenv("EMOJI_LINK",     "5271604874419647061"), "fallback": "🔗"},    # ✅ tested
-    "bot":       {"id": os.getenv("EMOJI_BOT",      "5251203410396458957"), "fallback": "🛡"},    # ✅ tested
-    "spam":      {"id": os.getenv("EMOJI_SPAM",     "5424972470023104089"), "fallback": "🔥"},    # ✅ @TgEmojis
-    "success":   {"id": os.getenv("EMOJI_SUCCESS",  "5202036282649244841"), "fallback": "⭐"},    # ✅ tested
-    "error":     {"id": os.getenv("EMOJI_ERROR",    "5213460324425935151"), "fallback": "❌"},    # ✅ @TgEmojis
-    "settings":  {"id": os.getenv("EMOJI_SETTINGS", "5341715473882955310"), "fallback": "⚙️"},   # ✅ @TgEmojis
-    "setting":   {"id": os.getenv("EMOJI_SETTINGS", "5341715473882955310"), "fallback": "⚙️"},   # ✅ @TgEmojis
-    "diamond":   {"id": os.getenv("EMOJI_DIAMOND",  "5202132945183208703"), "fallback": "💎"},    # ✅ tested
-    "star":      {"id": os.getenv("EMOJI_STAR",     "5202036282649244841"), "fallback": "⭐"},    # ✅ tested
-    "lock":      {"id": os.getenv("EMOJI_LOCK",     "5251203410396458957"), "fallback": "🛡"},    # ✅ tested
-    "bell":      {"id": os.getenv("EMOJI_BELL",     "6152132290324468688"), "fallback": "🔔"},    # ✅ @TgEmojis
+    "tele_logo": {"id": os.getenv("EMOJI_TELE_LOGO", TELE_ID),  "fallback": "✈️"},
+    "clock":     {"id": os.getenv("EMOJI_CLOCK",    WARN_ID),   "fallback": "⚠️"},
+    "warn":      {"id": os.getenv("EMOJI_WARN",     WARN_ID),   "fallback": "⚠️"},
+    "vip":       {"id": os.getenv("EMOJI_VIP",      STAR_ID),   "fallback": "⭐"},
+    "shield":    {"id": os.getenv("EMOJI_SHIELD",   WARN_ID),   "fallback": "⚠️"},
+    "ban":       {"id": os.getenv("EMOJI_BAN",      WARN_ID),   "fallback": "⚠️"},
+    "mute":      {"id": os.getenv("EMOJI_MUTE",     WARN_ID),   "fallback": "⚠️"},
+    "link":      {"id": os.getenv("EMOJI_LINK",     STAR_ID),   "fallback": "⭐"},
+    "bot":       {"id": os.getenv("EMOJI_BOT",      WARN_ID),   "fallback": "⚠️"},
+    "spam":      {"id": os.getenv("EMOJI_SPAM",     WARN_ID),   "fallback": "⚠️"},
+    "success":   {"id": os.getenv("EMOJI_SUCCESS",  STAR_ID),   "fallback": "⭐"},
+    "error":     {"id": os.getenv("EMOJI_ERROR",    WARN_ID),   "fallback": "⚠️"},
+    "settings":  {"id": os.getenv("EMOJI_SETTINGS", STAR_ID),   "fallback": "⭐"},
+    "setting":   {"id": os.getenv("EMOJI_SETTINGS", STAR_ID),   "fallback": "⭐"},
+    "diamond":   {"id": os.getenv("EMOJI_DIAMOND",  STAR_ID),   "fallback": "⭐"},
+    "star":      {"id": os.getenv("EMOJI_STAR",     STAR_ID),   "fallback": "⭐"},
+    "lock":      {"id": os.getenv("EMOJI_LOCK",     WARN_ID),   "fallback": "⚠️"},
+    "bell":      {"id": os.getenv("EMOJI_BELL",     STAR_ID),   "fallback": "⭐"},
 }
+
 
 
