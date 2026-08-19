@@ -3,6 +3,7 @@ import re
 from datetime import datetime, timedelta
 from typing import Optional
 from aiogram import Router, F, Bot
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import Message, ChatPermissions, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.filters import Command, CommandObject
 from database.db import db
@@ -205,6 +206,29 @@ async def cmd_script(message: Message):
         await message.answer(full_text, parse_mode="HTML", disable_web_page_preview=True)
     except TelegramBadRequest:
         await message.answer(emoji_mgr.strip_tg_emojis(full_text), parse_mode="HTML", disable_web_page_preview=True)
+
+# -------------------------------------------------------------
+# DEBUG: Test script message broken into parts to find bad emoji
+# -------------------------------------------------------------
+@router.message(Command("debug_script"))
+async def cmd_debug_script(message: Message, bot: Bot):
+    if not await require_admin(message, bot):
+        return
+    await emoji_mgr.load_emojis()
+    parts = [
+        ("header", f"{emoji_mgr.diamond} <b>DRAGON CITY TOOL &amp; SCRIPT</b> {emoji_mgr.vip}"),
+        ("star", f"{emoji_mgr.star} Access Tools"),
+        ("link", f"{emoji_mgr.link} <a href='https://www.wolfmod.xyz/dragon-city'>wolfmod.xyz</a>"),
+        ("shield", f"{emoji_mgr.shield} Key &amp; VIP Features"),
+        ("warn", f"{emoji_mgr.warn} Visit the link above"),
+        ("footer", f"{emoji_mgr.diamond} DM {emoji_mgr.vip} :@wolfmodyt {emoji_mgr.vip}"),
+        ("sig", emoji_mgr.signature),
+    ]
+    for name, part in parts:
+        try:
+            await message.answer(f"[{name}]: {part}", parse_mode="HTML", disable_web_page_preview=True)
+        except TelegramBadRequest as e:
+            await message.answer(f"❌ [{name}] FAILED: <code>{html.escape(str(e))}</code>", parse_mode="HTML")
 
 
 # -------------------------------------------------------------
