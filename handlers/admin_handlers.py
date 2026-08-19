@@ -184,7 +184,11 @@ async def cmd_payment(message: Message):
         return
 
     text = get_payment_info_text()
-    await safe_answer(message, emoji_mgr.format_msg(text), parse_mode="HTML", disable_web_page_preview=True)
+    full_text = emoji_mgr.format_msg(text)
+    try:
+        await message.answer(full_text, parse_mode="HTML", disable_web_page_preview=True)
+    except TelegramBadRequest:
+        await message.answer(emoji_mgr.strip_tg_emojis(full_text), parse_mode="HTML", disable_web_page_preview=True)
 
 # -------------------------------------------------------------
 # SCRIPT & TOOL & VIP KEY COMMAND (/script, /tool, /key, /free, /dragoncity, /dc)
@@ -196,7 +200,12 @@ async def cmd_script(message: Message):
         return
 
     text = get_script_tool_info_text()
-    await safe_answer(message, emoji_mgr.format_msg(text), parse_mode="HTML", disable_web_page_preview=True)
+    full_text = emoji_mgr.format_msg(text)
+    try:
+        await message.answer(full_text, parse_mode="HTML", disable_web_page_preview=True)
+    except TelegramBadRequest:
+        await message.answer(emoji_mgr.strip_tg_emojis(full_text), parse_mode="HTML", disable_web_page_preview=True)
+
 
 # -------------------------------------------------------------
 # GET CHAT ID / USER ID COMMAND (/id, /chatid, /info)
