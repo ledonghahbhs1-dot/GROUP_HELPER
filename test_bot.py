@@ -79,7 +79,23 @@ async def test():
     assert "9382382864" in pay_text
     assert "rewarble.com" in pay_text
     assert "PAYMENT METHODS" in pay_text
-    print("Payment detector tests passed ✅")
+    print("6. Testing Script & Tool Detection (Bilingual)...")
+    from filters.script_filter import script_detector
+    from utils.emoji_helper import get_script_tool_info_text
+    
+    assert script_detector.is_script_query("script") == True
+    assert script_detector.is_script_query("tool") == True
+    assert script_detector.is_script_query("dragon city tool") == True
+    assert script_detector.is_script_query("how to get vip key?") == True
+    assert script_detector.is_script_query("cho xin key free voi") == True
+    assert script_detector.is_script_query("lay key dc o dau") == True
+    assert script_detector.is_script_query("wolfmod dragon city") == True
+    assert script_detector.is_script_query("hello how are you") == False
+    
+    script_text = get_script_tool_info_text()
+    assert "wolfmod.xyz/dragon-city" in script_text
+    assert "DRAGON CITY TOOL & SCRIPT" in script_text
+    print("Script detector tests passed ✅")
     
     print("\n==========================================")
     print("ALL TESTS PASSED WITH 100% SUCCESS! ✅")

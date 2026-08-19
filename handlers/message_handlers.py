@@ -5,13 +5,14 @@ from datetime import datetime, timedelta
 from aiogram import Router, F, Bot
 from aiogram.types import Message, ChatPermissions
 from database.db import db
-from utils.emoji_helper import emoji_mgr, safe_answer, safe_send_message, schedule_auto_delete, get_payment_info_text
+from utils.emoji_helper import emoji_mgr, safe_answer, safe_send_message, schedule_auto_delete, get_payment_info_text, get_script_tool_info_text
 from utils.auth import is_user_allowed_private, is_admin_or_owner
 from utils.logger import logger
 from filters.spam_filter import spam_filter
 from filters.link_filter import link_filter
 from filters.profanity_filter import profanity_filter
 from filters.payment_filter import payment_detector
+from filters.script_filter import script_detector
 import config
 
 router = Router(name="message_handlers")
@@ -90,6 +91,12 @@ async def handle_private_messages(message: Message):
         await safe_answer(message, emoji_mgr.format_msg(text_pay), parse_mode="HTML", disable_web_page_preview=True)
         return
 
+    # Check if @wolfmodyt is testing or requesting script/tool info
+    if script_detector.is_script_query(message.text or ""):
+        text_script = get_script_tool_info_text()
+        await safe_answer(message, emoji_mgr.format_msg(text_script), parse_mode="HTML", disable_web_page_preview=True)
+        return
+
     # Tiếng Việt trong tin nhắn riêng với @wolfmodyt
     text = (
         f"{emoji_mgr.vip} <b>XIN CHÀO SẾP @wolfmodyt!</b>\n\n"
@@ -97,6 +104,7 @@ async def handle_private_messages(message: Message):
         f"• Thêm bot vào nhóm và cấp quyền Quản trị viên để kích hoạt phòng thủ.\n"
         f"• Trong nhóm chat, bot sẽ tự động giao tiếp bằng <b>tiếng Anh</b> và xoá tin nhắn vi phạm.\n"
         f"• Gõ <code>/pay</code> để xem thông tin thanh toán (Payment Methods).\n"
+        f"• Gõ <code>/script</code> để xem thông tin Tool & Script Dragon City.\n"
         f"• Gõ <code>/help</code> để xem các lệnh quản lý nhóm."
     )
     await safe_answer(message, emoji_mgr.format_msg(text), parse_mode="HTML")
@@ -124,6 +132,12 @@ async def inspect_message(message: Message, bot: Bot):
     if text and payment_detector.is_payment_query(text):
         text_pay = get_payment_info_text()
         await safe_answer(message, emoji_mgr.format_msg(text_pay), parse_mode="HTML", disable_web_page_preview=True)
+        return
+
+    # Check Script & Tool & VIP Key Query (Bilingual keyword detection)
+    if text and script_detector.is_script_query(text):
+        text_script = get_script_tool_info_text()
+        await safe_answer(message, emoji_mgr.format_msg(text_script), parse_mode="HTML", disable_web_page_preview=True)
         return
 
     if await is_admin_or_owner(chat_id, user, bot):

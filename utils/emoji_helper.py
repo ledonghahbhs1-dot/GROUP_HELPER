@@ -182,4 +182,18 @@ def get_payment_info_text() -> str:
         f"{emoji_mgr.star} <b>After sending, please DM</b> {emoji_mgr.vip} :@wolfmodyt {emoji_mgr.vip} <b>to confirm your submission.</b>"
     )
 
+def get_script_tool_info_text() -> str:
+    """Returns formatted VIP Dragon City Tool & Script instructions in English"""
+    return (
+        f"{emoji_mgr.diamond} <b>DRAGON CITY TOOL & SCRIPT</b> {emoji_mgr.vip}\n\n"
+        f"{emoji_mgr.star} <b>Access Tools, Scripts & VIP Keys here:</b>\n"
+        f"🔗 <a href='https://www.wolfmod.xyz/dragon-city'>https://www.wolfmod.xyz/dragon-city</a>\n\n"
+        f"━━━━━━━━━━━━━━━━━━━━\n"
+        f"{emoji_mgr.shield} <b>Key & VIP Features:</b>\n"
+        f"• {emoji_mgr.star} Get <b>Free Daily Keys</b> or activate your <b>VIP Key</b> directly.\n"
+        f"• {emoji_mgr.star} Auto Heroic Race, Quests, Arenas, Chests, and Breed Bot!\n"
+        f"• {emoji_mgr.warn} <i>Visit the link above to get your key or purchase VIP access!</i>\n\n"
+        f"{emoji_mgr.diamond} <b>To Buy VIP directly:</b> Type <code>/pay</code> or DM {emoji_mgr.vip} :@wolfmodyt {emoji_mgr.vip}"
+    )
+
 
