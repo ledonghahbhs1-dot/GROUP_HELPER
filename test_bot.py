@@ -60,6 +60,25 @@ async def test():
     print("Stripped fallback:", clean_html)
     assert clean_html == "👑 Hello ⚠️", "Fallback stripping failed!"
     
+    print("5. Testing Payment Detection (Bilingual)...")
+    from filters.payment_filter import payment_detector
+    from utils.emoji_helper import get_payment_info_text
+    
+    assert payment_detector.is_payment_query("pay") == True
+    assert payment_detector.is_payment_query("how to pay?") == True
+    assert payment_detector.is_payment_query("xin stk chuyen khoan") == True
+    assert payment_detector.is_payment_query("cho minh xin gia vip voi") == True
+    assert payment_detector.is_payment_query("thanh toan the nao") == True
+    assert payment_detector.is_payment_query("paypal me") == True
+    assert payment_detector.is_payment_query("vcb le dong ha") == True
+    assert payment_detector.is_payment_query("hello good morning") == False
+    
+    pay_text = get_payment_info_text()
+    assert "paypal.me/WolfmodYT197" in pay_text
+    assert "9382382864" in pay_text
+    assert "PAYMENT METHODS" in pay_text
+    print("Payment detector tests passed ✅")
+    
     print("\n==========================================")
     print("ALL TESTS PASSED WITH 100% SUCCESS! ✅")
     print("==========================================\n")

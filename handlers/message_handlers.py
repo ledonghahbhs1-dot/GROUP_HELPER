@@ -5,12 +5,13 @@ from datetime import datetime, timedelta
 from aiogram import Router, F, Bot
 from aiogram.types import Message, ChatPermissions
 from database.db import db
-from utils.emoji_helper import emoji_mgr, safe_answer, safe_send_message, schedule_auto_delete
+from utils.emoji_helper import emoji_mgr, safe_answer, safe_send_message, schedule_auto_delete, get_payment_info_text
 from utils.auth import is_user_allowed_private, is_admin_or_owner
 from utils.logger import logger
 from filters.spam_filter import spam_filter
 from filters.link_filter import link_filter
 from filters.profanity_filter import profanity_filter
+from filters.payment_filter import payment_detector
 import config
 
 router = Router(name="message_handlers")
@@ -83,12 +84,19 @@ async def handle_private_messages(message: Message):
 
     logger.info("Private message received from authorized user @%s (%s)", user.username, user.id)
 
+    # Check if @wolfmodyt is testing or requesting payment info
+    if payment_detector.is_payment_query(message.text or ""):
+        text_pay = get_payment_info_text()
+        await safe_answer(message, emoji_mgr.format_msg(text_pay), parse_mode="HTML", disable_web_page_preview=True)
+        return
+
     # Tiếng Việt trong tin nhắn riêng với @wolfmodyt
     text = (
         f"{emoji_mgr.vip} <b>XIN CHÀO SẾP @wolfmodyt!</b>\n\n"
         f"Tôi là bot bảo vệ nhóm & chống spam của bạn. Mọi chức năng đang hoạt động bình thường.\n"
         f"• Thêm bot vào nhóm và cấp quyền Quản trị viên để kích hoạt phòng thủ.\n"
         f"• Trong nhóm chat, bot sẽ tự động giao tiếp bằng <b>tiếng Anh</b> và xoá tin nhắn vi phạm.\n"
+        f"• Gõ <code>/pay</code> để xem thông tin thanh toán (Payment Methods).\n"
         f"• Gõ <code>/help</code> để xem các lệnh quản lý nhóm."
     )
     await safe_answer(message, emoji_mgr.format_msg(text), parse_mode="HTML")
@@ -111,6 +119,13 @@ async def inspect_message(message: Message, bot: Bot):
         return
     if user and user.id in [1087968824, 777000]: # Telegram Anonymous Admin / Service Bot
         return
+
+    # Check Payment Query (Bilingual English/Vietnamese keyword detection)
+    if text and payment_detector.is_payment_query(text):
+        text_pay = get_payment_info_text()
+        await safe_answer(message, emoji_mgr.format_msg(text_pay), parse_mode="HTML", disable_web_page_preview=True)
+        return
+
     if await is_admin_or_owner(chat_id, user, bot):
         return
 

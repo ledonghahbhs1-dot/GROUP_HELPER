@@ -6,7 +6,7 @@ from aiogram import Router, F, Bot
 from aiogram.types import Message, ChatPermissions, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.filters import Command, CommandObject
 from database.db import db
-from utils.emoji_helper import emoji_mgr, safe_answer, safe_send_message
+from utils.emoji_helper import emoji_mgr, safe_answer, safe_send_message, get_payment_info_text
 from utils.auth import is_user_allowed_private, is_admin_or_owner
 from utils.logger import logger
 import config
@@ -139,6 +139,18 @@ async def cmd_help(message: Message):
             f"• <code>/list_emojis</code> - View active custom emoji IDs"
         )
     await safe_answer(message, emoji_mgr.format_msg(text), parse_mode="HTML")
+
+# -------------------------------------------------------------
+# PAYMENT METHODS COMMAND (/pay, /payment, /bank, /donate, /buy)
+# -------------------------------------------------------------
+@router.message(Command("pay", "payment", "pricing", "price", "bank", "donate", "buy"))
+async def cmd_payment(message: Message):
+    is_private = message.chat.type == "private"
+    if is_private and not is_user_allowed_private(message.from_user):
+        return
+
+    text = get_payment_info_text()
+    await safe_answer(message, emoji_mgr.format_msg(text), parse_mode="HTML", disable_web_page_preview=True)
 
 # -------------------------------------------------------------
 # SETTINGS PANEL

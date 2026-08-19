@@ -165,3 +165,20 @@ def schedule_auto_delete(msg, delay_sec: int = 30):
         import asyncio
         asyncio.create_task(_delayed_delete(msg, delay_sec))
 
+def get_payment_info_text() -> str:
+    """Returns formatted VIP Payment Methods message"""
+    return (
+        f"{emoji_mgr.diamond} <b>PAYMENT METHODS</b> {emoji_mgr.vip}\n\n"
+        f"{emoji_mgr.star} <b>PayPal [GLOBAL]:</b> <code>paypal.me/WolfmodYT197</code>\n"
+        f"   └ <b>GMAIL PAYPAL:</b> <code>ledongha2k7@gmail.com</code>\n\n"
+        f"{emoji_mgr.star} <b>Binance ID [GLOBAL]:</b> <code>1158594960</code>\n"
+        f"   └ <b>Deposit Address:</b> <code>0xff924e6b692567a4d9462a3bbef33f48a138dd2e</code> (network bep20)\n\n"
+        f"{emoji_mgr.star} <b>SociaBuzz TRIBE:</b> <a href='https://sociabuzz.com/ldh/tribe'>LINK</a>\n\n"
+        f"{emoji_mgr.star} <b>VCB (Vietcombank) [VIETNAM]:</b> <code>9382382864</code> | <b>LE DONG HA</b>\n\n"
+        f"━━━━━━━━━━━━━━━━━━━━\n"
+        f"{emoji_mgr.warn} <i>Please send the correct information.</i>\n"
+        f"{emoji_mgr.shield} <i>Please send by <b>FRIENDS AND FAMILY OPTION</b> !</i>\n\n"
+        f"💬 <b>After sending, please DM</b> {emoji_mgr.tele_logo} :@wolfmodyt <b>to confirm your submission.</b>"
+    )
+
+
