@@ -1,5 +1,7 @@
 import html
+import re
 from typing import Dict, List, Optional
+from aiogram.exceptions import TelegramBadRequest
 import config
 from database.db import db
 
@@ -44,7 +46,7 @@ class EmojiManager:
             return f'<tg-emoji emoji-id="{emoji_id}">{fallback}</tg-emoji>'
         return fallback
 
-    # Custom Emojis requested by user
+    # Custom Emojis requested by user (Real valid IDs)
     @property
     def tele_logo(self) -> str:
         return self.get("tele_logo", "✈️")
@@ -61,6 +63,10 @@ class EmojiManager:
     def format_msg(self, text: str) -> str:
         """Appends the mandatory signature to the message"""
         return f"{text}{self.signature}"
+
+    def strip_tg_emojis(self, text: str) -> str:
+        """Strips <tg-emoji> tags down to standard fallback emojis in case of invalid custom IDs"""
+        return re.sub(r'<tg-emoji[^>]*>(.*?)</tg-emoji>', r'\1', text)
 
     # Convenient VIP Emoji methods
     @property
@@ -124,3 +130,23 @@ class EmojiManager:
         return self.get("bell", "🔔")
 
 emoji_mgr = EmojiManager()
+
+async def safe_answer(message, text: str, **kwargs):
+    """Safely answers a message, falling back to clean text if Telegram rejects custom emojis"""
+    try:
+        return await message.answer(text, **kwargs)
+    except TelegramBadRequest as e:
+        if "DOCUMENT_INVALID" in str(e) or "Bad Request" in str(e):
+            clean_text = emoji_mgr.strip_tg_emojis(text)
+            return await message.answer(clean_text, **kwargs)
+        raise e
+
+async def safe_send_message(bot, chat_id: int, text: str, **kwargs):
+    """Safely sends a message to chat_id, falling back to clean text if custom emoji is invalid"""
+    try:
+        return await bot.send_message(chat_id, text, **kwargs)
+    except TelegramBadRequest as e:
+        if "DOCUMENT_INVALID" in str(e) or "Bad Request" in str(e):
+            clean_text = emoji_mgr.strip_tg_emojis(text)
+            return await bot.send_message(chat_id, clean_text, **kwargs)
+        raise e

@@ -39,25 +39,26 @@ SPAM_DUPLICATE_LIMIT: int = 3      # Identical messages in a row
 SPAM_DUPLICATE_INTERVAL: int = 30  # Seconds
 
 # Telegram Premium Custom Emoji IDs
+# CHỈ DÙNG ID THẬT DO TELEGRAM PREMIUM CUNG CẤP
 DEFAULT_EMOJIS: Dict[str, Dict[str, str]] = {
-    # Custom Emoji IDs requested by user
+    # 3 Icon Premium thật từ tài khoản người dùng:
     "tele_logo": {"id": os.getenv("EMOJI_TELE_LOGO", "5211129162206560202"), "fallback": "✈️"},
     "clock": {"id": os.getenv("EMOJI_CLOCK", "5382194935057372936"), "fallback": "⏳"},
-    
-    # VIP Pack Custom Emojis
-    "vip": {"id": os.getenv("EMOJI_VIP", "5368324170671202286"), "fallback": "👑"},
-    "shield": {"id": os.getenv("EMOJI_SHIELD", "5368324170671202287"), "fallback": "🛡️"},
     "warn": {"id": os.getenv("EMOJI_WARN", "5202101484547766658"), "fallback": "⚠️"},
-    "ban": {"id": os.getenv("EMOJI_BAN", "5368324170671202289"), "fallback": "🚫"},
-    "mute": {"id": os.getenv("EMOJI_MUTE", "5368324170671202290"), "fallback": "🔇"},
-    "link": {"id": os.getenv("EMOJI_LINK", "5368324170671202291"), "fallback": "🔗"},
-    "bot": {"id": os.getenv("EMOJI_BOT", "5368324170671202292"), "fallback": "🤖"},
-    "spam": {"id": os.getenv("EMOJI_SPAM", "5368324170671202293"), "fallback": "🔥"},
-    "success": {"id": os.getenv("EMOJI_SUCCESS", "5368324170671202294"), "fallback": "✅"},
-    "error": {"id": os.getenv("EMOJI_ERROR", "5368324170671202295"), "fallback": "❌"},
-    "settings": {"id": os.getenv("EMOJI_SETTINGS", "5368324170671202296"), "fallback": "⚙️"},
-    "diamond": {"id": os.getenv("EMOJI_DIAMOND", "5368324170671202297"), "fallback": "💎"},
-    "star": {"id": os.getenv("EMOJI_STAR", "5368324170671202298"), "fallback": "⭐"},
-    "lock": {"id": os.getenv("EMOJI_LOCK", "5368324170671202299"), "fallback": "🔒"},
-    "bell": {"id": os.getenv("EMOJI_BELL", "5368324170671202300"), "fallback": "🔔"},
+    
+    # Các icon khác mặc định dùng Unicode Emoji đẹp (hoặc cấu hình thêm qua /set_emoji)
+    "vip": {"id": os.getenv("EMOJI_VIP", ""), "fallback": "👑"},
+    "shield": {"id": os.getenv("EMOJI_SHIELD", ""), "fallback": "🛡️"},
+    "ban": {"id": os.getenv("EMOJI_BAN", ""), "fallback": "🚫"},
+    "mute": {"id": os.getenv("EMOJI_MUTE", ""), "fallback": "🔇"},
+    "link": {"id": os.getenv("EMOJI_LINK", ""), "fallback": "🔗"},
+    "bot": {"id": os.getenv("EMOJI_BOT", ""), "fallback": "🤖"},
+    "spam": {"id": os.getenv("EMOJI_SPAM", ""), "fallback": "🔥"},
+    "success": {"id": os.getenv("EMOJI_SUCCESS", ""), "fallback": "✅"},
+    "error": {"id": os.getenv("EMOJI_ERROR", ""), "fallback": "❌"},
+    "settings": {"id": os.getenv("EMOJI_SETTINGS", ""), "fallback": "⚙️"},
+    "diamond": {"id": os.getenv("EMOJI_DIAMOND", ""), "fallback": "💎"},
+    "star": {"id": os.getenv("EMOJI_STAR", ""), "fallback": "⭐"},
+    "lock": {"id": os.getenv("EMOJI_LOCK", ""), "fallback": "🔒"},
+    "bell": {"id": os.getenv("EMOJI_BELL", ""), "fallback": "🔔"},
 }

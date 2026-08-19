@@ -4,7 +4,7 @@ from aiogram import Router, F, Bot
 from aiogram.types import ChatMemberUpdated, Message, ChatPermissions
 from aiogram.filters.chat_member_updated import ChatMemberUpdatedFilter, MEMBER, KICKED, LEFT, RESTRICTED
 from database.db import db
-from utils.emoji_helper import emoji_mgr
+from utils.emoji_helper import emoji_mgr, safe_send_message, safe_answer
 from utils.logger import logger
 import config
 
@@ -65,7 +65,7 @@ async def on_user_or_bot_join(event: ChatMemberUpdated, bot: Bot):
                         f"{emoji_mgr.diamond} <i>Chỉ có Quản trị viên mới được phép thêm bot vào nhóm.</i>"
                     )
                     final_text = emoji_mgr.format_msg(alert_text)
-                    msg = await bot.send_message(chat_id, final_text, parse_mode="HTML")
+                    msg = await safe_send_message(bot, chat_id, final_text, parse_mode="HTML")
 
                     # Auto-delete notification after 30s
                     if settings.get("auto_delete_logs", 1):
@@ -118,7 +118,7 @@ async def on_new_chat_members(message: Message, bot: Bot):
                         f"{emoji_mgr.ban} <b>Xử lý:</b> <i>Đã kick bot thành công!</i>"
                     )
                     final_text = emoji_mgr.format_msg(alert_text)
-                    sent = await message.answer(final_text, parse_mode="HTML")
+                    sent = await safe_answer(message, final_text, parse_mode="HTML")
                     if settings.get("auto_delete_logs", 1):
                         await asyncio.sleep(config.AUTO_DELETE_LOGS_SEC)
                         try:

@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from aiogram import Router, F, Bot
 from aiogram.types import Message, ChatPermissions
 from database.db import db
-from utils.emoji_helper import emoji_mgr
+from utils.emoji_helper import emoji_mgr, safe_answer, safe_send_message
 from utils.logger import logger
 from filters.spam_filter import spam_filter
 from filters.link_filter import link_filter
@@ -103,7 +103,7 @@ async def handle_private_messages(message: Message):
         f"• Thêm bot vào nhóm và cấp quyền Quản trị viên để kích hoạt phòng thủ.\n"
         f"• Gõ /help để xem các lệnh quản lý nhóm."
     )
-    await message.answer(emoji_mgr.format_msg(text), parse_mode="HTML")
+    await safe_answer(message, emoji_mgr.format_msg(text), parse_mode="HTML")
 
 @router.message(F.chat.type.in_(["group", "supergroup"]))
 async def inspect_message(message: Message, bot: Bot):
@@ -211,7 +211,7 @@ async def inspect_message(message: Message, bot: Bot):
         final_text = emoji_mgr.format_msg(alert_text)
 
         try:
-            sent_msg = await bot.send_message(chat_id, final_text, parse_mode="HTML")
+            sent_msg = await safe_send_message(bot, chat_id, final_text, parse_mode="HTML")
             # Tự động xoá sau 30 giây
             if settings.get("auto_delete_logs", 1):
                 await asyncio.sleep(config.AUTO_DELETE_LOGS_SEC)
