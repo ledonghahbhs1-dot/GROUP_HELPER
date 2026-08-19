@@ -106,7 +106,11 @@ async def inspect_message(message: Message, bot: Bot):
     user_id = user.id
     text = message.text or message.caption or ""
 
-    # 1. Exempt Admins & Group Owners
+    # 1. Exempt Anonymous Admins, Channel Posts & Group Owners
+    if message.sender_chat and message.sender_chat.id == message.chat.id:
+        return
+    if user and user.id in [1087968824, 777000]: # Telegram Anonymous Admin / Service Bot
+        return
     if await is_admin_or_owner(chat_id, user, bot):
         return
 
