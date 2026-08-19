@@ -794,8 +794,34 @@ async def cmd_list_emojis(message: Message, bot: Bot):
         current_id = db_val if db_val else (conf_id if conf_id else "Chưa gán ID")
         lines.append(f"{emoji_mgr.star} <b>{k.upper()}:</b> {icon_rendered} | ID: <code>{current_id}</code>")
 
-    lines.append(f"\n💡 <i>Dùng <code>/get_emoji</code> để lấy ID từ tài khoản Telegram Premium.</i>")
-    await safe_answer(message, emoji_mgr.format_msg("\n".join(lines)), parse_mode="HTML")
+@router.message(Command("test_emoji", "testemoji"))
+async def cmd_test_emoji(message: Message, command: CommandObject, bot: Bot):
+    if not await require_admin(message, bot):
+        return
+
+    if not command.args:
+        results = []
+        for k, val in config.DEFAULT_EMOJIS.items():
+            eid = val.get("id", "")
+            fb = val.get("fallback", "✨")
+            if eid:
+                results.append(f"• <b>{k.upper()}:</b> <tg-emoji emoji-id='{eid}'>{fb}</tg-emoji> | ID: <code>{eid}</code>")
+        text = "<b>KIỂM TRA HIỂN THỊ TỪNG CUSTOM EMOJI:</b>\n\n" + "\n".join(results)
+        await message.answer(text, parse_mode="HTML")
+        return
+
+    arg = command.args.strip()
+    if arg.isdigit():
+        eid = arg
+        test_txt = f"Test Emoji ID <code>{eid}</code>: <tg-emoji emoji-id='{eid}'>✨</tg-emoji>"
+    else:
+        k = arg.lower()
+        eid = config.DEFAULT_EMOJIS.get(k, {}).get("id", "")
+        test_txt = f"Test Key <b>{k}</b>: {emoji_mgr.get(k)} | ID: <code>{eid}</code>"
+    try:
+        await message.answer(test_txt, parse_mode="HTML")
+    except Exception as e:
+        await message.answer(f"❌ Telegram API rejected this emoji: {e}", parse_mode="HTML")
 
 # -------------------------------------------------------------
 # STATS COMMAND (ADMIN ONLY)

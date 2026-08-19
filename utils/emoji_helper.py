@@ -134,6 +134,8 @@ class EmojiManager:
         """Returns VIP Crown icon for Administrators"""
         return self.get("vip", "👑")
 
+from utils.logger import logger
+
 emoji_mgr = EmojiManager()
 
 async def safe_answer(message, text: str, **kwargs):
@@ -141,7 +143,8 @@ async def safe_answer(message, text: str, **kwargs):
     try:
         return await message.answer(text, **kwargs)
     except TelegramBadRequest as e:
-        if "DOCUMENT_INVALID" in str(e) or "Bad Request" in str(e):
+        logger.warning("safe_answer caught TelegramBadRequest: %s", e)
+        if "DOCUMENT_INVALID" in str(e) or "Bad Request" in str(e) or "can't parse" in str(e):
             clean_text = emoji_mgr.strip_tg_emojis(text)
             return await message.answer(clean_text, **kwargs)
         raise e
@@ -151,7 +154,8 @@ async def safe_send_message(bot, chat_id: int, text: str, **kwargs):
     try:
         return await bot.send_message(chat_id, text, **kwargs)
     except TelegramBadRequest as e:
-        if "DOCUMENT_INVALID" in str(e) or "Bad Request" in str(e):
+        logger.warning("safe_send_message caught TelegramBadRequest: %s", e)
+        if "DOCUMENT_INVALID" in str(e) or "Bad Request" in str(e) or "can't parse" in str(e):
             clean_text = emoji_mgr.strip_tg_emojis(text)
             return await bot.send_message(chat_id, clean_text, **kwargs)
         raise e
