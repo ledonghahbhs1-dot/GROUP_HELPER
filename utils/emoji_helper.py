@@ -139,35 +139,25 @@ emoji_mgr = EmojiManager()
 
 async def _try_send_stripping_bad_emojis(send_fn, text: str, **kwargs):
     """
-    Attempts to send `text`. If Telegram rejects it (DOCUMENT_INVALID),
-    strips one bad <tg-emoji> tag at a time until message sends or all custom emojis are stripped.
+    Attempts to send `text`. If Telegram rejects it (e.g. DOCUMENT_INVALID, bad entities, boost required),
+    falls back cleanly to stripped standard emojis, and then plain text.
     """
-    TG_EMOJI_RE = re.compile(r'<tg-emoji emoji-id=["\']([^"\']+)["\']>([^<]*)</tg-emoji>')
-    current_text = text
-    bad_ids: set = set()
-
-    while True:
+    try:
+        return await send_fn(text, **kwargs)
+    except TelegramBadRequest as e:
+        logger.warning("TelegramBadRequest sending formatted text (%s) — falling back to plain HTML", e)
+        plain_text = emoji_mgr.strip_tg_emojis(text)
         try:
-            return await send_fn(current_text, **kwargs)
-        except TelegramBadRequest as e:
-            err_str = str(e)
-            if "DOCUMENT_INVALID" not in err_str and "can't parse" not in err_str:
-                raise
-
-            match = TG_EMOJI_RE.search(current_text)
-            if not match:
-                return await send_fn(emoji_mgr.strip_tg_emojis(text), **kwargs)
-
-            bad_id = match.group(1)
-            if bad_id not in bad_ids:
-                bad_ids.add(bad_id)
-                logger.warning("Custom emoji ID %s caused DOCUMENT_INVALID — stripping it", bad_id)
-
-            current_text = re.sub(
-                r'<tg-emoji emoji-id=["\']' + re.escape(bad_id) + r'["\']>([^<]*)</tg-emoji>',
-                r'\1',
-                current_text
-            )
+            return await send_fn(plain_text, **kwargs)
+        except TelegramBadRequest as e2:
+            logger.error("Failed to send stripped HTML: %s — falling back to raw text", e2)
+            clean_kwargs = {k: v for k, v in kwargs.items() if k != "parse_mode"}
+            raw_text = re.sub(r'<[^>]+>', '', plain_text)
+            try:
+                return await send_fn(raw_text, **clean_kwargs)
+            except Exception as e3:
+                logger.error("Final send failure: %s", e3)
+                return None
 
 async def safe_answer(message, text: str, delay_sec: int = 0, **kwargs):
     """Helper to reply to a message safely handling tg-emoji tags with auto-retry and auto-delete"""
