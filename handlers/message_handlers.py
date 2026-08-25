@@ -13,6 +13,7 @@ from filters.link_filter import link_filter
 from filters.profanity_filter import profanity_filter
 from filters.payment_filter import payment_detector
 from filters.script_filter import script_detector
+from filters.scam_filter import scam_detector
 import config
 
 router = Router(name="message_handlers")
@@ -115,6 +116,64 @@ async def inspect_message(message: Message, bot: Bot):
     Main moderation pipeline for group messages (in English)
     """
     text = message.text or message.caption or ""
+
+    # 0. Check Scam/Fraud Detection (HIGHEST PRIORITY - run before all other checks)
+    user = message.from_user
+    if text and user and not user.is_bot and message.sender_chat is None:
+        is_scam, matched_keyword = scam_detector.is_scam_message(text)
+        if is_scam:
+            chat_id = message.chat.id
+            user_id = user.id
+            # Skip if user is admin
+            if not await is_admin_or_owner(chat_id, user, bot, sender_chat=message.sender_chat):
+                # Reply to user with evidence request
+                user_name = user.full_name
+                user_mention = f"<a href='tg://user?id={user_id}'>{html.escape(user_name)}</a>"
+                evidence_text = (
+                    f"{emoji_mgr.shield} <b>SCAM / FRAUD ALERT</b> {emoji_mgr.warn}\n\n"
+                    f"{emoji_mgr.bell} <b>User ID:</b> <code>{user_id}</code>\n"
+                    f"{emoji_mgr.bell} <b>Member:</b> {user_mention}\n"
+                    f"{emoji_mgr.error} <b>Detected Keyword:</b> <code>{html.escape(matched_keyword)}</code>\n\n"
+                    f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+                    f"{emoji_mgr.star} <b>PLEASE PROVIDE EVIDENCE</b>\n\n"
+                    f"Your message contains a scam-related keyword: <b>{html.escape(matched_keyword)}</b>\n\n"
+                    f"<b>If you are reporting a REAL SCAM:</b>\n"
+                    f"• Reply to this message with EVIDENCE\n"
+                    f"• Provide screenshots, transaction IDs, or proof\n"
+                    f"• Describe what happened in detail\n\n"
+                    f"<b>If this is a FALSE ALARM:</b>\n"
+                    f"• Please explain the context\n\n"
+                    f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+                    f"{emoji_mgr.vip} <b>Contact Admin:</b> @wolfmodyt"
+                )
+                try:
+                    await safe_answer(message, emoji_mgr.format_msg(evidence_text), parse_mode="HTML")
+                except Exception as e:
+                    logger.error(f"Failed to reply scam alert: {e}")
+
+                # Forward to admin
+                if config.OWNER_IDS and len(config.OWNER_IDS) > 0 and config.OWNER_IDS[0] > 0:
+                    try:
+                        for owner_id in config.OWNER_IDS:
+                            if owner_id > 0:
+                                admin_text = (
+                                    f"{emoji_mgr.warn} <b>SCAM DETECTION REPORT</b> {emoji_mgr.warn}\n\n"
+                                    f"{emoji_mgr.shield} <b>Chat ID:</b> <code>{chat_id}</code>\n"
+                                    f"{emoji_mgr.shield} <b>User ID:</b> <code>{user_id}</code>\n"
+                                    f"{emoji_mgr.shield} <b>Username:</b> @{user.username or 'N/A'}\n"
+                                    f"{emoji_mgr.shield} <b>Matched Keyword:</b> <code>{html.escape(matched_keyword)}</code>\n"
+                                    f"{emoji_mgr.error} <b>Message:</b> <code>{html.escape(text[:300])}</code>"
+                                )
+                                await safe_send_message(bot, owner_id, emoji_mgr.format_msg(admin_text), parse_mode="HTML")
+                    except Exception as e:
+                        logger.warning(f"Failed to forward scam report: {e}")
+
+                # Log violation
+                try:
+                    await db.increment_stat(chat_id, "scam")
+                except:
+                    pass
+                return
 
     # 1. Check Payment Query (Available for everyone: Members, Admins, Anonymous Senders)
     if text and payment_detector.is_payment_query(text):
