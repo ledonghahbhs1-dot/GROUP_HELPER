@@ -256,16 +256,6 @@ async def inspect_message(message: Message, bot: Bot):
     # Load group settings
     settings = await db.get_chat_settings(chat_id)
     violation_type = None
-    violation_desc = "" message.chat.id
-    user_id = user.id
-
-    # 4. 100% Exempt Group Admins & @wolfmodyt from MODERATION
-    if await is_admin_or_owner(chat_id, user, bot, sender_chat=message.sender_chat):
-        return
-
-    # Load group settings
-    settings = await db.get_chat_settings(chat_id)
-    violation_type = None
     violation_desc = ""
 
     # -------------------------------------------------------------
