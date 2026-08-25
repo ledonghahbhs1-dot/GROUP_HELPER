@@ -11,7 +11,8 @@ BASE_DIR = Path(__file__).resolve().parent
 BOT_TOKEN: str = os.getenv("BOT_TOKEN", "")
 
 # Admin/Owner IDs (Includes user IDs and Super-Admin Channel/Group IDs)
-raw_owners = os.getenv("OWNER_IDS", "-1002070376940")
+# @wolfmodyt: 6571486853
+raw_owners = os.getenv("OWNER_IDS", "6571486853")
 OWNER_IDS: List[int] = [
     int(x.strip()) for x in raw_owners.split(",") if x.strip().lstrip("-").isdigit()
 ]

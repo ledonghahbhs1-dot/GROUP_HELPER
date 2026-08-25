@@ -17,8 +17,9 @@ async def handle_scam_message(
 ):
     """
     Handles detected scam/fraud messages:
-    1. Sends evidence request message in English with icon
-    2. Forwards the message to admin @wolfmodyt
+    1. Reply to user with evidence request (English) - DO NOT DELETE user message
+    2. Include user ID in the message
+    3. Forward to admin if OWNER_IDS valid
     """
     text = message.text or message.caption or ""
     chat_id = message.chat.id
@@ -26,82 +27,88 @@ async def handle_scam_message(
     user_id = user.id
     user_name = user.full_name
 
-    # Don't delete the message yet - show evidence request first
     user_mention = f"<a href='tg://user?id={user_id}'>{html.escape(user_name)}</a>"
 
-    # Evidence request message with icon
+    # Evidence request message - ENGLISH with VIP emoji icons
     evidence_text = (
-        f"{emoji_mgr.shield} <b>⚠️ SCAM / FRAUD ALERT</b> {emoji_mgr.warn}\n\n"
+        f"{emoji_mgr.shield} <b>SCAM / FRAUD ALERT</b> {emoji_mgr.warn}\n\n"
+        f"{emoji_mgr.bell} <b>User ID:</b> <code>{user_id}</code>\n"
         f"{emoji_mgr.bell} <b>Member:</b> {user_mention}\n"
         f"{emoji_mgr.error} <b>Detected Keyword:</b> <code>{html.escape(matched_keyword)}</code>\n\n"
         f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"{emoji_mgr.star} <b>🚨 IMPORTANT NOTICE 🚨</b>\n\n"
-        f"This message may contain <b>scam/fraud content</b>.\n\n"
-        f"{emoji_mgr.warn} <b>IF YOU ARE A VICTIM:</b>\n"
-        f"• Please provide <b>EVIDENCE</b> by replying to this message\n"
-        f"• Screenshots, transaction IDs, chat history, or any proof\n"
-        f"• This information will be forwarded to administrators for review\n\n"
-        f"{emoji_mgr.vip} <b>FOR ADMINS & GROUP MEMBERS:</b>\n"
-        f"• Report suspicious messages with evidence\n"
-        f"• Help us protect the community from scammers\n"
-        f"• Contact: <b>@wolfmodyt</b> with proofs\n\n"
+        f"{emoji_mgr.star} <b>PLEASE PROVIDE EVIDENCE</b>\n\n"
+        f"Your message contains a scam-related keyword: <b>{html.escape(matched_keyword)}</b>\n\n"
+        f"<b>If you are reporting a REAL SCAM:</b>\n"
+        f"• Reply to this message with EVIDENCE\n"
+        f"• Provide screenshots, transaction IDs, or proof\n"
+        f"• Describe what happened in detail\n"
+        f"• This information will be reviewed by administrators\n\n"
+        f"<b>If this is a FALSE ALARM:</b>\n"
+        f"• Please explain the context\n"
+        f"• Administrators will review and determine if action is needed\n\n"
         f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"{emoji_mgr.lock} <b>Message forwarded to administrators for investigation.</b>"
+        f"{emoji_mgr.vip} <b>Contact Admin:</b> @wolfmodyt\n"
+        f"{emoji_mgr.lock} <b>Status:</b> Report forwarded to administrators"
     )
 
     try:
-        # Send evidence request message (visible to all)
-        sent_alert = await safe_send_message(
-            bot,
-            chat_id,
+        # Reply to user's message (do NOT delete user message)
+        await safe_answer(
+            message,
             emoji_mgr.format_msg(evidence_text),
             parse_mode="HTML"
         )
-        # Auto-delete after 2 minutes
-        if sent_alert:
-            schedule_auto_delete(sent_alert, 120)
+        logger.info(f"Scam alert replied to user {user_id} in chat {chat_id} with keyword '{matched_keyword}'")
     except Exception as e:
-        logger.error(f"Failed to send scam alert in chat {chat_id}: {e}")
+        logger.error(f"Failed to reply to user {user_id} in chat {chat_id}: {e}")
 
-    # Forward original message to admin/owner
-    try:
-        admin_forward_text = (
-            f"{emoji_mgr.warn} <b>🚨 SCAM DETECTION REPORT 🚨</b> {emoji_mgr.warn}\n\n"
-            f"{emoji_mgr.shield} <b>Chat ID:</b> <code>{chat_id}</code>\n"
-            f"{emoji_mgr.shield} <b>User ID:</b> <code>{user_id}</code>\n"
-            f"{emoji_mgr.shield} <b>Username:</b> @{user.username or 'N/A'}\n"
-            f"{emoji_mgr.shield} <b>Name:</b> {html.escape(user_name)}\n\n"
-            f"{emoji_mgr.error} <b>Matched Keyword:</b> <code>{html.escape(matched_keyword)}</code>\n"
-            f"{emoji_mgr.error} <b>Original Message:</b>\n<code>{html.escape(text[:500])}</code>\n\n"
-            f"{emoji_mgr.star} <b>Action Required:</b> Review and verify if this is a real scam\n"
-            f"{emoji_mgr.star} <b>Forward:</b> <a href='tg://user?id={user_id}'>Contact User</a>"
-        )
+    # Forward original message to admin/owner (if valid OWNER_IDS configured)
+    if config.OWNER_IDS and len(config.OWNER_IDS) > 0 and config.OWNER_IDS[0] > 0:
+        try:
+            admin_forward_text = (
+                f"{emoji_mgr.warn} <b>SCAM DETECTION REPORT</b> {emoji_mgr.warn}\n\n"
+                f"{emoji_mgr.shield} <b>Chat ID:</b> <code>{chat_id}</code>\n"
+                f"{emoji_mgr.shield} <b>User ID:</b> <code>{user_id}</code>\n"
+                f"{emoji_mgr.shield} <b>Username:</b> @{user.username or 'N/A'}\n"
+                f"{emoji_mgr.shield} <b>Name:</b> {html.escape(user_name)}\n\n"
+                f"{emoji_mgr.error} <b>Matched Keyword:</b> <code>{html.escape(matched_keyword)}</code>\n"
+                f"{emoji_mgr.error} <b>Original Message:</b>\n<code>{html.escape(text[:500])}</code>\n\n"
+                f"{emoji_mgr.star} <b>Action:</b> Evidence requested from user\n"
+                f"{emoji_mgr.star} <b>Contact User:</b> <a href='tg://user?id={user_id}'>@{user.username or 'User'}</a>"
+            )
 
-        # Send to owner
-        for owner_id in config.OWNER_IDS:
-            try:
-                await safe_send_message(
-                    bot,
-                    owner_id,
-                    emoji_mgr.format_msg(admin_forward_text),
-                    parse_mode="HTML"
-                )
+            # Send to owner
+            for owner_id in config.OWNER_IDS:
+                if owner_id <= 0:
+                    continue
 
-                # Try to forward original message as well
                 try:
-                    await bot.forward_message(
-                        chat_id=owner_id,
-                        from_chat_id=chat_id,
-                        message_id=message.message_id
+                    await safe_send_message(
+                        bot,
+                        owner_id,
+                        emoji_mgr.format_msg(admin_forward_text),
+                        parse_mode="HTML"
                     )
+                    logger.info(f"Scam report sent to admin {owner_id}")
+
+                    # Try to forward original message as well
+                    try:
+                        await bot.forward_message(
+                            chat_id=owner_id,
+                            from_chat_id=chat_id,
+                            message_id=message.message_id
+                        )
+                        logger.info(f"Original message forwarded to admin {owner_id}")
+                    except Exception as e:
+                        logger.debug(f"Could not forward original message to admin {owner_id}: {e}")
+
                 except Exception as e:
-                    logger.warning(f"Could not forward message to admin {owner_id}: {e}")
+                    logger.warning(f"Failed to send scam report to admin {owner_id}: {e}")
 
-            except Exception as e:
-                logger.error(f"Failed to send scam report to owner {owner_id}: {e}")
-
-    except Exception as e:
-        logger.error(f"Failed to handle scam message: {e}")
+        except Exception as e:
+            logger.error(f"Error in admin notification: {e}")
+    else:
+        logger.warning(f"OWNER_IDS not configured or invalid. Scam report not sent to admin. Configure OWNER_IDS in config.py")
 
     # Log the violation
     try:
