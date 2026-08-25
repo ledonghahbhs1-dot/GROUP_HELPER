@@ -14,7 +14,6 @@ from filters.spam_filter import spam_filter
 from handlers.admin_handlers import router as admin_router
 from handlers.callback_handlers import router as callback_router
 from handlers.member_handlers import router as member_router
-from handlers.scam_handler import router as scam_router
 from handlers.message_handlers import router as message_router
 
 async def set_bot_commands(bot: Bot):
@@ -74,7 +73,6 @@ async def main():
     # 4. Register Handlers in priority order
     dp.include_router(admin_router)
     dp.include_router(callback_router)
-    dp.include_router(scam_router)
     dp.include_router(member_router)
     dp.include_router(message_router)
 
