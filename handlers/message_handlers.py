@@ -105,7 +105,6 @@ async def handle_private_messages(message: Message):
         f"{emoji_mgr.star} Thêm bot vào nhóm và cấp quyền Quản trị viên để kích hoạt phòng thủ.\n"
         f"{emoji_mgr.star} Trong nhóm chat, bot sẽ tự động giao tiếp bằng <b>tiếng Anh</b> và xoá tin nhắn vi phạm.\n"
         f"{emoji_mgr.star} Gõ <code>/pay</code> để xem thông tin thanh toán (Payment Methods).\n"
-        f"{emoji_mgr.star} Gõ <code>/script</code> để xem thông tin Tool & Script Dragon City.\n"
         f"{emoji_mgr.star} Gõ <code>/help</code> để xem các lệnh quản lý nhóm."
     )
     await safe_answer(message, emoji_mgr.format_msg(text), parse_mode="HTML")
@@ -116,126 +115,11 @@ async def inspect_message(message: Message, bot: Bot):
     Main moderation pipeline for group messages (in English)
     """
     text = message.text or message.caption or ""
-
-    # 0. Check Scam/Fraud Detection (HIGHEST PRIORITY - run before all other checks)
+    chat_id = message.chat.id
     user = message.from_user
-    if text and user and not user.is_bot and message.sender_chat is None:
-        is_scam, matched_keyword = scam_detector.is_scam_message(text)
-        if is_scam:
-            chat_id = message.chat.id
-            user_id = user.id
-            # Skip if user is admin
-            if not await is_admin_or_owner(chat_id, user, bot, sender_chat=message.sender_chat):
-                # Reply to user with evidence request
-                user_name = user.full_name
-                user_mention = f"<a href='tg://user?id={user_id}'>{html.escape(user_name)}</a>"
-                evidence_text = (
-                    f"{emoji_mgr.shield} <b>SCAM / FRAUD ALERT</b> {emoji_mgr.warn}\n\n"
-                    f"{emoji_mgr.bell} <b>User ID:</b> <code>{user_id}</code>\n"
-                    f"{emoji_mgr.bell} <b>Member:</b> {user_mention}\n"
-                    f"{emoji_mgr.error} <b>Detected Keyword:</b> <code>{html.escape(matched_keyword)}</code>\n\n"
-                    f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-                    f"{emoji_mgr.star} <b>PLEASE PROVIDE EVIDENCE</b>\n\n"
-                    f"Your message contains a scam-related keyword: <b>{html.escape(matched_keyword)}</b>\n\n"
-                    f"<b>If you are reporting a REAL SCAM:</b>\n"
-                    f"• Reply to this message with EVIDENCE\n"
-                    f"• Provide screenshots, transaction IDs, or proof\n"
-                    f"• Describe what happened in detail\n\n"
-                    f"<b>If this is a FALSE ALARM:</b>\n"
-                    f"• Please explain the context\n\n"
-                    f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-                    f"{emoji_mgr.vip} <b>Contact Admin:</b> @wolfmodyt"
-                )
-                # Delete user's scam message after 2 minutes (keep bot reply)
-                try:
-                    schedule_auto_delete(message, 120)  # Delete USER'S MESSAGE after 2 minutes, not bot's reply
-                    logger.info(f"Scheduled deletion of scam message from user {user_id} in 120s")
-                except Exception as e:
-                    logger.warning(f"Failed to schedule message deletion: {e}")
+    user_id = user.id if user else 0
 
-                # Reply to user with evidence request (KEEP - do not delete bot's reply)
-                try:
-                    await safe_answer(message, emoji_mgr.format_msg(evidence_text), parse_mode="HTML")
-                    logger.info(f"Scam alert replied to user {user_id}")
-                except Exception as e:
-                    logger.error(f"Failed to reply scam alert: {e}")
-
-                # Forward original message + report to admin
-                if config.OWNER_IDS and len(config.OWNER_IDS) > 0 and config.OWNER_IDS[0] > 0:
-                    try:
-                        for owner_id in config.OWNER_IDS:
-                            if owner_id > 0:
-                                # Send admin report first
-                                admin_text = (
-                                    f"{emoji_mgr.warn} <b>SCAM DETECTION REPORT</b> {emoji_mgr.warn}\n\n"
-                                    f"{emoji_mgr.shield} <b>Chat ID:</b> <code>{chat_id}</code>\n"
-                                    f"{emoji_mgr.shield} <b>User ID:</b> <code>{user_id}</code>\n"
-                                    f"{emoji_mgr.shield} <b>Username:</b> @{user.username or 'N/A'}\n"
-                                    f"{emoji_mgr.shield} <b>Name:</b> {html.escape(user_name)}\n"
-                                    f"{emoji_mgr.shield} <b>Matched Keyword:</b> <code>{html.escape(matched_keyword)}</code>\n"
-                                    f"{emoji_mgr.error} <b>Message Preview:</b> <code>{html.escape(text[:300])}</code>"
-                                )
-                                await safe_send_message(bot, owner_id, emoji_mgr.format_msg(admin_text), parse_mode="HTML")
-                                logger.info(f"Scam report sent to admin {owner_id}")
-
-                                # Forward original user message
-                                try:
-                                    await bot.forward_message(
-                                        chat_id=owner_id,
-                                        from_chat_id=chat_id,
-                                        message_id=message.message_id
-                                    )
-                                    logger.info(f"Original scam message forwarded to admin {owner_id}")
-                                except Exception as fw_error:
-                                    logger.warning(f"Could not forward original message to admin {owner_id}: {fw_error}")
-                    except Exception as e:
-                        logger.warning(f"Failed to send scam report to admin: {e}")
-
-                # Log violation
-                try:
-                    await db.increment_stat(chat_id, "scam")
-                except:
-                    pass
-                return
-
-    # 1. Check Anti-Link / Bot Share (HIGH PRIORITY - delete immediately)
-    # Check for unauthorized links or bot sharing
-    if text and not user.is_bot and message.sender_chat is None:
-        has_link, link_desc = await link_filter.check_links(message, chat_id)
-        if has_link:
-            # Delete message immediately (no delay)
-            try:
-                await message.delete()
-                logger.info(f"Deleted link message from user {user_id} in chat {chat_id}: {link_desc}")
-            except Exception as e:
-                logger.warning(f"Failed to delete link message: {e}")
-
-            # Send alert with VIP icons
-            alert_text = (
-                f"{emoji_mgr.shield} <b>LINK / BOT SHARING BLOCKED</b> {emoji_mgr.warn}\n\n"
-                f"{emoji_mgr.vip} <b>NOTICE:</b>\n"
-                f"Sharing bot links or unauthorized links is not allowed in this group.\n\n"
-                f"{emoji_mgr.error} <b>Detected:</b> <code>{html.escape(link_desc)}</code>\n\n"
-                f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-                f"{emoji_mgr.bell} <b>Bot / Link Bị Chặn Trong Nhóm Này</b>\n"
-                f"Vui lòng liên hệ Admin: {emoji_mgr.vip} <b>@wolfmodyt</b> {emoji_mgr.vip}\n"
-                f"━━━━━━━━━━━━━━━━━━━━━━━━━━"
-            )
-            try:
-                alert_msg = await safe_send_message(bot, chat_id, emoji_mgr.format_msg(alert_text), parse_mode="HTML")
-                if alert_msg:
-                    schedule_auto_delete(alert_msg, 60)  # Delete alert after 1 minute
-            except Exception as e:
-                logger.error(f"Failed to send link alert: {e}")
-
-            # Log violation
-            try:
-                await db.increment_stat(chat_id, "link")
-            except:
-                pass
-            return
-
-    # 2. Check Payment Query (Available for everyone: Members, Admins, Anonymous Senders)
+    # 1. Check Payment Query (Available for everyone: Members, Admins, Anonymous Senders)
     if text and payment_detector.is_payment_query(text):
         text_pay = get_payment_info_text()
         await safe_answer(message, emoji_mgr.format_msg(text_pay), parse_mode="HTML", disable_web_page_preview=True)
@@ -250,14 +134,129 @@ async def inspect_message(message: Message, bot: Bot):
     # 3. 100% Exempt Anonymous Admins, Group Senders & Channel Senders from MODERATION
     if message.sender_chat is not None:
         return
-    if message.from_user and (message.from_user.id in [1087968824, 777000] or getattr(message.from_user, "username", "") == "GroupAnonymousBot"):
+    if user and (user.id in [1087968824, 777000] or getattr(user, "username", "") == "GroupAnonymousBot"):
         return
 
-    user = message.from_user
     if not user or user.is_bot:
         return
 
-    chat_id = message.chat.id
+    # 4. 100% Exempt Group Admins & @wolfmodyt from MODERATION
+    if await is_admin_or_owner(chat_id, user, bot, sender_chat=message.sender_chat):
+        return
+
+    # -------------------------------------------------------------
+    # BELOW THIS LINE: MODERATION FOR REGULAR MEMBERS
+    # -------------------------------------------------------------
+
+    # 5. Check Scam/Fraud Detection (HIGHEST PRIORITY)
+    if text:
+        is_scam, matched_keyword = scam_detector.is_scam_message(text)
+        if is_scam:
+            user_name = user.full_name
+            user_mention = f"<a href='tg://user?id={user_id}'>{html.escape(user_name)}</a>"
+            evidence_text = (
+                f"{emoji_mgr.shield} <b>SCAM / FRAUD ALERT</b> {emoji_mgr.warn}\n\n"
+                f"{emoji_mgr.bell} <b>User ID:</b> <code>{user_id}</code>\n"
+                f"{emoji_mgr.bell} <b>Member:</b> {user_mention}\n"
+                f"{emoji_mgr.error} <b>Detected Keyword:</b> <code>{html.escape(matched_keyword)}</code>\n\n"
+                f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+                f"{emoji_mgr.star} <b>PLEASE PROVIDE EVIDENCE</b>\n\n"
+                f"Your message contains a scam-related keyword: <b>{html.escape(matched_keyword)}</b>\n\n"
+                f"<b>If you are reporting a REAL SCAM:</b>\n"
+                f"• Reply to this message with EVIDENCE\n"
+                f"• Provide screenshots, transaction IDs, or proof\n"
+                f"• Describe what happened in detail\n\n"
+                f"<b>If this is a FALSE ALARM:</b>\n"
+                f"• Please explain the context\n\n"
+                f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+                f"{emoji_mgr.vip} <b>Contact Admin:</b> @wolfmodyt"
+            )
+            # Delete user's scam message after 2 minutes
+            try:
+                schedule_auto_delete(message, 120)
+                logger.info(f"Scheduled deletion of scam message from user {user_id} in 120s")
+            except Exception as e:
+                logger.warning(f"Failed to schedule message deletion: {e}")
+
+            # Reply to user with evidence request
+            try:
+                await safe_answer(message, emoji_mgr.format_msg(evidence_text), parse_mode="HTML")
+                logger.info(f"Scam alert replied to user {user_id}")
+            except Exception as e:
+                logger.error(f"Failed to reply scam alert: {e}")
+
+            # Forward original message + report to admin
+            if config.OWNER_IDS and len(config.OWNER_IDS) > 0 and config.OWNER_IDS[0] > 0:
+                try:
+                    for owner_id in config.OWNER_IDS:
+                        if owner_id > 0:
+                            admin_text = (
+                                f"{emoji_mgr.warn} <b>SCAM DETECTION REPORT</b> {emoji_mgr.warn}\n\n"
+                                f"{emoji_mgr.shield} <b>Chat ID:</b> <code>{chat_id}</code>\n"
+                                f"{emoji_mgr.shield} <b>User ID:</b> <code>{user_id}</code>\n"
+                                f"{emoji_mgr.shield} <b>Username:</b> @{user.username or 'N/A'}\n"
+                                f"{emoji_mgr.shield} <b>Name:</b> {html.escape(user_name)}\n"
+                                f"{emoji_mgr.shield} <b>Matched Keyword:</b> <code>{html.escape(matched_keyword)}</code>\n"
+                                f"{emoji_mgr.error} <b>Message Preview:</b> <code>{html.escape(text[:300])}</code>"
+                            )
+                            await safe_send_message(bot, owner_id, emoji_mgr.format_msg(admin_text), parse_mode="HTML")
+                            logger.info(f"Scam report sent to admin {owner_id}")
+
+                            try:
+                                await bot.forward_message(
+                                    chat_id=owner_id,
+                                    from_chat_id=chat_id,
+                                    message_id=message.message_id
+                                )
+                                logger.info(f"Original scam message forwarded to admin {owner_id}")
+                            except Exception as fw_error:
+                                logger.warning(f"Could not forward original message to admin {owner_id}: {fw_error}")
+                except Exception as e:
+                    logger.warning(f"Failed to send scam report to admin: {e}")
+
+            # Log violation
+            try:
+                await db.increment_stat(chat_id, "scam")
+            except:
+                pass
+            return
+
+    # 6. Check Anti-Link / Bot Share
+    has_link, link_desc = await link_filter.check_links(message, chat_id)
+    if has_link:
+        try:
+            await message.delete()
+            logger.info(f"Deleted link message from user {user_id} in chat {chat_id}: {link_desc}")
+        except Exception as e:
+            logger.warning(f"Failed to delete link message: {e}")
+
+        alert_text = (
+            f"{emoji_mgr.shield} <b>LINK / BOT SHARING BLOCKED</b> {emoji_mgr.warn}\n\n"
+            f"{emoji_mgr.vip} <b>NOTICE:</b>\n"
+            f"Sharing bot links or unauthorized links is not allowed in this group.\n\n"
+            f"{emoji_mgr.error} <b>Detected:</b> <code>{html.escape(link_desc)}</code>\n\n"
+            f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+            f"{emoji_mgr.bell} <b>Bot / Link Bị Chặn Trong Nhóm Này</b>\n"
+            f"Vui lòng liên hệ Admin: {emoji_mgr.vip} <b>@wolfmodyt</b> {emoji_mgr.vip}\n"
+            f"━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        )
+        try:
+            alert_msg = await safe_send_message(bot, chat_id, emoji_mgr.format_msg(alert_text), parse_mode="HTML")
+            if alert_msg:
+                schedule_auto_delete(alert_msg, 60)
+        except Exception as e:
+            logger.error(f"Failed to send link alert: {e}")
+
+        try:
+            await db.increment_stat(chat_id, "link")
+        except:
+            pass
+        return
+
+    # Load group settings
+    settings = await db.get_chat_settings(chat_id)
+    violation_type = None
+    violation_desc = "" message.chat.id
     user_id = user.id
 
     # 4. 100% Exempt Group Admins & @wolfmodyt from MODERATION
