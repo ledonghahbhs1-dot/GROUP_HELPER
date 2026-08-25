@@ -146,27 +146,46 @@ async def inspect_message(message: Message, bot: Bot):
                     f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
                     f"{emoji_mgr.vip} <b>Contact Admin:</b> @wolfmodyt"
                 )
+                # Reply to user with evidence request and schedule auto-delete (2 minutes)
+                alert_msg = None
                 try:
-                    await safe_answer(message, emoji_mgr.format_msg(evidence_text), parse_mode="HTML")
+                    alert_msg = await safe_answer(message, emoji_mgr.format_msg(evidence_text), parse_mode="HTML")
+                    if alert_msg:
+                        schedule_auto_delete(alert_msg, 120)  # Auto-delete after 2 minutes
+                        logger.info(f"Scam alert sent to user {user_id}, scheduled auto-delete in 120s")
                 except Exception as e:
                     logger.error(f"Failed to reply scam alert: {e}")
 
-                # Forward to admin
+                # Forward original message + report to admin
                 if config.OWNER_IDS and len(config.OWNER_IDS) > 0 and config.OWNER_IDS[0] > 0:
                     try:
                         for owner_id in config.OWNER_IDS:
                             if owner_id > 0:
+                                # Send admin report first
                                 admin_text = (
                                     f"{emoji_mgr.warn} <b>SCAM DETECTION REPORT</b> {emoji_mgr.warn}\n\n"
                                     f"{emoji_mgr.shield} <b>Chat ID:</b> <code>{chat_id}</code>\n"
                                     f"{emoji_mgr.shield} <b>User ID:</b> <code>{user_id}</code>\n"
                                     f"{emoji_mgr.shield} <b>Username:</b> @{user.username or 'N/A'}\n"
+                                    f"{emoji_mgr.shield} <b>Name:</b> {html.escape(user_name)}\n"
                                     f"{emoji_mgr.shield} <b>Matched Keyword:</b> <code>{html.escape(matched_keyword)}</code>\n"
-                                    f"{emoji_mgr.error} <b>Message:</b> <code>{html.escape(text[:300])}</code>"
+                                    f"{emoji_mgr.error} <b>Message Preview:</b> <code>{html.escape(text[:300])}</code>"
                                 )
                                 await safe_send_message(bot, owner_id, emoji_mgr.format_msg(admin_text), parse_mode="HTML")
+                                logger.info(f"Scam report sent to admin {owner_id}")
+
+                                # Forward original user message
+                                try:
+                                    await bot.forward_message(
+                                        chat_id=owner_id,
+                                        from_chat_id=chat_id,
+                                        message_id=message.message_id
+                                    )
+                                    logger.info(f"Original scam message forwarded to admin {owner_id}")
+                                except Exception as fw_error:
+                                    logger.warning(f"Could not forward original message to admin {owner_id}: {fw_error}")
                     except Exception as e:
-                        logger.warning(f"Failed to forward scam report: {e}")
+                        logger.warning(f"Failed to send scam report to admin: {e}")
 
                 # Log violation
                 try:
