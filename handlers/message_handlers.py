@@ -119,14 +119,18 @@ async def inspect_message(message: Message, bot: Bot):
     user = message.from_user
     user_id = user.id if user else 0
 
+    logger.info("GROUP MSG [%s in %s (%s)]: text=%r", user_id, chat_id, message.chat.type, text)
+
     # 1. Check Payment Query (Available for everyone: Members, Admins, Anonymous Senders)
     if text and payment_detector.is_payment_query(text):
+        logger.info("Payment query detected: %r", text)
         text_pay = get_payment_info_text()
         await safe_answer(message, emoji_mgr.format_msg(text_pay), parse_mode="HTML", disable_web_page_preview=True)
         return
 
     # 2. Check Script & Tool & VIP Key Query (Available for everyone: Members, Admins, Anonymous Senders)
     if text and script_detector.is_script_query(text):
+        logger.info("Script query detected: %r", text)
         text_script = get_script_tool_info_text()
         await safe_answer(message, emoji_mgr.format_msg(text_script), parse_mode="HTML", disable_web_page_preview=True)
         return
