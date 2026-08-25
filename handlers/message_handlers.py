@@ -146,13 +146,17 @@ async def inspect_message(message: Message, bot: Bot):
                     f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
                     f"{emoji_mgr.vip} <b>Contact Admin:</b> @wolfmodyt"
                 )
-                # Reply to user with evidence request and schedule auto-delete (2 minutes)
-                alert_msg = None
+                # Delete user's scam message after 2 minutes (keep bot reply)
                 try:
-                    alert_msg = await safe_answer(message, emoji_mgr.format_msg(evidence_text), parse_mode="HTML")
-                    if alert_msg:
-                        schedule_auto_delete(alert_msg, 120)  # Auto-delete after 2 minutes
-                        logger.info(f"Scam alert sent to user {user_id}, scheduled auto-delete in 120s")
+                    schedule_auto_delete(message, 120)  # Delete USER'S MESSAGE after 2 minutes, not bot's reply
+                    logger.info(f"Scheduled deletion of scam message from user {user_id} in 120s")
+                except Exception as e:
+                    logger.warning(f"Failed to schedule message deletion: {e}")
+
+                # Reply to user with evidence request (KEEP - do not delete bot's reply)
+                try:
+                    await safe_answer(message, emoji_mgr.format_msg(evidence_text), parse_mode="HTML")
+                    logger.info(f"Scam alert replied to user {user_id}")
                 except Exception as e:
                     logger.error(f"Failed to reply scam alert: {e}")
 
@@ -194,7 +198,44 @@ async def inspect_message(message: Message, bot: Bot):
                     pass
                 return
 
-    # 1. Check Payment Query (Available for everyone: Members, Admins, Anonymous Senders)
+    # 1. Check Anti-Link / Bot Share (HIGH PRIORITY - delete immediately)
+    # Check for unauthorized links or bot sharing
+    if text and not user.is_bot and message.sender_chat is None:
+        has_link, link_desc = await link_filter.check_links(message, chat_id)
+        if has_link:
+            # Delete message immediately (no delay)
+            try:
+                await message.delete()
+                logger.info(f"Deleted link message from user {user_id} in chat {chat_id}: {link_desc}")
+            except Exception as e:
+                logger.warning(f"Failed to delete link message: {e}")
+
+            # Send alert with VIP icons
+            alert_text = (
+                f"{emoji_mgr.shield} <b>LINK / BOT SHARING BLOCKED</b> {emoji_mgr.warn}\n\n"
+                f"{emoji_mgr.vip} <b>NOTICE:</b>\n"
+                f"Sharing bot links or unauthorized links is not allowed in this group.\n\n"
+                f"{emoji_mgr.error} <b>Detected:</b> <code>{html.escape(link_desc)}</code>\n\n"
+                f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+                f"{emoji_mgr.bell} <b>Bot / Link Bị Chặn Trong Nhóm Này</b>\n"
+                f"Vui lòng liên hệ Admin: {emoji_mgr.vip} <b>@wolfmodyt</b> {emoji_mgr.vip}\n"
+                f"━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            )
+            try:
+                alert_msg = await safe_send_message(bot, chat_id, emoji_mgr.format_msg(alert_text), parse_mode="HTML")
+                if alert_msg:
+                    schedule_auto_delete(alert_msg, 60)  # Delete alert after 1 minute
+            except Exception as e:
+                logger.error(f"Failed to send link alert: {e}")
+
+            # Log violation
+            try:
+                await db.increment_stat(chat_id, "link")
+            except:
+                pass
+            return
+
+    # 2. Check Payment Query (Available for everyone: Members, Admins, Anonymous Senders)
     if text and payment_detector.is_payment_query(text):
         text_pay = get_payment_info_text()
         await safe_answer(message, emoji_mgr.format_msg(text_pay), parse_mode="HTML", disable_web_page_preview=True)
