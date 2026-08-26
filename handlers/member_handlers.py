@@ -29,7 +29,7 @@ def should_welcome(chat_id: int, user_id: int) -> bool:
     return True
 
 def build_welcome_text(chat_title: str, user_id: int, user_name: str) -> str:
-    """Build English VIP welcome message with Admin info and Group rules"""
+    """Build English VIP welcome message with Admin info and Group rules using VIP custom emojis"""
     user_mention = f"<a href='tg://user?id={user_id}'>{html.escape(user_name)}</a>"
     group_name = html.escape(chat_title or "OUR GROUP")
     text = (
@@ -37,14 +37,14 @@ def build_welcome_text(chat_title: str, user_id: int, user_name: str) -> str:
         f"{emoji_mgr.star} <b>Welcome member:</b> {user_mention} (<code>{user_id}</code>)\n\n"
         f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
         f"{emoji_mgr.shield} <b>ADMIN & SUPPORT CONTACT:</b>\n"
-        f"• <b>Owner / Master Admin:</b> @wolfmodyt 👑\n"
-        f"• <b>Payment Methods (VIP Key):</b> Type <code>pay</code> in chat or DM @wolfmodyt\n"
-        f"• <b>Dragon City Tool & Script:</b> Type <code>tool</code> or <code>script</code>\n\n"
-        f"{emoji_mgr.warn} <b>GROUP RULES & DEFENSE:</b>\n"
-        f"• No spamming or excessive flood messages\n"
-        f"• No unauthorized links / Telegram invite links\n"
-        f"• No forwarded messages from bots\n"
-        f"• <i>Violators will receive warnings (2 warnings = PERMANENT BAN).</i>\n"
+        f"• {emoji_mgr.vip} <b>Owner / Master Admin:</b> @wolfmodyt {emoji_mgr.vip}\n"
+        f"• {emoji_mgr.star} <b>Payment Methods (VIP Key):</b> Type <code>pay</code> in chat or DM {emoji_mgr.vip} :@wolfmodyt\n"
+        f"• {emoji_mgr.star} <b>Dragon City Tool & Script:</b> Type <code>tool</code> or <code>script</code>\n\n"
+        f"{emoji_mgr.warn} <b>GROUP SECURITY & RULES:</b>\n"
+        f"• {emoji_mgr.error} No spamming or excessive flood messages\n"
+        f"• {emoji_mgr.link} No unauthorized links / Telegram invite links\n"
+        f"• {emoji_mgr.bot} No forwarded messages from bots / inline bots\n"
+        f"• {emoji_mgr.warn} <i>Violators will receive warnings (2 warnings = PERMANENT BAN).</i>\n"
         f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
         f"{emoji_mgr.diamond} <i>Wishing you a wonderful experience!</i>"
     )

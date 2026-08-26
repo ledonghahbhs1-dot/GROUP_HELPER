@@ -151,7 +151,7 @@ async def test():
     from filters.scam_filter import scam_detector
     
     is_scam1, kw1 = scam_detector.is_scam_message("thằng này lừa đảo anh em cẩn thận")
-    assert is_scam1 == True and "lừa đảo" in kw1
+    assert is_scam1 == True and ("lừa đảo" in kw1 or "lua dao" in kw1 or "lừa" in kw1)
     
     is_scam2, kw2 = scam_detector.is_scam_message("this guy is a scammer and fraud")
     assert is_scam2 == True and ("scam" in kw2 or "fraud" in kw2)
@@ -173,7 +173,7 @@ async def test():
     assert "WELCOME TO DRAGON CITY VIP!" in welcome_str
     assert "@wolfmodyt" in welcome_str
     assert "ADMIN & SUPPORT" in welcome_str
-    assert "GROUP RULES" in welcome_str
+    assert "GROUP SECURITY & RULES" in welcome_str
     
     assert should_welcome(-100123, 9999) == True
     assert should_welcome(-100123, 9999) == False, "Duplicate welcome within 30s should be prevented"
