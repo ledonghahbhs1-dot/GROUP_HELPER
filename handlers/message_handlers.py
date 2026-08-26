@@ -144,31 +144,28 @@ async def inspect_message(message: Message, bot: Bot):
 
     logger.info("GROUP MSG [%s in %s (%s)]: text=%r", user_id, chat_id, message.chat.type, text)
 
-    # 1. Check Payment Query (Available for everyone: Members, Admins, Anonymous Senders)
-    if text and payment_detector.is_payment_query(text):
-        logger.info("Payment query detected: %r", text)
-        text_pay = get_payment_info_text()
-        await safe_answer(message, emoji_mgr.format_msg(text_pay), parse_mode="HTML", disable_web_page_preview=True)
-        return
-
-    # 2. Check Script & Tool & VIP Key Query (Available for everyone: Members, Admins, Anonymous Senders)
-    if text and script_detector.is_script_query(text):
-        logger.info("Script query detected: %r", text)
-        text_script = get_script_tool_info_text()
-        await safe_answer(message, emoji_mgr.format_msg(text_script), parse_mode="HTML", disable_web_page_preview=True)
-        return
-
-    # 3. 100% Exempt Anonymous Admins, Group Senders & Channel Senders from MODERATION
+    # 1. 100% Exempt Anonymous Admins, Group Senders & Channel Senders from MODERATION
+    is_sender_exempt = False
     if message.sender_chat is not None:
-        return
-    if user and (user.id in [1087968824, 777000] or getattr(user, "username", "") == "GroupAnonymousBot"):
-        return
+        is_sender_exempt = True
+    elif user and (user.id in [1087968824, 777000] or getattr(user, "username", "") == "GroupAnonymousBot"):
+        is_sender_exempt = True
+    elif not user or user.is_bot:
+        is_sender_exempt = True
+    elif await is_admin_or_owner(chat_id, user, bot, sender_chat=message.sender_chat):
+        is_sender_exempt = True
 
-    if not user or user.is_bot:
-        return
-
-    # 4. 100% Exempt Group Admins & @wolfmodyt from MODERATION
-    if await is_admin_or_owner(chat_id, user, bot, sender_chat=message.sender_chat):
+    # If sender is an Admin / Owner / Channel / Bot:
+    if is_sender_exempt:
+        # Check if they queried payment or script
+        if text and payment_detector.is_payment_query(text):
+            text_pay = get_payment_info_text()
+            await safe_answer(message, emoji_mgr.format_msg(text_pay), parse_mode="HTML", disable_web_page_preview=True)
+            return
+        if text and script_detector.is_script_query(text):
+            text_script = get_script_tool_info_text()
+            await safe_answer(message, emoji_mgr.format_msg(text_script), parse_mode="HTML", disable_web_page_preview=True)
+            return
         return
 
     # -------------------------------------------------------------
@@ -342,3 +339,19 @@ async def inspect_message(message: Message, bot: Bot):
             logger.info("Sent permanent security warning alert to chat %s for user %s", chat_id, user_id)
         except Exception as e:
             logger.error("Failed to send warning alert in chat %s: %s", chat_id, e)
+        return
+
+    # -------------------------------------------------------------
+    # 8. Check Payment & Script Queries for regular members (Clean message)
+    # -------------------------------------------------------------
+    if text and payment_detector.is_payment_query(text):
+        logger.info("Payment query detected from member: %r", text)
+        text_pay = get_payment_info_text()
+        await safe_answer(message, emoji_mgr.format_msg(text_pay), parse_mode="HTML", disable_web_page_preview=True)
+        return
+
+    if text and script_detector.is_script_query(text):
+        logger.info("Script query detected from member: %r", text)
+        text_script = get_script_tool_info_text()
+        await safe_answer(message, emoji_mgr.format_msg(text_script), parse_mode="HTML", disable_web_page_preview=True)
+        return

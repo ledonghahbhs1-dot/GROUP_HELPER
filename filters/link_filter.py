@@ -30,44 +30,47 @@ class LinkFilter:
         Checks if the message contains unauthorized links.
         Returns (is_violation: bool, detected_link: str)
         """
+        # Fetch whitelisted domains for this chat
+        whitelist = await db.get_whitelist_links(chat_id)
+
+        # 1. Direct Telegram Entity Check (URLs and Hyperlinks)
+        entities = (message.entities or []) + (message.caption_entities or [])
+        full_text = message.text or message.caption or ""
+        for ent in entities:
+            if ent.type == "url":
+                ent_url = full_text[ent.offset : ent.offset + ent.length]
+                if ent_url and not self._is_whitelisted(ent_url, whitelist):
+                    return True, f"Liên kết web ({ent_url})"
+            elif ent.type == "text_link" and ent.url:
+                if not self._is_whitelisted(ent.url, whitelist):
+                    return True, f"Liên kết ẩn ({ent.url})"
+
+        # 2. Extract all text content
         text_sources = []
         if message.text:
             text_sources.append(message.text)
         if message.caption:
             text_sources.append(message.caption)
 
-        # Check entity URLs (hidden hyperlinks)
-        entities = (message.entities or []) + (message.caption_entities or [])
-        for ent in entities:
-            if ent.type == "url":
-                full_text = message.text or message.caption or ""
-                ent_text = full_text[ent.offset : ent.offset + ent.length]
-                text_sources.append(ent_text)
-            elif ent.type == "text_link" and ent.url:
-                text_sources.append(ent.url)
-
         full_content = " ".join(text_sources)
         if not full_content:
             return False, ""
 
-        # Fetch whitelisted domains for this chat
-        whitelist = await db.get_whitelist_links(chat_id)
-
-        # Check Telegram Invites first
+        # 3. Check Telegram Invites
         tg_match = TELEGRAM_INVITE_REGEX.search(full_content)
         if tg_match:
             detected = tg_match.group(0)
             if not self._is_whitelisted(detected, whitelist):
                 return True, f"Link Telegram ({detected})"
 
-        # Check General URLs
+        # 4. Check General URLs
         url_match = URL_REGEX.search(full_content)
         if url_match:
             detected = url_match.group(0)
             if not self._is_whitelisted(detected, whitelist):
                 return True, f"Liên kết web ({detected})"
 
-        # Check Domain patterns
+        # 5. Check Domain patterns
         domain_match = DOMAIN_REGEX.search(full_content)
         if domain_match:
             detected = domain_match.group(0)
