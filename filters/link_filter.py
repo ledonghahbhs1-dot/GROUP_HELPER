@@ -20,7 +20,7 @@ DOMAIN_REGEX = re.compile(
 )
 
 TELEGRAM_INVITE_REGEX = re.compile(
-    r'(?:t\.me|telegram\.me|telegram\.dog)/(?:joinchat/|\+|[a-zA-Z0-9_]{5,})',
+    r'(?:https?://)?(?:t\.me|telegram\.me|telegram\.dog)/(?:joinchat/|\+|[a-zA-Z0-9_+/=-]+)',
     re.IGNORECASE
 )
 

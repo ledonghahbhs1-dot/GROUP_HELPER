@@ -294,14 +294,15 @@ async def inspect_message(message: Message, bot: Bot):
             await db.increment_stat(chat_id, "spam")
 
     # -------------------------------------------------------------
-    # Handle Violation in Group (English alerts + VIP icons + 30s auto delete)
+    # Handle Violation in Group (Immediate delete user msg + permanent warning)
     # -------------------------------------------------------------
     if violation_type:
-        # Delete offending message immediately
+        # Delete offending user message immediately
         try:
             await message.delete()
-        except Exception:
-            pass
+            logger.info("Deleted offending %s message (ID: %s) from user %s in chat %s", violation_type, message.message_id, user_id, chat_id)
+        except Exception as del_err:
+            logger.warning("Failed to delete offending message %s from user %s: %s", message.message_id, user_id, del_err)
 
         max_warns = settings.get("max_warns", config.DEFAULT_MAX_WARNS) # Default = 2
         warn_action = settings.get("warn_action", config.DEFAULT_WARN_ACTION) # Default = 'ban'
@@ -338,7 +339,7 @@ async def inspect_message(message: Message, bot: Bot):
                 f"{emoji_mgr.shield} <b>SECURITY WARNING ({current_warns}/{max_warns})</b> {emoji_mgr.vip}\n\n"
                 f"{emoji_mgr.warn} <b>Member:</b> {user_mention}\n"
                 f"{emoji_mgr.error} <b>Violation:</b> {violation_desc}\n"
-                f"{emoji_mgr.bell} <b>Action:</b> Offending message has been deleted.\n"
+                f"{emoji_mgr.bell} <b>Action:</b> Offending message has been deleted immediately.\n"
                 f"{emoji_mgr.star} <b>Warning Count:</b> <code>{current_warns}/{max_warns}</code>\n\n"
                 f"{emoji_mgr.diamond} <i>Maximum 2 warnings allowed. Exceeding 2 warnings will result in a permanent BAN!</i>"
             )
@@ -347,9 +348,8 @@ async def inspect_message(message: Message, bot: Bot):
         final_text = emoji_mgr.format_msg(alert_text)
 
         try:
-            sent_msg = await safe_send_message(bot, chat_id, final_text, parse_mode="HTML")
-            # Tự động xoá thông báo sau 30 giây (giữ thông báo hiện đủ 30 giây)
-            if settings.get("auto_delete_logs", 1):
-                schedule_auto_delete(sent_msg, config.AUTO_DELETE_LOGS_SEC)
+            # Send warning alert message without auto-deletion (kept permanent in chat)
+            await safe_send_message(bot, chat_id, final_text, parse_mode="HTML")
+            logger.info("Sent permanent security warning alert to chat %s for user %s", chat_id, user_id)
         except Exception as e:
             logger.error("Failed to send warning alert in chat %s: %s", chat_id, e)

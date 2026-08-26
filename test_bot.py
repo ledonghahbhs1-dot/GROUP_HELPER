@@ -123,6 +123,30 @@ async def test():
     assert "@inline_bot" in desc2
     print("Bot forward tests passed ✅")
     
+    print("8. Testing Link Filter...")
+    from filters.link_filter import link_filter
+    from aiogram.types import MessageEntity
+    
+    class MockLinkMsg:
+        def __init__(self, text=None, caption=None, entities=None, caption_entities=None):
+            self.text = text
+            self.caption = caption
+            self.entities = entities or []
+            self.caption_entities = caption_entities or []
+
+    has_link1, desc1 = await link_filter.check_links(MockLinkMsg(text="Join my group t.me/somegroup"), -100999999999)
+    assert has_link1 == True, "Telegram link should be detected"
+
+    has_link2, desc2 = await link_filter.check_links(MockLinkMsg(text="Check this link https://spam-site.xyz/promo"), -100999999999)
+    assert has_link2 == True, "Web URL should be detected"
+
+    has_link3, desc3 = await link_filter.check_links(MockLinkMsg(text="Join private invite https://t.me/+AbCdEfGh123"), -100999999999)
+    assert has_link3 == True, "Telegram invite + link should be detected"
+
+    has_link4, _ = await link_filter.check_links(MockLinkMsg(text="Hello bro how are you"), -100999999999)
+    assert has_link4 == False, "Normal message without link should pass"
+    print("Link filter tests passed ✅")
+
     print("\n==========================================")
     print("ALL TESTS PASSED WITH 100% SUCCESS! ✅")
     print("==========================================\n")
