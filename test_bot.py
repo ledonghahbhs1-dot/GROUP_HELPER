@@ -98,6 +98,30 @@ async def test():
     assert "DRAGON CITY TOOL AND SCRIPT" in script_text
     print("Script detector tests passed ✅")
 
+    print("7. Testing Bot Forward Detection...")
+    from handlers.message_handlers import check_bot_forward
+    from aiogram.types import MessageOriginUser, User
+    
+    bot_origin = MessageOriginUser(type="user", date=12345, sender_user=User(id=999, is_bot=True, first_name="SpamBot", username="spambot"))
+    human_origin = MessageOriginUser(type="user", date=12345, sender_user=User(id=888, is_bot=False, first_name="RealHuman", username="human"))
+    
+    class MockMsg:
+        def __init__(self, forward_origin=None, forward_from=None, via_bot=None):
+            self.forward_origin = forward_origin
+            self.forward_from = forward_from
+            self.via_bot = via_bot
+    
+    is_fwd_bot, desc1 = check_bot_forward(MockMsg(forward_origin=bot_origin))
+    assert is_fwd_bot == True, "Bot origin should be detected"
+    assert "@spambot" in desc1
+
+    is_fwd_human, _ = check_bot_forward(MockMsg(forward_origin=human_origin))
+    assert is_fwd_human == False, "Human origin should not be detected as bot"
+
+    is_via_bot, desc2 = check_bot_forward(MockMsg(via_bot=User(id=777, is_bot=True, first_name="InlineBot", username="inline_bot")))
+    assert is_via_bot == True, "Inline bot should be detected"
+    assert "@inline_bot" in desc2
+    print("Bot forward tests passed ✅")
     
     print("\n==========================================")
     print("ALL TESTS PASSED WITH 100% SUCCESS! ✅")

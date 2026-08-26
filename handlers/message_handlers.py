@@ -3,7 +3,7 @@ import html
 import time
 from datetime import datetime, timedelta
 from aiogram import Router, F, Bot
-from aiogram.types import Message, ChatPermissions
+from aiogram.types import Message, ChatPermissions, MessageOriginUser
 from database.db import db
 from utils.emoji_helper import emoji_mgr, safe_answer, safe_send_message, schedule_auto_delete, get_payment_info_text, get_script_tool_info_text
 from utils.auth import is_user_allowed_private, is_admin_or_owner
@@ -17,6 +17,29 @@ from filters.scam_filter import scam_detector
 import config
 
 router = Router(name="message_handlers")
+
+def check_bot_forward(message: Message) -> tuple[bool, str]:
+    """Check if message is forwarded from a bot or sent via an inline bot"""
+    # 1. aiogram 3.x MessageOrigin
+    if message.forward_origin:
+        if isinstance(message.forward_origin, MessageOriginUser) and message.forward_origin.sender_user.is_bot:
+            bot_user = message.forward_origin.sender_user
+            bot_handle = f"@{bot_user.username}" if bot_user.username else (bot_user.full_name or "Bot")
+            return True, f"Forwarded message from bot ({bot_handle})"
+
+    # 2. Legacy forward_from
+    if getattr(message, "forward_from", None) and message.forward_from.is_bot:
+        bot_user = message.forward_from
+        bot_handle = f"@{bot_user.username}" if bot_user.username else (bot_user.full_name or "Bot")
+        return True, f"Forwarded message from bot ({bot_handle})"
+
+    # 3. Via inline bot
+    if getattr(message, "via_bot", None) and message.via_bot:
+        bot_user = message.via_bot
+        bot_handle = f"@{bot_user.username}" if bot_user.username else (bot_user.full_name or "Bot")
+        return True, f"Sent via inline bot ({bot_handle})"
+
+    return False, ""
 
 async def apply_punishment(
     bot: Bot,
@@ -225,47 +248,25 @@ async def inspect_message(message: Message, bot: Bot):
                 pass
             return
 
-    # 6. Check Anti-Link / Bot Share
-    has_link, link_desc = await link_filter.check_links(message, chat_id)
-    if has_link:
-        try:
-            await message.delete()
-            logger.info(f"Deleted link message from user {user_id} in chat {chat_id}: {link_desc}")
-        except Exception as e:
-            logger.warning(f"Failed to delete link message: {e}")
-
-        alert_text = (
-            f"{emoji_mgr.shield} <b>LINK / BOT SHARING BLOCKED</b> {emoji_mgr.warn}\n\n"
-            f"{emoji_mgr.vip} <b>NOTICE:</b>\n"
-            f"Sharing bot links or unauthorized links is not allowed in this group.\n\n"
-            f"{emoji_mgr.error} <b>Detected:</b> <code>{html.escape(link_desc)}</code>\n\n"
-            f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-            f"{emoji_mgr.bell} <b>Bot / Link Bị Chặn Trong Nhóm Này</b>\n"
-            f"Vui lòng liên hệ Admin: {emoji_mgr.vip} <b>@wolfmodyt</b> {emoji_mgr.vip}\n"
-            f"━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        )
-        try:
-            alert_msg = await safe_send_message(bot, chat_id, emoji_mgr.format_msg(alert_text), parse_mode="HTML")
-            if alert_msg:
-                schedule_auto_delete(alert_msg, 60)
-        except Exception as e:
-            logger.error(f"Failed to send link alert: {e}")
-
-        try:
-            await db.increment_stat(chat_id, "link")
-        except:
-            pass
-        return
-
     # Load group settings
     settings = await db.get_chat_settings(chat_id)
     violation_type = None
     violation_desc = ""
 
     # -------------------------------------------------------------
+    # 1. Check Anti-Bot Forward / Inline Bot (anti_bot)
+    # -------------------------------------------------------------
+    if settings.get("anti_bot", 1):
+        is_bot_fwd, bot_fwd_desc = check_bot_forward(message)
+        if is_bot_fwd:
+            violation_type = "bot"
+            violation_desc = f"Bot Forward / Inline Bot [{html.escape(bot_fwd_desc)}]"
+            await db.increment_stat(chat_id, "bot_blocked")
+
+    # -------------------------------------------------------------
     # 2. Check Anti-Badwords / Toxicity
     # -------------------------------------------------------------
-    if settings.get("anti_badwords", 1) and text:
+    if not violation_type and settings.get("anti_badwords", 1) and text:
         is_profane, matched_word = await profanity_filter.check_profanity(text, chat_id)
         if is_profane:
             violation_type = "badwords"
@@ -273,7 +274,7 @@ async def inspect_message(message: Message, bot: Bot):
             await db.increment_stat(chat_id, "badwords")
 
     # -------------------------------------------------------------
-    # 3. Check Anti-Link (if no badwords found)
+    # 3. Check Anti-Link
     # -------------------------------------------------------------
     if not violation_type and settings.get("anti_link", 1):
         has_link, link_desc = await link_filter.check_links(message, chat_id)
