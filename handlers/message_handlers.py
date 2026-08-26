@@ -175,42 +175,31 @@ async def inspect_message(message: Message, bot: Bot):
     # BELOW THIS LINE: MODERATION FOR REGULAR MEMBERS
     # -------------------------------------------------------------
 
-    # 5. Check Scam/Fraud Detection (HIGHEST PRIORITY)
+    # 5. Check Scam/Fraud/Spam Accusation Detection (HIGHEST PRIORITY)
     if text:
         is_scam, matched_keyword = scam_detector.is_scam_message(text)
         if is_scam:
             user_name = user.full_name
             user_mention = f"<a href='tg://user?id={user_id}'>{html.escape(user_name)}</a>"
             evidence_text = (
-                f"{emoji_mgr.shield} <b>SCAM / FRAUD ALERT</b> {emoji_mgr.warn}\n\n"
-                f"{emoji_mgr.bell} <b>User ID:</b> <code>{user_id}</code>\n"
-                f"{emoji_mgr.bell} <b>Member:</b> {user_mention}\n"
-                f"{emoji_mgr.error} <b>Detected Keyword:</b> <code>{html.escape(matched_keyword)}</code>\n\n"
+                f"{emoji_mgr.shield} <b>SECURITY ALERT - EVIDENCE REQUIRED</b> {emoji_mgr.vip}\n\n"
+                f"{emoji_mgr.bell} <b>User:</b> {user_mention} (<code>{user_id}</code>)\n"
+                f"{emoji_mgr.warn} <b>Detected Keyword:</b> <code>{html.escape(matched_keyword)}</code>\n\n"
                 f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
                 f"{emoji_mgr.star} <b>PLEASE PROVIDE EVIDENCE</b>\n\n"
-                f"Your message contains a scam-related keyword: <b>{html.escape(matched_keyword)}</b>\n\n"
-                f"<b>If you are reporting a REAL SCAM:</b>\n"
-                f"• Reply to this message with EVIDENCE\n"
-                f"• Provide screenshots, transaction IDs, or proof\n"
-                f"• Describe what happened in detail\n\n"
-                f"<b>If this is a FALSE ALARM:</b>\n"
-                f"• Please explain the context\n\n"
+                f"• If you are reporting scam, spam, or abuse, please reply to this message with <b>screenshots, transaction IDs, links, or proof</b>.\n"
+                f"• Describe what happened in detail so administrators can review.\n\n"
+                f"{emoji_mgr.diamond} <b>If this is a false alarm / normal conversation:</b>\n"
+                f"• Please clarify the context.\n\n"
                 f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
                 f"{emoji_mgr.vip} <b>Contact Admin:</b> @wolfmodyt"
             )
-            # Delete user's scam message after 2 minutes
-            try:
-                schedule_auto_delete(message, 120)
-                logger.info(f"Scheduled deletion of scam message from user {user_id} in 120s")
-            except Exception as e:
-                logger.warning(f"Failed to schedule message deletion: {e}")
-
-            # Reply to user with evidence request
+            # DO NOT delete user's message (as requested), reply with English evidence request + VIP icons
             try:
                 await safe_answer(message, emoji_mgr.format_msg(evidence_text), parse_mode="HTML")
-                logger.info(f"Scam alert replied to user {user_id}")
+                logger.info(f"Evidence request sent to user {user_id} in chat {chat_id} (keyword: {matched_keyword})")
             except Exception as e:
-                logger.error(f"Failed to reply scam alert: {e}")
+                logger.error(f"Failed to reply evidence request: {e}")
 
             # Forward original message + report to admin
             if config.OWNER_IDS and len(config.OWNER_IDS) > 0 and config.OWNER_IDS[0] > 0:

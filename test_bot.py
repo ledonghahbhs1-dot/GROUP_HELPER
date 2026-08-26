@@ -146,6 +146,25 @@ async def test():
     has_link4, _ = await link_filter.check_links(MockLinkMsg(text="Hello bro how are you"), -100999999999)
     assert has_link4 == False, "Normal message without link should pass"
     print("Link filter tests passed ✅")
+    
+    print("9. Testing Scam & Spam Accusation Detection...")
+    from filters.scam_filter import scam_detector
+    
+    is_scam1, kw1 = scam_detector.is_scam_message("thằng này lừa đảo anh em cẩn thận")
+    assert is_scam1 == True and "lừa đảo" in kw1
+    
+    is_scam2, kw2 = scam_detector.is_scam_message("this guy is a scammer and fraud")
+    assert is_scam2 == True and ("scam" in kw2 or "fraud" in kw2)
+    
+    is_scam3, kw3 = scam_detector.is_scam_message("report thằng này spam bot")
+    assert is_scam3 == True and "spam" in kw3
+    
+    is_scam4, kw4 = scam_detector.is_scam_message("nó bùng tiền của tôi rồi")
+    assert is_scam4 == True and "bùng tiền" in kw4
+    
+    is_scam5, _ = scam_detector.is_scam_message("hello admin, how are you today?")
+    assert is_scam5 == False
+    print("Scam & Spam detection tests passed ✅")
 
     print("\n==========================================")
     print("ALL TESTS PASSED WITH 100% SUCCESS! ✅")

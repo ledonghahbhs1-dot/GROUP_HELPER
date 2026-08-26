@@ -5,20 +5,21 @@ from utils.text_cleaner import normalize_text_for_filter
 # 100+ Scam/Fraud Related Keywords (Multiple Languages: English, Vietnamese, Spanish, Portuguese, Chinese, Russian, French, etc.)
 SCAM_KEYWORDS_RAW = [
     # ===== ENGLISH (30+ keywords) =====
-    "scam", "scammer", "fraud", "fraudster", "con", "con artist", "phishing", "phish",
+    "scam", "scammer", "scamming", "fraud", "fraudster", "con", "con artist", "phishing", "phish",
     "stealing", "steal", "money laundering", "ponzi", "pyramid scheme", "fake",
     "counterfeit", "bogus", "trick", "deceive", "deception", "misleading",
     "cheating", "cheat", "hustle", "ripoff", "rip off", "ripoff artist",
-    "blackmail", "extortion", "embezzlement", "swindle", "scheme",
+    "blackmail", "extortion", "embezzlement", "swindle", "scheme", "spam", "spammer", "spamming", "spamer",
 
     # ===== VIETNAMESE (30+ keywords) =====
-    "lừa", "lừa đảo", "lừa danh", "lừa tiền", "lừa dối", "scam", "scammer",
+    "lừa", "lừa đảo", "lừa danh", "lừa tiền", "lừa dối", "scam", "scammer", "spam", "spamer",
     "gian lận", "gian dối", "chiếm đoạt", "chiếm doat", "đánh cắp", "danh cap",
     "khống chế tài khoản", "hacker", "giả mạo", "gia mao", "mạo danh", "mao danh",
     "ăn cơm nhà không trả tiền", "khũ khu", "khư khư", "chơi xấu", "chơi khăm",
     "lũng đoạn", "lung doan", "độc quyền", "độc lập", "thao túng", "thao tung",
     "tham nhũng", "tham nhung", "rửa tiền", "rua tien", "bán thân", "ban than",
     "lạm dụng", "lam dung", "công cộng", "cong cong", "tội danh", "toi danh",
+    "bùng tiền", "bung tien", "quỵt tiền", "quyt tien", "bóc phốt", "boc phot", "phốt", "phot", "tố cáo", "to cao", "tố scam", "to scam",
 
     # ===== SPANISH (15+ keywords) =====
     "estafa", "estafador", "fraude", "defraudador", "engaño", "engañar",
@@ -66,14 +67,17 @@ SCAM_KEYWORDS_RAW = [
 
 class ScamDetector:
     def __init__(self):
-        self.keywords: Set[str] = set()
+        keywords_set: Set[str] = set()
         self.language_map = {}
 
         for kw in SCAM_KEYWORDS_RAW:
             clean = normalize_text_for_filter(kw.strip().lower())
             if clean:
-                self.keywords.add(clean)
-            self.keywords.add(kw.strip().lower())
+                keywords_set.add(clean)
+            keywords_set.add(kw.strip().lower())
+
+        # Sort by length descending so longer compound phrases match first
+        self.keywords_sorted = sorted(keywords_set, key=lambda x: len(x), reverse=True)
 
     def is_scam_message(self, text: str) -> Tuple[bool, str]:
         """
@@ -87,7 +91,7 @@ class ScamDetector:
         normalized = normalize_text_for_filter(text_lower)
 
         # Check keywords with word boundaries
-        for kw in self.keywords:
+        for kw in self.keywords_sorted:
             pattern = r'(?:\b|\s|^)' + re.escape(kw) + r'(?:\b|\s|$)'
             if re.search(pattern, text_lower) or re.search(pattern, normalized):
                 return True, kw

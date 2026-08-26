@@ -29,26 +29,19 @@ async def handle_scam_message(
 
     user_mention = f"<a href='tg://user?id={user_id}'>{html.escape(user_name)}</a>"
 
-    # Evidence request message - ENGLISH with VIP emoji icons
+    # Evidence request message - ENGLISH with VIP emoji icons (do NOT delete user message)
     evidence_text = (
-        f"{emoji_mgr.shield} <b>SCAM / FRAUD ALERT</b> {emoji_mgr.warn}\n\n"
-        f"{emoji_mgr.bell} <b>User ID:</b> <code>{user_id}</code>\n"
-        f"{emoji_mgr.bell} <b>Member:</b> {user_mention}\n"
-        f"{emoji_mgr.error} <b>Detected Keyword:</b> <code>{html.escape(matched_keyword)}</code>\n\n"
+        f"{emoji_mgr.shield} <b>SECURITY ALERT - EVIDENCE REQUIRED</b> {emoji_mgr.vip}\n\n"
+        f"{emoji_mgr.bell} <b>User:</b> {user_mention} (<code>{user_id}</code>)\n"
+        f"{emoji_mgr.warn} <b>Detected Keyword:</b> <code>{html.escape(matched_keyword)}</code>\n\n"
         f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
         f"{emoji_mgr.star} <b>PLEASE PROVIDE EVIDENCE</b>\n\n"
-        f"Your message contains a scam-related keyword: <b>{html.escape(matched_keyword)}</b>\n\n"
-        f"<b>If you are reporting a REAL SCAM:</b>\n"
-        f"• Reply to this message with EVIDENCE\n"
-        f"• Provide screenshots, transaction IDs, or proof\n"
-        f"• Describe what happened in detail\n"
-        f"• This information will be reviewed by administrators\n\n"
-        f"<b>If this is a FALSE ALARM:</b>\n"
-        f"• Please explain the context\n"
-        f"• Administrators will review and determine if action is needed\n\n"
+        f"• If you are reporting scam, spam, or abuse, please reply to this message with <b>screenshots, transaction IDs, links, or proof</b>.\n"
+        f"• Describe what happened in detail so administrators can review.\n\n"
+        f"{emoji_mgr.diamond} <b>If this is a false alarm / normal conversation:</b>\n"
+        f"• Please clarify the context.\n\n"
         f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"{emoji_mgr.vip} <b>Contact Admin:</b> @wolfmodyt\n"
-        f"{emoji_mgr.lock} <b>Status:</b> Report forwarded to administrators"
+        f"{emoji_mgr.vip} <b>Contact Admin:</b> @wolfmodyt"
     )
 
     try:
