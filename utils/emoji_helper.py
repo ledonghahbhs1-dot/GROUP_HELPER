@@ -37,12 +37,11 @@ class EmojiManager:
             if not fallback:
                 fallback = config.DEFAULT_EMOJIS[key_lower].get("fallback", "")
 
-        if not fallback:
-            fallback = "✨"
-
         if emoji_id and emoji_id.isdigit():
             return f'<tg-emoji emoji-id="{emoji_id}">{fallback}</tg-emoji>'
-        return fallback
+
+        # Icon nào không có ID VIP thì không dùng (trả về chuỗi rỗng)
+        return ""
 
     # Custom Emojis requested by user (Real valid IDs)
     @property

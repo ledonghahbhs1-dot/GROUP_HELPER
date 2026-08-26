@@ -54,6 +54,7 @@ async def test():
     assert "5211129162206560202" in sig or "wolfmodyt" in sig
     assert "5213205860498549992" in emoji_mgr.clock
     assert "5213205860498549992" in emoji_mgr.warn
+    assert emoji_mgr.get("unknown_non_vip_key") == "", "Any icon without a VIP ID must not be used (return empty string)"
 
     
     print("4. Testing Emoji Fallback Stripper...")
