@@ -1,5 +1,6 @@
 import asyncio
 import html
+import time
 from aiogram import Router, F, Bot
 from aiogram.types import ChatMemberUpdated, Message, ChatPermissions
 from aiogram.filters.chat_member_updated import ChatMemberUpdatedFilter, MEMBER, KICKED, LEFT, RESTRICTED
@@ -10,6 +11,57 @@ from utils.logger import logger
 import config
 
 router = Router(name="member_handlers")
+
+# Prevent duplicate welcome messages for same user within 30s
+_welcomed_users = {}
+
+def should_welcome(chat_id: int, user_id: int) -> bool:
+    now = time.time()
+    # Expire old records (> 5 mins)
+    expired = [k for k, v in _welcomed_users.items() if now - v > 300]
+    for k in expired:
+        _welcomed_users.pop(k, None)
+
+    last_time = _welcomed_users.get((chat_id, user_id), 0)
+    if now - last_time < 30:
+        return False
+    _welcomed_users[(chat_id, user_id)] = now
+    return True
+
+def build_welcome_text(chat_title: str, user_id: int, user_name: str) -> str:
+    """Build English VIP welcome message with Admin info and Group rules"""
+    user_mention = f"<a href='tg://user?id={user_id}'>{html.escape(user_name)}</a>"
+    group_name = html.escape(chat_title or "OUR GROUP")
+    text = (
+        f"{emoji_mgr.vip} <b>WELCOME TO {group_name.upper()}!</b> {emoji_mgr.vip}\n\n"
+        f"{emoji_mgr.star} <b>Welcome member:</b> {user_mention} (<code>{user_id}</code>)\n\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"{emoji_mgr.shield} <b>ADMIN & SUPPORT CONTACT:</b>\n"
+        f"• <b>Owner / Master Admin:</b> @wolfmodyt 👑\n"
+        f"• <b>Payment Methods (VIP Key):</b> Type <code>pay</code> in chat or DM @wolfmodyt\n"
+        f"• <b>Dragon City Tool & Script:</b> Type <code>tool</code> or <code>script</code>\n\n"
+        f"{emoji_mgr.warn} <b>GROUP RULES & DEFENSE:</b>\n"
+        f"• No spamming or excessive flood messages\n"
+        f"• No unauthorized links / Telegram invite links\n"
+        f"• No forwarded messages from bots\n"
+        f"• <i>Violators will receive warnings (2 warnings = PERMANENT BAN).</i>\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"{emoji_mgr.diamond} <i>Wishing you a wonderful experience!</i>"
+    )
+    return emoji_mgr.format_msg(text)
+
+async def handle_welcome_for_user(bot: Bot, chat_id: int, chat_title: str, user):
+    """Sends welcome message if not already sent recently"""
+    if not user or user.is_bot:
+        return
+    if not should_welcome(chat_id, user.id):
+        return
+    try:
+        welcome_text = build_welcome_text(chat_title or "THE GROUP", user.id, user.full_name)
+        await safe_send_message(bot, chat_id, welcome_text, parse_mode="HTML")
+        logger.info("Sent welcome message to user %s in chat %s", user.id, chat_id)
+    except Exception as e:
+        logger.error("Failed to send welcome message to user %s: %s", user.id, e)
 
 @router.chat_member(ChatMemberUpdatedFilter(member_status_changed=MEMBER))
 async def on_user_or_bot_join(event: ChatMemberUpdated, bot: Bot):
@@ -24,7 +76,7 @@ async def on_user_or_bot_join(event: ChatMemberUpdated, bot: Bot):
     if event.chat.type not in ["group", "supergroup"]:
         return
 
-    # Check if the joined member is a BOT
+    # 1. Check if the joined member is a BOT
     if new_user.is_bot:
         bot_info = await bot.get_me()
         if new_user.id == bot_info.id:
@@ -37,11 +89,11 @@ async def on_user_or_bot_join(event: ChatMemberUpdated, bot: Bot):
 
             if not is_admin:
                 try:
-                    # 1. Ban/Kick the unauthorized bot immediately
+                    # Ban/Kick the unauthorized bot immediately
                     await bot.ban_chat_member(chat_id, new_user.id)
                     await db.increment_stat(chat_id, "bot_blocked")
 
-                    # 2. Build English VIP notification message
+                    # Build English VIP notification message
                     inviter_name = html.escape(inviter.full_name) if inviter else "Unknown"
                     inviter_mention = f"<a href='tg://user?id={inviter.id}'>{inviter_name}</a>" if inviter else "Unknown"
                     bot_name = html.escape(new_user.full_name)
@@ -56,33 +108,33 @@ async def on_user_or_bot_join(event: ChatMemberUpdated, bot: Bot):
                     )
                     final_text = emoji_mgr.format_msg(alert_text)
                     msg = await safe_send_message(bot, chat_id, final_text, parse_mode="HTML")
-                    # Tự động xoá thông báo sau 30 giây (giữ thông báo hiện đủ 30 giây)
                     if settings.get("auto_delete_logs", 1):
                         schedule_auto_delete(msg, config.AUTO_DELETE_LOGS_SEC)
 
                 except Exception as e:
                     logger.error("Failed to kick unauthorized bot %s: %s", new_user.id, e)
+        return
+
+    # 2. Regular human member joined -> Send Welcome & Admin Info
+    await handle_welcome_for_user(bot, chat_id, event.chat.title or "THE GROUP", new_user)
 
 @router.message(F.new_chat_members)
 async def on_new_chat_members(message: Message, bot: Bot):
     """
-    Fallback handler for new chat members message
+    Fallback handler for new chat members service message
     """
     chat_id = message.chat.id
     if message.chat.type not in ["group", "supergroup"]:
         return
 
     settings = await db.get_chat_settings(chat_id)
-    if not settings.get("anti_bot", 1):
-        return
-
     bot_info = await bot.get_me()
     inviter = message.from_user
     is_admin = await is_admin_or_owner(chat_id, inviter, bot, sender_chat=message.sender_chat)
 
     for member in message.new_chat_members:
-        if member.is_bot and member.id != bot_info.id:
-            if not is_admin:
+        if member.is_bot:
+            if member.id != bot_info.id and settings.get("anti_bot", 1) and not is_admin:
                 try:
                     await bot.ban_chat_member(chat_id, member.id)
                     await db.increment_stat(chat_id, "bot_blocked")
@@ -108,3 +160,6 @@ async def on_new_chat_members(message: Message, bot: Bot):
                         schedule_auto_delete(sent, config.AUTO_DELETE_LOGS_SEC)
                 except Exception as e:
                     logger.error("Error auto-kicking bot: %s", e)
+        else:
+            # Human member joined
+            await handle_welcome_for_user(bot, chat_id, message.chat.title or "THE GROUP", member)

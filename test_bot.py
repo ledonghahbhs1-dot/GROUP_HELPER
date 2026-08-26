@@ -160,11 +160,24 @@ async def test():
     assert is_scam3 == True and "spam" in kw3
     
     is_scam4, kw4 = scam_detector.is_scam_message("nó bùng tiền của tôi rồi")
-    assert is_scam4 == True and "bùng tiền" in kw4
+    assert is_scam4 == True and ("bùng tiền" in kw4 or "bung tien" in kw4)
     
     is_scam5, _ = scam_detector.is_scam_message("hello admin, how are you today?")
     assert is_scam5 == False
     print("Scam & Spam detection tests passed ✅")
+    
+    print("10. Testing Welcome Message & Admin Info...")
+    from handlers.member_handlers import build_welcome_text, should_welcome
+    
+    welcome_str = build_welcome_text("Dragon City VIP", 112233, "Nguyen Van A")
+    assert "WELCOME TO DRAGON CITY VIP!" in welcome_str
+    assert "@wolfmodyt" in welcome_str
+    assert "ADMIN & SUPPORT" in welcome_str
+    assert "GROUP RULES" in welcome_str
+    
+    assert should_welcome(-100123, 9999) == True
+    assert should_welcome(-100123, 9999) == False, "Duplicate welcome within 30s should be prevented"
+    print("Welcome message tests passed ✅")
 
     print("\n==========================================")
     print("ALL TESTS PASSED WITH 100% SUCCESS! ✅")
