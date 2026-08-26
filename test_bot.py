@@ -18,9 +18,10 @@ from filters.profanity_filter import profanity_filter
 from filters.link_filter import link_filter
 
 class MockUser:
-    def __init__(self, user_id, username):
+    def __init__(self, user_id, username, full_name=None):
         self.id = user_id
         self.username = username
+        self.full_name = full_name or username
 
 class MockBot:
     pass
@@ -178,6 +179,38 @@ async def test():
     assert should_welcome(-100123, 9999) == True
     assert should_welcome(-100123, 9999) == False, "Duplicate welcome within 30s should be prevented"
     print("Welcome message tests passed ✅")
+    
+    print("11. Testing Target ID Resolution for Admin Commands...")
+    from handlers.admin_handlers import resolve_target
+    from aiogram.filters import CommandObject
+    
+    class MockTargetMsg:
+        def __init__(self, reply_to_message=None):
+            self.reply_to_message = reply_to_message
+
+    class MockRepliedMsg:
+        def __init__(self, from_user=None, sender_chat=None):
+            self.from_user = from_user
+            self.sender_chat = sender_chat
+
+    # Case 1: ID provided in arguments
+    cmd_with_id = CommandObject(prefix="/", command="warn", args="987654321 spamming links")
+    t_id1, t_name1, rem1 = resolve_target(MockTargetMsg(), cmd_with_id)
+    assert t_id1 == 987654321
+    assert rem1 == "spamming links"
+
+    # Case 2: ID resolved from reply message
+    cmd_no_args = CommandObject(prefix="/", command="ban", args="rule violation")
+    replied_user = MockUser(555666, "badguy")
+    t_id2, t_name2, rem2 = resolve_target(MockTargetMsg(reply_to_message=MockRepliedMsg(from_user=replied_user)), cmd_no_args)
+    assert t_id2 == 555666
+    assert rem2 == "rule violation"
+
+    # Case 3: No ID provided and no reply -> Must return None
+    cmd_empty = CommandObject(prefix="/", command="kick", args="")
+    t_id3, _, _ = resolve_target(MockTargetMsg(), cmd_empty)
+    assert t_id3 is None, "Should not resolve target when no ID and no reply"
+    print("Target ID Resolution tests passed ✅")
 
     print("\n==========================================")
     print("ALL TESTS PASSED WITH 100% SUCCESS! ✅")
