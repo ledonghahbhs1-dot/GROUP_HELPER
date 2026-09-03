@@ -286,17 +286,34 @@ async def test():
     t_id3, _, _ = await resolve_target(MockTargetMsg(), MockBot(), cmd_empty)
     assert t_id3 is None, "Should not resolve target when no ID and no reply"
 
-    # Case 6: parse_admin_cmd helper with username and numeric ID
+    # Case 6: Banned Users Database & Username Resolution for already-banned users
+    await db.add_banned_user(-100123456, 777888999, "bannedguy", "Banned Guy", "Violated rules")
+    banned_list = await db.get_banned_users(-100123456)
+    assert any(u["user_id"] == 777888999 for u in banned_list), "Banned user must be in banned_list"
+    
+    # Resolving already banned user by @username
+    t_id_banned, _, _ = await resolve_target(MockTargetMsg(), MockBot(), raw_args="@bannedguy")
+    assert t_id_banned == 777888999, f"Expected 777888999 for @bannedguy, got {t_id_banned}"
+    
+    # Remove from banned list
+    await db.remove_banned_user(-100123456, 777888999)
+    banned_list_after = await db.get_banned_users(-100123456)
+    assert not any(u["user_id"] == 777888999 for u in banned_list_after)
+
+    # Case 7: parse_admin_cmd helper with username, banlist and numeric ID
     assert parse_admin_cmd("warn 123456789 spam", False) == ("warn", "123456789 spam")
     assert parse_admin_cmd("unban @masteroogwayv1", False) == ("unban", "@masteroogwayv1")
     assert parse_admin_cmd("unwarn @masteroogwayv1", False) == ("unwarn", "@masteroogwayv1")
     assert parse_admin_cmd("ban @masteroogwayv1", False) == ("ban", "@masteroogwayv1")
     assert parse_admin_cmd("/unban @masteroogwayv1", False) == ("unban", "@masteroogwayv1")
     assert parse_admin_cmd("/unwarn @masteroogwayv1", False) == ("unwarn", "@masteroogwayv1")
+    assert parse_admin_cmd("banlist", False) == ("banlist", "")
+    assert parse_admin_cmd("banned", False) == ("banned", "")
+    assert parse_admin_cmd("/banlist", False) == ("banlist", "")
     assert parse_admin_cmd("warn", True) == ("warn", "")
     assert parse_admin_cmd("ban", True) == ("ban", "")
     assert parse_admin_cmd("i warn you", False) is None
-    print("Target ID Resolution & @Username Resolution tests passed ✅")
+    print("Target ID Resolution, Banned Users Registry & Command Parser tests passed ✅")
 
     print("\n==========================================")
     print("ALL TESTS PASSED WITH 100% SUCCESS! ✅")

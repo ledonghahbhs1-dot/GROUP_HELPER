@@ -105,14 +105,20 @@ async def resolve_target(
                             await db.save_user(u.id, u.username or "", u.full_name or "")
                             return u.id, u.full_name or f"@{clean_uname}", rem
 
-                # 2.2 Check Database user cache
+                # 2.2 Check Database user cache & banned users
                 cached = await db.get_user_by_username(clean_uname)
                 if cached and cached.get("user_id"):
                     name = cached.get("full_name") or f"@{cached.get('username', clean_uname)}"
                     return cached["user_id"], name, rem
 
-                # 2.3 Check group administrators
                 chat_obj = getattr(message, "chat", None)
+                c_id = getattr(chat_obj, "id", None) if chat_obj else None
+                banned_cached = await db.get_banned_user_by_username(clean_uname, chat_id=c_id)
+                if banned_cached and banned_cached.get("user_id"):
+                    name = banned_cached.get("full_name") or f"@{banned_cached.get('username', clean_uname)}"
+                    return banned_cached["user_id"], name, rem
+
+                # 2.3 Check group administrators
                 if bot and chat_obj and getattr(chat_obj, "type", "") in ["group", "supergroup"]:
                     try:
                         admins = await bot.get_chat_administrators(chat_obj.id)
@@ -126,11 +132,11 @@ async def resolve_target(
                 # 2.4 Try Telegram API bot.get_chat(@username)
                 if bot:
                     try:
-                        chat_obj = await bot.get_chat(f"@{clean_uname}")
-                        if chat_obj and chat_obj.id:
-                            name = chat_obj.full_name or f"@{clean_uname}"
-                            await db.save_user(chat_obj.id, clean_uname, name)
-                            return chat_obj.id, name, rem
+                        chat_obj_tg = await bot.get_chat(f"@{clean_uname}")
+                        if chat_obj_tg and chat_obj_tg.id:
+                            name = chat_obj_tg.full_name or f"@{clean_uname}"
+                            await db.save_user(chat_obj_tg.id, clean_uname, name)
+                            return chat_obj_tg.id, name, rem
                     except Exception:
                         pass
 
@@ -169,11 +175,13 @@ def parse_admin_cmd(text: str, has_reply: bool) -> Optional[tuple[str, str]]:
     Returns (command_name, args_string) or None if normal chat text.
     """
     text = (text or "").strip()
-    m = re.match(r'^(?:/|!|)(warn|ban|unwarn|unban|resetwarns|clearwarns|mute|unmute|kick|warns)\b(?:\s+(.*))?$', text, re.IGNORECASE)
+    m = re.match(r'^(?:/|!|)(warn|ban|unwarn|unban|resetwarns|clearwarns|mute|unmute|kick|warns|banlist|banned)\b(?:\s+(.*))?$', text, re.IGNORECASE)
     if not m:
         return None
     cmd = m.group(1).lower()
     args = (m.group(2) or "").strip()
+    if cmd in ["banlist", "banned"]:
+        return cmd, args
     is_slash = text.startswith(('/', '!'))
     if not is_slash:
         if not has_reply:
@@ -806,6 +814,8 @@ async def execute_ban(message: Message, bot: Bot, command: Optional[CommandObjec
     try:
         await bot.ban_chat_member(chat_id, target_id)
         await db.reset_warns(chat_id, target_id)
+        u_uname = target_name.lstrip("@") if target_name.startswith("@") else ""
+        await db.add_banned_user(chat_id, target_id, u_uname, target_name, reason)
         target_mention = f"<a href='tg://user?id={target_id}'>{html.escape(target_name)}</a>"
         text = (
             f"{emoji_mgr.ban} <b>PERMANENTLY BANNED / ĐÃ CẤM VĨNH VIỄN</b> {emoji_mgr.vip}\n\n"
@@ -813,7 +823,10 @@ async def execute_ban(message: Message, bot: Bot, command: Optional[CommandObjec
             f"{emoji_mgr.error} <b>Reason:</b> {html.escape(reason)}\n"
             f"{emoji_mgr.shield} <b>Action:</b> <i>Banned permanently from the group.</i>"
         )
-        await safe_answer(message, emoji_mgr.format_msg(text), parse_mode="HTML")
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="🔓 Gỡ cấm (Unban)", callback_data=f"quick_unban:{target_id}")]
+        ])
+        await safe_answer(message, emoji_mgr.format_msg(text), reply_markup=keyboard, parse_mode="HTML")
     except Exception as e:
         await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.error} Error banning user: {e}"))
 
@@ -831,7 +844,7 @@ async def execute_unban(message: Message, bot: Bot, command: Optional[CommandObj
     target_id, target_name, _ = await resolve_target(message, bot, command, raw_args)
     if not target_id:
         if target_name and target_name.startswith("@"):
-            err_txt = f"{emoji_mgr.warn} <b>KHÔNG TÌM THẤY USERNAME:</b> Không tìm thấy User ID cho {html.escape(target_name)} trong dữ liệu nhóm!\n\n💡 Vui lòng reply trực tiếp tin nhắn của thành viên hoặc nhập User ID (vd: <code>/unban 123456789</code>)!"
+            err_txt = f"{emoji_mgr.warn} <b>KHÔNG TÌM THẤY USERNAME:</b> Không tìm thấy User ID cho {html.escape(target_name)} trong dữ liệu nhóm!\n\n💡 Vui lòng gõ <code>/banlist</code> để xem danh sách bị ban và gỡ 1-chạm, hoặc nhập User ID (vd: <code>/unban 123456789</code>)!"
         else:
             err_txt = f"{emoji_mgr.warn} <b>LỆNH YÊU CẦU ID HOẶC USERNAME:</b> Vui lòng nhập @username, ID hoặc reply tin nhắn (vd: <code>/unban @masteroogwayv1</code> hoặc <code>/unban 123456789</code>)!"
         err_msg = await safe_answer(message, emoji_mgr.format_msg(err_txt), parse_mode="HTML")
@@ -849,6 +862,7 @@ async def execute_unban(message: Message, bot: Bot, command: Optional[CommandObj
     try:
         await bot.unban_chat_member(chat_id, target_id)
         await db.reset_warns(chat_id, target_id)
+        await db.remove_banned_user(chat_id, target_id)
         target_mention = f"<a href='tg://user?id={target_id}'>{html.escape(target_name)}</a>"
         text = (
             f"{emoji_mgr.star} <b>MEMBER UNBANNED / ĐÃ GỠ CẤM</b> {emoji_mgr.vip}\n\n"
@@ -862,6 +876,38 @@ async def execute_unban(message: Message, bot: Bot, command: Optional[CommandObj
 @router.message(Command("unban", prefix="/!"))
 async def cmd_unban(message: Message, command: CommandObject, bot: Bot):
     await execute_unban(message, bot, command=command)
+
+async def execute_banlist(message: Message, bot: Bot):
+    chat_id = message.chat.id
+    if message.chat.type == "private":
+        return
+    if not await require_admin(message, bot):
+        return
+
+    banned_list = await db.get_banned_users(chat_id, limit=30)
+    if not banned_list:
+        text = f"{emoji_mgr.shield} <b>DANH SÁCH BAN / BANNED LIST</b> {emoji_mgr.vip}\n\nHiện tại nhóm không có thành viên nào trong danh sách bị cấm!"
+        await safe_answer(message, emoji_mgr.format_msg(text), parse_mode="HTML")
+        return
+
+    lines = [f"{emoji_mgr.ban} <b>DANH SÁCH THÀNH VIÊN ĐÃ BỊ CẤM ({len(banned_list)})</b> {emoji_mgr.vip}\n"]
+    buttons = []
+    for idx, u in enumerate(banned_list, 1):
+        u_id = u["user_id"]
+        u_name = u["full_name"] or f"User {u_id}"
+        u_uname = f"(@{u['username']})" if u.get("username") else ""
+        reason = u.get("reason") or "Rule violation"
+        lines.append(f"<b>{idx}.</b> <a href='tg://user?id={u_id}'>{html.escape(u_name)}</a> {html.escape(u_uname)}\n└ ID: <code>{u_id}</code> | Lý do: <i>{html.escape(reason)}</i>")
+        btn_label = f"🔓 Gỡ {u['username'] or u_id}"[:30]
+        buttons.append([InlineKeyboardButton(text=btn_label, callback_data=f"quick_unban:{u_id}")])
+
+    lines.append(f"\n💡 <i>Bấm nút bên dưới để gỡ cấm ngay lập tức hoặc gõ:</i> <code>/unban &lt;ID hoặc @username&gt;</code>")
+    keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
+    await safe_answer(message, emoji_mgr.format_msg("\n".join(lines)), reply_markup=keyboard, parse_mode="HTML")
+
+@router.message(Command("banlist", "banned", prefix="/!"))
+async def cmd_banlist(message: Message, bot: Bot):
+    await execute_banlist(message, bot)
 
 async def execute_resetwarns(message: Message, bot: Bot, command: Optional[CommandObject] = None, raw_args: str = ""):
     chat_id = message.chat.id
@@ -931,6 +977,8 @@ async def handle_plain_admin_commands(message: Message, bot: Bot):
         await execute_unmute(message, bot, raw_args=args)
     elif cmd == "kick":
         await execute_kick(message, bot, raw_args=args)
+    elif cmd in ["banlist", "banned"]:
+        await execute_banlist(message, bot)
 
 # -------------------------------------------------------------
 # BANNED WORDS MANAGEMENT (ADMIN ONLY)

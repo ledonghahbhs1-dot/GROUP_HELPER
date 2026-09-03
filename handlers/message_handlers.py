@@ -58,6 +58,7 @@ async def apply_punishment(
     if action_lower == "ban":
         try:
             await bot.ban_chat_member(chat_id=chat_id, user_id=user_id)
+            await db.add_banned_user(chat_id, user_id, "", user_name, reason)
             return f"{emoji_mgr.ban} <b>PERMANENTLY BANNED:</b> {user_mention} has been permanently banned from the group for exceeding warning limits!"
         except Exception as e:
             logger.error("Failed to ban user %s: %s", user_id, e)

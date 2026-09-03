@@ -88,6 +88,22 @@ class Database:
             await db.execute("""
                 CREATE INDEX IF NOT EXISTS idx_users_cache_username ON users_cache(username)
             """)
+
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS banned_users (
+                    chat_id INTEGER,
+                    user_id INTEGER,
+                    username TEXT,
+                    full_name TEXT,
+                    reason TEXT,
+                    banned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    PRIMARY KEY(chat_id, user_id)
+                )
+            """)
+
+            await db.execute("""
+                CREATE INDEX IF NOT EXISTS idx_banned_users_username ON banned_users(username)
+            """)
             await db.commit()
             logger.info("Database initialized successfully at %s", self.db_path)
 
@@ -305,6 +321,66 @@ class Database:
         async with aiosqlite.connect(self.db_path) as db:
             db.row_factory = aiosqlite.Row
             cursor = await db.execute("SELECT user_id, username, full_name FROM users_cache WHERE user_id = ?", (user_id,))
+            row = await cursor.fetchone()
+            return dict(row) if row else None
+
+    async def add_banned_user(self, chat_id: int, user_id: int, username: str = "", full_name: str = "", reason: str = ""):
+        """Records a banned user with their username and details"""
+        if not user_id:
+            return
+        clean_username = (username or "").lstrip("@").strip()
+        await self.save_user(user_id, clean_username, full_name)
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute("""
+                INSERT INTO banned_users (chat_id, user_id, username, full_name, reason, banned_at)
+                VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                ON CONFLICT(chat_id, user_id) DO UPDATE SET
+                    username = CASE WHEN ? != '' THEN ? ELSE banned_users.username END,
+                    full_name = CASE WHEN ? != '' THEN ? ELSE banned_users.full_name END,
+                    reason = ?,
+                    banned_at = CURRENT_TIMESTAMP
+            """, (chat_id, user_id, clean_username, full_name, reason, clean_username, clean_username, full_name, full_name, reason))
+            await db.commit()
+
+    async def remove_banned_user(self, chat_id: int, user_id: int):
+        """Removes a user from the banned_users registry"""
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute("DELETE FROM banned_users WHERE chat_id = ? AND user_id = ?", (chat_id, user_id))
+            await db.commit()
+
+    async def get_banned_users(self, chat_id: int, limit: int = 50) -> list[Dict[str, Any]]:
+        """Returns the list of currently banned users in a chat"""
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            cursor = await db.execute("""
+                SELECT chat_id, user_id, username, full_name, reason, banned_at
+                FROM banned_users
+                WHERE chat_id = ?
+                ORDER BY banned_at DESC
+                LIMIT ?
+            """, (chat_id, limit))
+            rows = await cursor.fetchall()
+            return [dict(r) for r in rows]
+
+    async def get_banned_user_by_username(self, username: str, chat_id: Optional[int] = None) -> Optional[Dict[str, Any]]:
+        """Looks up a banned user by username across chat or globally"""
+        clean = (username or "").lstrip("@").strip().lower()
+        if not clean:
+            return None
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            if chat_id:
+                cursor = await db.execute("""
+                    SELECT user_id, username, full_name, reason FROM banned_users
+                    WHERE chat_id = ? AND LOWER(username) = ?
+                    ORDER BY banned_at DESC LIMIT 1
+                """, (chat_id, clean))
+            else:
+                cursor = await db.execute("""
+                    SELECT user_id, username, full_name, reason FROM banned_users
+                    WHERE LOWER(username) = ?
+                    ORDER BY banned_at DESC LIMIT 1
+                """, (clean,))
             row = await cursor.fetchone()
             return dict(row) if row else None
 
