@@ -29,8 +29,8 @@ ALLOWED_PRIVATE_USERNAMES: List[str] = [
 # Database Path
 DATABASE_PATH: str = os.getenv("DATABASE_PATH", str(BASE_DIR / "data" / "guard_bot.db"))
 
-# Default Group Settings (Mặc định: Cảnh cáo tối đa 2 lần, quá 2 lần là BAN, tự xoá thông báo sau 30 giây)
-DEFAULT_MAX_WARNS: int = int(os.getenv("DEFAULT_MAX_WARNS", 2))
+# Default Group Settings (Mặc định: Cảnh cáo tối đa 5 lần, quá 5 lần là BAN, tự xoá thông báo sau 30 giây)
+DEFAULT_MAX_WARNS: int = int(os.getenv("DEFAULT_MAX_WARNS", 5))
 DEFAULT_WARN_ACTION: str = os.getenv("DEFAULT_WARN_ACTION", "ban").lower()  # "ban", "mute", "kick"
 DEFAULT_MUTE_DURATION: int = int(os.getenv("DEFAULT_MUTE_DURATION", 3600))  # seconds
 AUTO_DELETE_LOGS_SEC: int = int(os.getenv("AUTO_DELETE_LOGS_SEC", 30))       # 30 seconds

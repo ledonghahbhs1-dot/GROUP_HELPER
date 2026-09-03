@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from aiogram import Router, F, Bot
 from aiogram.types import Message, ChatPermissions, MessageOriginUser
 from database.db import db
-from utils.emoji_helper import emoji_mgr, safe_answer, safe_send_message, schedule_auto_delete, get_payment_info_text, get_script_tool_info_text
+from utils.emoji_helper import emoji_mgr, safe_answer, safe_send_message, schedule_auto_delete, get_payment_info_text, get_script_tool_info_text, get_issue_support_text
 from utils.auth import is_user_allowed_private, is_admin_or_owner
 from utils.logger import logger
 from filters.spam_filter import spam_filter
@@ -13,6 +13,7 @@ from filters.link_filter import link_filter
 from filters.profanity_filter import profanity_filter
 from filters.payment_filter import payment_detector
 from filters.script_filter import script_detector
+from filters.issue_filter import issue_detector
 from filters.scam_filter import scam_detector
 import config
 
@@ -109,6 +110,12 @@ async def handle_private_messages(message: Message):
 
     logger.info("Private message received from authorized user @%s (%s)", user.username, user.id)
 
+    # Check if @wolfmodyt is testing or requesting issue assistance
+    if issue_detector.is_issue_query(message.text or "")[0]:
+        text_issue = get_issue_support_text(user.id, user.full_name)
+        await safe_answer(message, emoji_mgr.format_msg(text_issue), parse_mode="HTML")
+        return
+
     # Check if @wolfmodyt is testing or requesting payment info
     if payment_detector.is_payment_query(message.text or ""):
         text_pay = get_payment_info_text()
@@ -139,10 +146,14 @@ async def inspect_message(message: Message, bot: Bot):
     """
     text = message.text or message.caption or ""
     chat_id = message.chat.id
-    user = message.from_user
-    user_id = user.id if user else 0
-
     logger.info("GROUP MSG [%s in %s (%s)]: text=%r", user_id, chat_id, message.chat.type, text)
+
+    # Cache user for @username command resolution
+    if user and not user.is_bot:
+        try:
+            await db.save_user(user.id, user.username or "", user.full_name or "")
+        except Exception:
+            pass
 
     # 1. 100% Exempt Anonymous Admins, Group Senders & Channel Senders from MODERATION
     is_sender_exempt = False
@@ -157,7 +168,11 @@ async def inspect_message(message: Message, bot: Bot):
 
     # If sender is an Admin / Owner / Channel / Bot:
     if is_sender_exempt:
-        # Check if they queried payment or script
+        # Check if they queried issue, payment or script
+        if text and issue_detector.is_issue_query(text)[0]:
+            text_issue = get_issue_support_text(user_id, user.full_name if user else "")
+            await safe_answer(message, emoji_mgr.format_msg(text_issue), parse_mode="HTML")
+            return
         if text and payment_detector.is_payment_query(text):
             text_pay = get_payment_info_text()
             await safe_answer(message, emoji_mgr.format_msg(text_pay), parse_mode="HTML", disable_web_page_preview=True)
@@ -260,14 +275,20 @@ async def inspect_message(message: Message, bot: Bot):
             await db.increment_stat(chat_id, "badwords")
 
     # -------------------------------------------------------------
-    # 3. Check Anti-Link
+    # 3. Check Anti-Link & Bot Link Detection
     # -------------------------------------------------------------
-    if not violation_type and settings.get("anti_link", 1):
-        has_link, link_desc = await link_filter.check_links(message, chat_id)
+    if not violation_type and (settings.get("anti_link", 1) or settings.get("anti_bot", 1)):
+        bot_info = await bot.get_me()
+        has_link, link_desc, is_bot = await link_filter.check_links(message, chat_id, own_bot_username=bot_info.username or "")
         if has_link:
-            violation_type = "link"
-            violation_desc = f"Unauthorized link [{html.escape(link_desc)}]"
-            await db.increment_stat(chat_id, "link")
+            if is_bot:
+                violation_type = "bot_link"
+                violation_desc = f"Link bot khác [<code>{html.escape(link_desc)}</code>]"
+                await db.increment_stat(chat_id, "bot_blocked")
+            elif settings.get("anti_link", 1):
+                violation_type = "link"
+                violation_desc = f"Liên kết không được phép [<code>{html.escape(link_desc)}</code>]"
+                await db.increment_stat(chat_id, "link")
 
     # -------------------------------------------------------------
     # 4. Check Anti-Spam / Flood (if no other violations)
@@ -290,7 +311,7 @@ async def inspect_message(message: Message, bot: Bot):
         except Exception as del_err:
             logger.warning("Failed to delete offending message %s from user %s: %s", message.message_id, user_id, del_err)
 
-        max_warns = settings.get("max_warns", config.DEFAULT_MAX_WARNS) # Default = 2
+        max_warns = settings.get("max_warns", config.DEFAULT_MAX_WARNS) # Default = 5
         warn_action = settings.get("warn_action", config.DEFAULT_WARN_ACTION) # Default = 'ban'
         mute_dur = settings.get("mute_duration", config.DEFAULT_MUTE_DURATION)
 
@@ -299,7 +320,7 @@ async def inspect_message(message: Message, bot: Bot):
         user_name = user.full_name
         user_mention = f"<a href='tg://user?id={user_id}'>{html.escape(user_name)}</a>"
 
-        # Check if max warns reached (Quá 2 lần sẽ bị BAN khỏi group chat)
+        # Check if max warns reached (Quá max_warns lần sẽ bị BAN vĩnh viễn khỏi group chat)
         if current_warns >= max_warns:
             punish_msg = await apply_punishment(
                 bot=bot,
@@ -315,7 +336,7 @@ async def inspect_message(message: Message, bot: Bot):
 
             alert_text = (
                 f"{emoji_mgr.shield} <b>GROUP SECURITY SYSTEM</b> {emoji_mgr.vip}\n\n"
-                f"{emoji_mgr.warn} <b>Member:</b> {user_mention}\n"
+                f"{emoji_mgr.warn} <b>Member:</b> {user_mention} (<code>{user_id}</code>)\n"
                 f"{emoji_mgr.ban} <b>Reason:</b> {violation_desc}\n"
                 f"{emoji_mgr.error} <b>Warnings:</b> <code>{current_warns}/{max_warns}</code> (MAX REACHED)\n\n"
                 f"{punish_msg}"
@@ -323,11 +344,11 @@ async def inspect_message(message: Message, bot: Bot):
         else:
             alert_text = (
                 f"{emoji_mgr.shield} <b>SECURITY WARNING ({current_warns}/{max_warns})</b> {emoji_mgr.vip}\n\n"
-                f"{emoji_mgr.warn} <b>Member:</b> {user_mention}\n"
+                f"{emoji_mgr.warn} <b>Member:</b> {user_mention} (<code>{user_id}</code>)\n"
                 f"{emoji_mgr.error} <b>Violation:</b> {violation_desc}\n"
                 f"{emoji_mgr.bell} <b>Action:</b> Offending message has been deleted immediately.\n"
                 f"{emoji_mgr.star} <b>Warning Count:</b> <code>{current_warns}/{max_warns}</code>\n\n"
-                f"{emoji_mgr.diamond} <i>Maximum 2 warnings allowed. Exceeding 2 warnings will result in a permanent BAN!</i>"
+                f"{emoji_mgr.diamond} <i>Maximum {max_warns} warnings allowed. Exceeding {max_warns} warnings will result in a permanent BAN!</i>"
             )
 
         # Append signature
@@ -342,7 +363,18 @@ async def inspect_message(message: Message, bot: Bot):
         return
 
     # -------------------------------------------------------------
-    # 8. Check Payment & Script Queries for regular members (Clean message)
+    # 8. Check Issue / Not Working / No Effect Queries (HIGHEST SUPPORT PRIORITY)
+    # -------------------------------------------------------------
+    if text:
+        is_issue, matched_issue_kw = issue_detector.is_issue_query(text)
+        if is_issue:
+            logger.info("Issue / not-working query detected from member %s: kw=%r, text=%r", user_id, matched_issue_kw, text)
+            text_issue = get_issue_support_text(user_id, user.full_name if user else "")
+            await safe_answer(message, emoji_mgr.format_msg(text_issue), parse_mode="HTML")
+            return
+
+    # -------------------------------------------------------------
+    # 9. Check Payment & Script Queries for regular members (Clean message)
     # -------------------------------------------------------------
     if text and payment_detector.is_payment_query(text):
         logger.info("Payment query detected from member: %r", text)

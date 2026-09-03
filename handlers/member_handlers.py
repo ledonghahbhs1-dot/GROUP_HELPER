@@ -44,7 +44,7 @@ def build_welcome_text(chat_title: str, user_id: int, user_name: str) -> str:
         f"• {emoji_mgr.error} No spamming or excessive flood messages\n"
         f"• {emoji_mgr.link} No unauthorized links / Telegram invite links\n"
         f"• {emoji_mgr.bot} No forwarded messages from bots / inline bots\n"
-        f"• {emoji_mgr.warn} <i>Violators will receive warnings (2 warnings = PERMANENT BAN).</i>\n"
+        f"• {emoji_mgr.warn} <i>Violators will receive warnings (5 warnings = PERMANENT BAN).</i>\n"
         f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
         f"{emoji_mgr.diamond} <i>Wishing you a wonderful experience!</i>"
     )
@@ -116,6 +116,16 @@ async def on_user_or_bot_join(event: ChatMemberUpdated, bot: Bot):
         return
 
     # 2. Regular human member joined -> Send Welcome & Admin Info
+    if new_user:
+        try:
+            await db.save_user(new_user.id, new_user.username or "", new_user.full_name or "")
+        except Exception:
+            pass
+    if inviter:
+        try:
+            await db.save_user(inviter.id, inviter.username or "", inviter.full_name or "")
+        except Exception:
+            pass
     await handle_welcome_for_user(bot, chat_id, event.chat.title or "THE GROUP", new_user)
 
 @router.message(F.new_chat_members)
@@ -133,6 +143,11 @@ async def on_new_chat_members(message: Message, bot: Bot):
     is_admin = await is_admin_or_owner(chat_id, inviter, bot, sender_chat=message.sender_chat)
 
     for member in message.new_chat_members:
+        if member and not member.is_bot:
+            try:
+                await db.save_user(member.id, member.username or "", member.full_name or "")
+            except Exception:
+                pass
         if member.is_bot:
             if member.id != bot_info.id and settings.get("anti_bot", 1) and not is_admin:
                 try:

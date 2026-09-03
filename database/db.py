@@ -19,7 +19,7 @@ class Database:
                     anti_link INTEGER DEFAULT 1,
                     anti_bot INTEGER DEFAULT 1,
                     anti_badwords INTEGER DEFAULT 1,
-                    max_warns INTEGER DEFAULT 2,
+                    max_warns INTEGER DEFAULT 5,
                     warn_action TEXT DEFAULT 'ban',
                     mute_duration INTEGER DEFAULT 3600,
                     auto_delete_logs INTEGER DEFAULT 1,
@@ -75,6 +75,19 @@ class Database:
                     PRIMARY KEY(chat_id, violation_type)
                 )
             """)
+
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS users_cache (
+                    user_id INTEGER PRIMARY KEY,
+                    username TEXT,
+                    full_name TEXT,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+
+            await db.execute("""
+                CREATE INDEX IF NOT EXISTS idx_users_cache_username ON users_cache(username)
+            """)
             await db.commit()
             logger.info("Database initialized successfully at %s", self.db_path)
 
@@ -86,7 +99,7 @@ class Database:
             if row:
                 return dict(row)
             
-            # Default settings (2 warns max -> BAN)
+            # Default settings (5 warns max -> BAN)
             await db.execute("""
                 INSERT INTO group_settings (chat_id, anti_spam, anti_link, anti_bot, anti_badwords, max_warns, warn_action, mute_duration, auto_delete_logs)
                 VALUES (?, 1, 1, 1, 1, ?, ?, ?, 1)
@@ -255,5 +268,44 @@ class Database:
             """, (chat_id,))
             rows = await cursor.fetchall()
             return {r[0]: r[1] for r in rows}
+
+    async def save_user(self, user_id: int, username: str = "", full_name: str = ""):
+        """Caches user id, username, and full name for @username admin command resolution"""
+        if not user_id:
+            return
+        clean_username = (username or "").lstrip("@").strip()
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute("""
+                INSERT INTO users_cache (user_id, username, full_name, updated_at)
+                VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+                ON CONFLICT(user_id) DO UPDATE SET
+                    username = CASE WHEN ? != '' THEN ? ELSE users_cache.username END,
+                    full_name = CASE WHEN ? != '' THEN ? ELSE users_cache.full_name END,
+                    updated_at = CURRENT_TIMESTAMP
+            """, (user_id, clean_username, full_name, clean_username, clean_username, full_name, full_name))
+            await db.commit()
+
+    async def get_user_by_username(self, username: str) -> Optional[Dict[str, Any]]:
+        """Looks up cached user by username (case-insensitive)"""
+        clean = (username or "").lstrip("@").strip().lower()
+        if not clean:
+            return None
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            cursor = await db.execute("""
+                SELECT user_id, username, full_name FROM users_cache WHERE LOWER(username) = ? ORDER BY updated_at DESC LIMIT 1
+            """, (clean,))
+            row = await cursor.fetchone()
+            return dict(row) if row else None
+
+    async def get_user_by_id(self, user_id: int) -> Optional[Dict[str, Any]]:
+        """Looks up cached user by user ID"""
+        if not user_id:
+            return None
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            cursor = await db.execute("SELECT user_id, username, full_name FROM users_cache WHERE user_id = ?", (user_id,))
+            row = await cursor.fetchone()
+            return dict(row) if row else None
 
 db = Database()

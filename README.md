@@ -12,8 +12,8 @@ Bot Telegram bảo vệ nhóm toàn diện, tự động hoá kiểm duyệt n�
 | ✈️ **Chữ ký cuối mỗi tin nhắn** | Mọi câu nhắn của bot đều tự động đính kèm icon Telegram Premium và tag username: `<tg-emoji emoji-id="5211129162206560202">✈️</tg-emoji> :@wolfmodyt` |
 | ⏳ **Icon giới hạn thời gian (Time limit / Mute / Cooldown)** | Khi bị giới hạn thời gian, bot hiển thị icon đồng hồ Premium: `<tg-emoji emoji-id="5382194935057372936">⏳</tg-emoji>` |
 | ⏱️ **Tự động xoá sau 30 giây** | Mọi thông báo cảnh báo / vi phạm trong nhóm sẽ **tự động xoá sau đúng 30 giây** để giữ cho nhóm luôn sạch đẹp. |
-| 🚫 **Cảnh cáo tối đa 2 lần -> BAN** | Thành viên vi phạm (spam, link, chửi bậy) sẽ bị cảnh cáo (1/2, 2/2). **Quá 2 lần vi phạm sẽ bị BAN vĩnh viễn** khỏi nhóm chat. |
-| 🤖 **Chống người lạ thêm Bot** | Tự động trục xuất (Kick/Ban) ngay lập tức mọi bot lạ do thành viên thường thêm vào nhóm. |
+| 🚫 **Cảnh cáo tối đa 5 lần -> BAN** | Thành viên vi phạm (spam, link, chửi bậy, link bot khác) sẽ bị cảnh cáo (1/5 ... 5/5). **Quá 5 lần vi phạm sẽ bị BAN vĩnh viễn** khỏi nhóm chat. |
+| 🤖 **Chống người lạ thêm Bot / Gửi link Bot khác** | Tự động trục xuất (Kick/Ban) ngay lập tức mọi bot lạ do thành viên thường thêm vào nhóm. Khi người dùng gửi link bot khác (trừ admin), bot sẽ xoá tin nhắn, ghi nhận cảnh cáo và chỉ trích dẫn 3-4 từ đầu của link (không hiện toàn bộ link). |
 
 ---
 
@@ -62,7 +62,7 @@ Bot đã hỗ trợ sẵn các slot Custom Emoji ID cao cấp mà bạn có th�
      - `BOT_TOKEN`: Token bot từ [@BotFather](https://t.me/BotFather).
      - `OWNER_IDS`: Telegram ID của bạn.
      - `ALLOWED_PRIVATE_USERNAMES`: `wolfmodyt`
-     - `DEFAULT_MAX_WARNS`: `2`
+     - `DEFAULT_MAX_WARNS`: `5`
      - `DEFAULT_WARN_ACTION`: `ban`
      - `AUTO_DELETE_LOGS_SEC`: `30`
      - `EMOJI_TELE_LOGO`: `5211129162206560202`
@@ -80,13 +80,13 @@ Bot đã hỗ trợ sẵn các slot Custom Emoji ID cao cấp mà bạn có th�
 | :--- | :--- |
 | `/settings` | Mở bảng cài đặt bảo vệ nhóm (Bật/Tắt Anti-Spam, Link, Bot, Chửi bậy) |
 | `/stats` | Xem thống kê số lần bot đã ngăn chặn vi phạm |
-| `/warn [lý do]` | *(Reply)* Cảnh cáo thành viên (Tối đa 2 lần -> BAN) |
-| `/unwarn` | *(Reply)* Xoá 1 lần cảnh cáo |
-| `/warns` | *(Reply hoặc gõ trực tiếp)* Xem số lần cảnh cáo |
-| `/mute [thời gian]` | *(Reply)* Cấm chat (vd: `/mute 30m`, `/mute 2h`, `/mute 1d`) |
-| `/unmute` | *(Reply)* Gỡ cấm chat |
-| `/kick` | *(Reply)* Kick thành viên khỏi nhóm |
-| `/ban` | *(Reply)* Cấm vĩnh viễn thành viên khỏi nhóm |
+| `/warn [user_id / reply] [lý do]` | Cảnh cáo thành viên bằng User ID hoặc Reply (Tối đa 5 lần -> BAN vĩnh viễn, hoặc gõ `warn user_id`) |
+| `/unwarn [user_id / reply]` | Xoá 1 lần cảnh cáo theo User ID hoặc Reply |
+| `/warns [user_id / reply]` | Xem số lần cảnh cáo của bản thân hoặc thành viên |
+| `/mute [user_id / reply] [thời gian] [lý do]` | Cấm chat (vd: `/mute 30m`, `/mute 2h`, `/mute 1d`) |
+| `/unmute [user_id / reply]` | Mở cấm chat |
+| `/kick [user_id / reply] [lý do]` | Trục xuất thành viên khỏi nhóm |
+| `/ban [user_id / reply] [lý do]` | Cấm vĩnh viễn thành viên khỏi nhóm theo User ID hoặc Reply (hoặc gõ `ban user_id`) |
 | `/unban [user_id]` | Gỡ cấm cho thành viên theo User ID |
 | `/addword [từ]` | Thêm từ cấm riêng của nhóm |
 | `/delword [từ]` | Xoá từ cấm |

@@ -239,3 +239,26 @@ def get_script_tool_info_text() -> str:
         f"{emoji_mgr.star} <b>To Buy VIP directly:</b> Type <code>/pay</code> or DM {emoji_mgr.vip} :@wolfmodyt {emoji_mgr.vip}"
     )
 
+def get_issue_support_text(user_id: int = 0, user_name: str = "") -> str:
+    """Returns formatted English support message requesting video or photo evidence for not-working/issue reports"""
+    user_line = ""
+    if user_id and user_name:
+        user_mention = f"<a href='tg://user?id={user_id}'>{html.escape(user_name)}</a>"
+        user_line = f"{emoji_mgr.star} <b>Reported by:</b> {user_mention} (<code>{user_id}</code>)\n\n"
+    elif user_id:
+        user_line = f"{emoji_mgr.star} <b>User ID:</b> <code>{user_id}</code>\n\n"
+
+    return (
+        f"{emoji_mgr.shield} <b>TECHNICAL SUPPORT & ISSUE ASSISTANCE</b> {emoji_mgr.vip}\n\n"
+        f"{user_line}"
+        f"{emoji_mgr.warn} <b>Issue Notice:</b> <i>If the tool, script, or key is not working / has no effect:</i>\n\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"{emoji_mgr.star} <b>PLEASE PROVIDE VIDEO OR PHOTO PROOF:</b>\n"
+        f"• Please reply with a <b>video recording</b> or <b>screenshot / photos</b> demonstrating the problem.\n"
+        f"• Make sure to capture any error code, console log, or the exact behavior occurring.\n\n"
+        f"{emoji_mgr.diamond} <b>ADMIN REVIEW:</b>\n"
+        f"• Master Admin {emoji_mgr.vip} <b>@wolfmodyt</b> will carefully inspect your evidence and provide assistance as soon as possible.\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"{emoji_mgr.star} <b>Direct Admin Contact:</b> @wolfmodyt"
+    )
+

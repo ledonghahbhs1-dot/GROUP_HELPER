@@ -93,12 +93,12 @@ async def on_settings_callback(callback: CallbackQuery, bot: Bot):
 
     elif data == "cycle_max_warns":
         current = settings.get("max_warns", config.DEFAULT_MAX_WARNS)
-        warn_steps = [1, 2, 3, 5]
+        warn_steps = [1, 2, 3, 5, 10]
         try:
             idx = (warn_steps.index(current) + 1) % len(warn_steps)
             new_val = warn_steps[idx]
         except ValueError:
-            new_val = 2
+            new_val = 5
         await db.update_chat_setting(chat_id, "max_warns", new_val)
         await callback.answer(f"Max warnings set to {new_val}")
 
