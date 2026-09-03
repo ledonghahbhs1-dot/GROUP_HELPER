@@ -328,6 +328,7 @@ def get_features_info_text() -> str:
         f"• <b>Get Free Daily Key:</b> <a href=\"https://www.wolfmod.xyz/dragon-city\">https://www.wolfmod.xyz/dragon-city</a>\n\n"
         f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
         f"{emoji_mgr.diamond} <b>GET VIP ACCESS & SUPPORT:</b>\n"
+        f"• <b>Buy VIP Key on Web:</b> <a href=\"https://www.wolfmod.xyz/dragon-city\">https://www.wolfmod.xyz/dragon-city</a>\n"
         f"• <b>VIP Pricing:</b> Type <code>price</code> ($1 / 2 Days, $7 / 30 Days)\n"
         f"• <b>Payment Methods:</b> Type <code>pay</code> or <code>/pay</code>\n"
         f"• <b>Website:</b> <a href=\"https://www.wolfmod.xyz\">wolfmod.xyz</a>\n"
