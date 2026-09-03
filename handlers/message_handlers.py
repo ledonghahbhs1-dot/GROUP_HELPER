@@ -100,10 +100,34 @@ async def apply_punishment(
 @router.message(F.chat.type == "private")
 async def handle_private_messages(message: Message):
     """
-    Direct message handler: Communicates in Vietnamese with @wolfmodyt.
-    Completely ignores unauthorized users.
+    Direct message handler:
+    - Responds to payment queries, script queries, and issue reports from ANY user.
+    - Greets Master @wolfmodyt with full status menu.
+    - Silently ignores other unauthorized DM messages.
     """
     user = message.from_user
+    user_id = user.id if user else 0
+    text = message.text or message.caption or ""
+
+    # 1. Check Issue / Not Working query
+    if text and issue_detector.is_issue_query(text)[0]:
+        text_issue = get_issue_support_text(user_id, user.full_name if user else "")
+        await safe_answer(message, emoji_mgr.format_msg(text_issue), parse_mode="HTML")
+        return
+
+    # 2. Check Payment query (pay, payment, bank, stk, etc.)
+    if text and payment_detector.is_payment_query(text):
+        text_pay = get_payment_info_text()
+        await safe_answer(message, emoji_mgr.format_msg(text_pay), parse_mode="HTML", disable_web_page_preview=True)
+        return
+
+    # 3. Check Script / Tool query (script, tool, key, dc, etc.)
+    if text and script_detector.is_script_query(text):
+        text_script = get_script_tool_info_text()
+        await safe_answer(message, emoji_mgr.format_msg(text_script), parse_mode="HTML", disable_web_page_preview=True)
+        return
+
+    # Check authorization for other direct bot messages
     if not is_user_allowed_private(user):
         user_info = f"ID: {user.id}, Username: @{user.username}" if user else "Unknown"
         logger.info("Private message silently ignored from unauthorized user (%s)", user_info)
@@ -111,34 +135,16 @@ async def handle_private_messages(message: Message):
 
     logger.info("Private message received from authorized user @%s (%s)", user.username, user.id)
 
-    # Check if @wolfmodyt is testing or requesting issue assistance
-    if issue_detector.is_issue_query(message.text or "")[0]:
-        text_issue = get_issue_support_text(user.id, user.full_name)
-        await safe_answer(message, emoji_mgr.format_msg(text_issue), parse_mode="HTML")
-        return
-
-    # Check if @wolfmodyt is testing or requesting payment info
-    if payment_detector.is_payment_query(message.text or ""):
-        text_pay = get_payment_info_text()
-        await safe_answer(message, emoji_mgr.format_msg(text_pay), parse_mode="HTML", disable_web_page_preview=True)
-        return
-
-    # Check if @wolfmodyt is testing or requesting script/tool info
-    if script_detector.is_script_query(message.text or ""):
-        text_script = get_script_tool_info_text()
-        await safe_answer(message, emoji_mgr.format_msg(text_script), parse_mode="HTML", disable_web_page_preview=True)
-        return
-
-    # Direct message response in English
-    text = (
+    # Direct message response in English for @wolfmodyt
+    reply_text = (
         f"{emoji_mgr.shield} <b>HELLO MASTER @wolfmodyt!</b> {emoji_mgr.vip}\n\n"
         f"Your Group Security & Anti-Spam Guard Bot is operational:\n"
         f"{emoji_mgr.star} Add the bot to your group and grant Administrator permissions to activate defense.\n"
         f"{emoji_mgr.star} In group chats, the bot will moderate in <b>English</b> and delete offending messages.\n"
-        f"{emoji_mgr.star} Type <code>/pay</code> to view Payment Methods.\n"
+        f"{emoji_mgr.star} Type <code>/pay</code> or <code>pay</code> to view Payment Methods.\n"
         f"{emoji_mgr.star} Type <code>/help</code> to view all group management commands."
     )
-    await safe_answer(message, emoji_mgr.format_msg(text), parse_mode="HTML")
+    await safe_answer(message, emoji_mgr.format_msg(reply_text), parse_mode="HTML")
 
 @router.message(F.chat.type.in_(["group", "supergroup"]))
 async def inspect_message(message: Message, bot: Bot):
@@ -147,6 +153,8 @@ async def inspect_message(message: Message, bot: Bot):
     """
     text = message.text or message.caption or ""
     chat_id = message.chat.id
+    user = message.from_user
+    user_id = user.id if user else 0
     logger.info("GROUP MSG [%s in %s (%s)]: text=%r", user_id, chat_id, message.chat.type, text)
 
     # Cache user for @username command resolution

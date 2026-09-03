@@ -5,7 +5,7 @@ from typing import Optional
 from aiogram import Router, F, Bot
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import Message, ChatPermissions, InlineKeyboardMarkup, InlineKeyboardButton
-from aiogram.filters import Command, CommandObject
+from aiogram.filters import Command, CommandObject, Filter
 from database.db import db
 from utils.emoji_helper import (
     emoji_mgr,
@@ -20,6 +20,16 @@ from utils.logger import logger
 import config
 
 router = Router(name="admin_handlers")
+
+class PlainAdminCommandFilter(Filter):
+    async def __call__(self, message: Message) -> bool | dict:
+        text = (message.text or "").strip()
+        if not text or text.startswith(('/', '!')):
+            return False
+        parsed = parse_admin_cmd(text, bool(message.reply_to_message))
+        if parsed:
+            return {"parsed_admin_cmd": parsed}
+        return False
 
 def parse_time_duration(time_str: str) -> int:
     """Parses duration string like 10m, 1h, 2d, 1w into seconds"""
@@ -261,10 +271,6 @@ async def cmd_help(message: Message):
 # -------------------------------------------------------------
 @router.message(Command("pay", "payment", "pricing", "price", "bank", "donate", "buy"))
 async def cmd_payment(message: Message):
-    is_private = message.chat.type == "private"
-    if is_private and not is_user_allowed_private(message.from_user):
-        return
-
     text = get_payment_info_text()
     full_text = emoji_mgr.format_msg(text)
     try:
@@ -277,10 +283,6 @@ async def cmd_payment(message: Message):
 # -------------------------------------------------------------
 @router.message(Command("script", "tool", "key", "free", "vipkey", "dragoncity", "dc"))
 async def cmd_script(message: Message):
-    is_private = message.chat.type == "private"
-    if is_private and not is_user_allowed_private(message.from_user):
-        return
-
     text = get_script_tool_info_text()
     full_text = emoji_mgr.format_msg(text)
     try:
@@ -891,17 +893,9 @@ async def cmd_resetwarns(message: Message, command: CommandObject, bot: Bot):
 # -------------------------------------------------------------
 # PLAIN TEXT MODERATION COMMAND HANDLER (warn 123, ban 123, etc.)
 # -------------------------------------------------------------
-@router.message(F.text, F.chat.type.in_(["group", "supergroup"]))
-async def handle_plain_admin_commands(message: Message, bot: Bot):
-    text = (message.text or "").strip()
-    if not text or text.startswith(('/', '!')):
-        return
-    
-    parsed = parse_admin_cmd(text, bool(message.reply_to_message))
-    if not parsed:
-        return
-
-    cmd, args = parsed
+@router.message(PlainAdminCommandFilter(), F.chat.type.in_(["group", "supergroup"]))
+async def handle_plain_admin_commands(message: Message, bot: Bot, parsed_admin_cmd: tuple[str, str]):
+    cmd, args = parsed_admin_cmd
     if cmd == "warn":
         await execute_warn(message, bot, raw_args=args)
     elif cmd == "ban":
@@ -921,12 +915,6 @@ async def handle_plain_admin_commands(message: Message, bot: Bot):
     elif cmd in ["banlist", "banned"]:
         await execute_banlist(message, bot)
 
-# -------------------------------------------------------------
-# BANNED WORDS MANAGEMENT (ADMIN ONLY)
-# -------------------------------------------------------------
-@router.message(Command("addword"))
-async def cmd_addword(message: Message, command: CommandObject, bot: Bot):
-    chat_id = message.chat.id
 # -------------------------------------------------------------
 # BANNED WORDS MANAGEMENT (ADMIN ONLY)
 # -------------------------------------------------------------

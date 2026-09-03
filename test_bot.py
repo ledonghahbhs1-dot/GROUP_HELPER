@@ -313,6 +313,18 @@ async def test():
     assert parse_admin_cmd("warn", True) == ("warn", "")
     assert parse_admin_cmd("ban", True) == ("ban", "")
     assert parse_admin_cmd("i warn you", False) is None
+    assert parse_admin_cmd("pay", False) is None, "'pay' must NOT be parsed as an admin moderation command"
+
+    # Case 8: PlainAdminCommandFilter filter check
+    from handlers.admin_handlers import PlainAdminCommandFilter
+    class MockFilterMsg:
+        def __init__(self, text, reply_to_message=None):
+            self.text = text
+            self.reply_to_message = reply_to_message
+
+    filter_inst = PlainAdminCommandFilter()
+    assert await filter_inst(MockFilterMsg("pay")) == False, "Filter must return False for 'pay' so message falls through to payment detector!"
+    assert await filter_inst(MockFilterMsg("warn 123456789")) == {"parsed_admin_cmd": ("warn", "123456789")}
     print("Target ID Resolution, Banned Users Registry & Command Parser tests passed ✅")
 
     print("\n==========================================")
