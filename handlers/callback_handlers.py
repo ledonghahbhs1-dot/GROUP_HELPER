@@ -61,27 +61,27 @@ async def on_settings_callback(callback: CallbackQuery, bot: Bot):
                 await bot.unban_chat_member(chat_id, target_user_id)
                 await db.reset_warns(chat_id, target_user_id)
                 await db.remove_banned_user(chat_id, target_user_id)
-                await callback.answer(f"✅ Đã gỡ cấm (unbanned) thành viên {target_user_id} thành công!", show_alert=True)
+                await callback.answer(f"✅ Member {target_user_id} unbanned successfully!", show_alert=True)
                 # Refresh banned list message
                 banned_list = await db.get_banned_users(chat_id, limit=30)
                 if not banned_list:
-                    text = f"{emoji_mgr.shield} <b>DANH SÁCH BAN / BANNED LIST</b> {emoji_mgr.vip}\n\nHiện tại nhóm không có thành viên nào trong danh sách bị cấm!"
+                    text = f"{emoji_mgr.shield} <b>BANNED MEMBERS LIST</b> {emoji_mgr.vip}\n\nThere are currently no banned members in this group!"
                     await callback.message.edit_text(emoji_mgr.format_msg(text), parse_mode="HTML")
                 else:
-                    lines = [f"{emoji_mgr.ban} <b>DANH SÁCH THÀNH VIÊN ĐÃ BỊ CẤM ({len(banned_list)})</b> {emoji_mgr.vip}\n"]
+                    lines = [f"{emoji_mgr.ban} <b>BANNED MEMBERS LIST ({len(banned_list)})</b> {emoji_mgr.vip}\n"]
                     buttons = []
                     for idx, u in enumerate(banned_list, 1):
                         u_id = u["user_id"]
                         u_name = u["full_name"] or f"User {u_id}"
                         u_uname = f"(@{u['username']})" if u.get("username") else ""
                         reason = u.get("reason") or "Rule violation"
-                        lines.append(f"<b>{idx}.</b> {u_name} {u_uname}\n└ <code>{u_id}</code> | Lý do: <i>{reason}</i>")
-                        btn_label = f"🔓 Gỡ {u['username'] or u_id}"[:30]
+                        lines.append(f"<b>{idx}.</b> {u_name} {u_uname}\n└ <code>{u_id}</code> | Reason: <i>{reason}</i>")
+                        btn_label = f"🔓 Unban {u['username'] or u_id}"[:30]
                         buttons.append([InlineKeyboardButton(text=btn_label, callback_data=f"quick_unban:{u_id}")])
-                    lines.append(f"\n💡 <i>Bấm nút bên dưới để gỡ cấm hoặc gõ:</i> <code>/unban &lt;ID hoặc @username&gt;</code>")
+                    lines.append(f"\n💡 <i>Click buttons below to unban or type:</i> <code>/unban &lt;ID or @username&gt;</code>")
                     await callback.message.edit_text(emoji_mgr.format_msg("\n".join(lines)), reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons), parse_mode="HTML")
             except Exception as e:
-                await callback.answer(f"❌ Lỗi khi gỡ cấm: {e}", show_alert=True)
+                await callback.answer(f"❌ Error unbanning user: {e}", show_alert=True)
         return
 
     if data == "close_settings":

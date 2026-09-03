@@ -20,23 +20,25 @@ async def set_bot_commands(bot: Bot):
     """Sets standard command list in Telegram menu for regular users and admins"""
     try:
         user_commands = [
-            BotCommand(command="start", description="Khởi động & thông tin bot"),
-            BotCommand(command="help", description="Hướng dẫn sử dụng & danh sách lệnh"),
-            BotCommand(command="warns", description="Xem số cảnh cáo của bản thân"),
+            BotCommand(command="start", description="Start & bot information"),
+            BotCommand(command="help", description="Help guide & commands list"),
+            BotCommand(command="warns", description="Check warning status"),
         ]
         await bot.set_my_commands(user_commands, scope=BotCommandScopeDefault())
 
         admin_commands = [
-            BotCommand(command="settings", description="Bảng cài đặt bảo vệ nhóm"),
-            BotCommand(command="warn", description="Cảnh cáo thành viên (reply)"),
-            BotCommand(command="unwarn", description="Xoá cảnh cáo (reply)"),
-            BotCommand(command="mute", description="Cấm chat thành viên (reply)"),
-            BotCommand(command="unmute", description="Mở cấm chat (reply)"),
-            BotCommand(command="kick", description="Trục xuất khỏi nhóm (reply)"),
-            BotCommand(command="ban", description="Cấm vĩnh viễn (reply)"),
-            BotCommand(command="stats", description="Xem thống kê vi phạm"),
-            BotCommand(command="get_emoji", description="Lấy ID Custom Emoji VIP"),
-            BotCommand(command="help", description="Toàn bộ danh sách lệnh"),
+            BotCommand(command="settings", description="Group security & rules panel"),
+            BotCommand(command="banlist", description="Banned members list & 1-click unban"),
+            BotCommand(command="warn", description="Warn member (reply/ID/@username)"),
+            BotCommand(command="unwarn", description="Remove warning (reply/ID/@username)"),
+            BotCommand(command="mute", description="Mute member (reply/ID/@username)"),
+            BotCommand(command="unmute", description="Unmute member (reply/ID/@username)"),
+            BotCommand(command="kick", description="Kick member (reply/ID/@username)"),
+            BotCommand(command="ban", description="Ban member permanently (reply/ID/@username)"),
+            BotCommand(command="unban", description="Unban member (ID/@username)"),
+            BotCommand(command="stats", description="View security violation statistics"),
+            BotCommand(command="get_emoji", description="Extract Custom Emoji VIP IDs"),
+            BotCommand(command="help", description="Full administrator commands list"),
         ]
         await bot.set_my_commands(admin_commands, scope=BotCommandScopeAllChatAdministrators())
     except Exception as e:
@@ -51,8 +53,8 @@ async def periodic_spam_cleanup():
 async def main():
     if not config.BOT_TOKEN or config.BOT_TOKEN.startswith("1234567890:"):
         logger.error("BOT_TOKEN is missing or not configured! Please set BOT_TOKEN in .env or Railway environment variables.")
-        print("\n[ERROR] Vui lòng cấu hình BOT_TOKEN trong file .env hoặc biến môi trường Railway!")
-        print("Ví dụ: BOT_TOKEN=1234567890:ABCdefGHIjklMNOpqrSTUvwxYZ\n")
+        print("\n[ERROR] Please configure BOT_TOKEN in .env file or Railway environment variables!")
+        print("Example: BOT_TOKEN=1234567890:ABCdefGHIjklMNOpqrSTUvwxYZ\n")
         return
 
     logger.info("Starting Telegram Guard Bot...")
@@ -85,11 +87,11 @@ async def main():
     asyncio.create_task(periodic_spam_cleanup())
 
     print("\n" + "=" * 55)
-    print(f"🛡️  TELEGRAM GUARD BOT ĐANG HOẠT ĐỘNG! 👑")
+    print(f"🛡️  TELEGRAM GUARD BOT IS RUNNING! 👑")
     print(f"• Username : @{bot_user.username}")
     print(f"• Bot ID   : {bot_user.id}")
     print(f"• Database : {config.DATABASE_PATH}")
-    print(f"• VIP Emoji: Sẵn sàng hỗ trợ Telegram Premium Custom Emoji")
+    print(f"• VIP Emoji: Telegram Premium Custom Emoji Ready")
     print(f"• Scam Detect: ✅ ENABLED (140+ keywords - 13 languages)")
     print("=" * 55 + "\n")
 

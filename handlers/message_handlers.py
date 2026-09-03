@@ -129,14 +129,14 @@ async def handle_private_messages(message: Message):
         await safe_answer(message, emoji_mgr.format_msg(text_script), parse_mode="HTML", disable_web_page_preview=True)
         return
 
-    # Tiếng Việt trong tin nhắn riêng với @wolfmodyt
+    # Direct message response in English
     text = (
-        f"{emoji_mgr.shield} <b>XIN CHÀO SẾP @wolfmodyt!</b> {emoji_mgr.vip}\n\n"
-        f"Tôi là bot bảo vệ nhóm & chống spam của bạn. Mọi chức năng đang hoạt động bình thường:\n"
-        f"{emoji_mgr.star} Thêm bot vào nhóm và cấp quyền Quản trị viên để kích hoạt phòng thủ.\n"
-        f"{emoji_mgr.star} Trong nhóm chat, bot sẽ tự động giao tiếp bằng <b>tiếng Anh</b> và xoá tin nhắn vi phạm.\n"
-        f"{emoji_mgr.star} Gõ <code>/pay</code> để xem thông tin thanh toán (Payment Methods).\n"
-        f"{emoji_mgr.star} Gõ <code>/help</code> để xem các lệnh quản lý nhóm."
+        f"{emoji_mgr.shield} <b>HELLO MASTER @wolfmodyt!</b> {emoji_mgr.vip}\n\n"
+        f"Your Group Security & Anti-Spam Guard Bot is operational:\n"
+        f"{emoji_mgr.star} Add the bot to your group and grant Administrator permissions to activate defense.\n"
+        f"{emoji_mgr.star} In group chats, the bot will moderate in <b>English</b> and delete offending messages.\n"
+        f"{emoji_mgr.star} Type <code>/pay</code> to view Payment Methods.\n"
+        f"{emoji_mgr.star} Type <code>/help</code> to view all group management commands."
     )
     await safe_answer(message, emoji_mgr.format_msg(text), parse_mode="HTML")
 
@@ -284,11 +284,11 @@ async def inspect_message(message: Message, bot: Bot):
         if has_link:
             if is_bot:
                 violation_type = "bot_link"
-                violation_desc = f"Link bot khác [<code>{html.escape(link_desc)}</code>]"
+                violation_desc = f"Unauthorized External Bot Link [<code>{html.escape(link_desc)}</code>]"
                 await db.increment_stat(chat_id, "bot_blocked")
             elif settings.get("anti_link", 1):
                 violation_type = "link"
-                violation_desc = f"Liên kết không được phép [<code>{html.escape(link_desc)}</code>]"
+                violation_desc = f"Unauthorized External Link [<code>{html.escape(link_desc)}</code>]"
                 await db.increment_stat(chat_id, "link")
 
     # -------------------------------------------------------------
