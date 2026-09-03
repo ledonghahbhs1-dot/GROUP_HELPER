@@ -22,6 +22,7 @@ async def set_bot_commands(bot: Bot):
         user_commands = [
             BotCommand(command="start", description="Start & bot information"),
             BotCommand(command="help", description="Help guide & commands list"),
+            BotCommand(command="features", description="VIP & Free script features list"),
             BotCommand(command="price", description="VIP key pricing & packages"),
             BotCommand(command="pay", description="Payment methods info"),
             BotCommand(command="script", description="Dragon City Tool & Script link"),
@@ -32,6 +33,7 @@ async def set_bot_commands(bot: Bot):
         admin_commands = [
             BotCommand(command="settings", description="Group security & rules panel"),
             BotCommand(command="banlist", description="Banned members list & 1-click unban"),
+            BotCommand(command="features", description="VIP & Free script features list"),
             BotCommand(command="price", description="VIP key pricing & packages"),
             BotCommand(command="pay", description="Payment methods info"),
             BotCommand(command="script", description="Dragon City Tool & Script link"),

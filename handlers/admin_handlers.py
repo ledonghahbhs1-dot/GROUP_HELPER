@@ -14,7 +14,8 @@ from utils.emoji_helper import (
     schedule_auto_delete,
     get_payment_info_text,
     get_script_tool_info_text,
-    get_pricing_info_text
+    get_pricing_info_text,
+    get_features_info_text
 )
 from utils.auth import is_user_allowed_private, is_admin_or_owner
 from utils.logger import logger
@@ -240,6 +241,7 @@ async def cmd_help(message: Message):
         f"{emoji_mgr.shield} <b>ADMINISTRATOR COMMANDS LIST</b> {emoji_mgr.vip}\n\n"
         f"{emoji_mgr.settings} <b>SETTINGS & STATS:</b>\n"
         f"{emoji_mgr.star} <code>/settings</code> - Open interactive group security panel\n"
+        f"{emoji_mgr.star} <code>/features</code> - View VIP & Free script detailed feature list\n"
         f"{emoji_mgr.star} <code>/price</code> - View VIP Key Pricing & Packages\n"
         f"{emoji_mgr.star} <code>/pay</code> - View Payment Methods\n"
         f"{emoji_mgr.star} <code>/script</code> - View Dragon City Tool & Script Link\n"
@@ -267,6 +269,18 @@ async def cmd_help(message: Message):
         f"{emoji_mgr.star} <code>/list_emojis</code> - View active custom emoji IDs"
     )
     await safe_answer(message, emoji_mgr.format_msg(text), parse_mode="HTML")
+
+# -------------------------------------------------------------
+# FEATURES COMMAND (/features, /feature, /tinhnang, /chucnang, /menu)
+# -------------------------------------------------------------
+@router.message(Command("features", "feature", "tinhnang", "chucnang", "menu"))
+async def cmd_features(message: Message):
+    text = get_features_info_text()
+    full_text = emoji_mgr.format_msg(text)
+    try:
+        await message.answer(full_text, parse_mode="HTML", disable_web_page_preview=True)
+    except TelegramBadRequest:
+        await message.answer(emoji_mgr.strip_tg_emojis(full_text), parse_mode="HTML", disable_web_page_preview=True)
 
 # -------------------------------------------------------------
 # PRICING COMMAND (/price, /pricing, /cost, /rate, /rates, /gia)

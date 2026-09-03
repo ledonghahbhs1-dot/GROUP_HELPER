@@ -136,6 +136,31 @@ async def test():
     assert "pay" in pricing_text
     print("Multilingual pricing detector tests passed ✅")
 
+    print("5.8 Testing Multilingual Feature & VIP Mod Menu Detector...")
+    from filters.feature_filter import feature_detector
+    from utils.emoji_helper import get_features_info_text
+
+    assert feature_detector.is_feature_query("features")[0] == True
+    assert feature_detector.is_feature_query("what are the vip features?")[0] == True
+    assert feature_detector.is_feature_query("cho xem danh sach tinh nang voi")[0] == True
+    assert feature_detector.is_feature_query("script co chuc nang gi vay ad?")[0] == True
+    assert feature_detector.is_feature_query("que funciones tiene")[0] == True
+    assert feature_detector.is_feature_query("quais sao as funcoes do vip")[0] == True
+    assert feature_detector.is_feature_query("какие функции у вип скрипта")[0] == True
+    assert feature_detector.is_feature_query("apa saja fitur vip script")[0] == True
+    assert feature_detector.is_feature_query("hello good morning")[0] == False
+
+    feat_text = get_features_info_text()
+    assert "WOLFMOD VIP SCRIPT V9.0" in feat_text
+    assert "VIP FEATURE DETAILED LIST" in feat_text
+    assert "Easy Arena Battle" in feat_text
+    assert "Hack Max Stats" in feat_text
+    assert "Clone Dragon" in feat_text
+    assert "No-Sample Trade" in feat_text
+    assert "FREE SCRIPT FEATURES" in feat_text
+    assert "wolfmod.xyz/dragon-city" in feat_text
+    print("Feature detector tests passed ✅")
+
     print("6. Testing Script & Tool Detection (Bilingual)...")
     from filters.script_filter import script_detector
     from utils.emoji_helper import get_script_tool_info_text
