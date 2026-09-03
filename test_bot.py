@@ -82,6 +82,60 @@ async def test():
     assert "9382382864" in pay_text
     assert "rewarble.com" in pay_text
     assert "PAYMENT METHODS" in pay_text
+
+    print("5.5 Testing Multilingual Pricing Detector (100+ keywords)...")
+    from filters.pricing_filter import pricing_detector
+    from utils.emoji_helper import get_pricing_info_text
+
+    # English
+    assert pricing_detector.is_pricing_query("price")[0] == True
+    assert pricing_detector.is_pricing_query("how much is vip key?")[0] == True
+    assert pricing_detector.is_pricing_query("what is the cost of subscription?")[0] == True
+    assert pricing_detector.is_pricing_query("pricing")[0] == True
+    assert pricing_detector.is_pricing_query("check price")[0] == True
+
+    # Vietnamese
+    assert pricing_detector.is_pricing_query("giá bao nhiêu")[0] == True
+    assert pricing_detector.is_pricing_query("xin bảng giá vip với ad")[0] == True
+    assert pricing_detector.is_pricing_query("gia key het bao nhieu tien")[0] == True
+    assert pricing_detector.is_pricing_query("cho em xin gia 30 ngay")[0] == True
+
+    # Spanish & Portuguese
+    assert pricing_detector.is_pricing_query("cuanto cuesta el vip?")[0] == True
+    assert pricing_detector.is_pricing_query("precio")[0] == True
+    assert pricing_detector.is_pricing_query("qual o valor da key?")[0] == True
+    assert pricing_detector.is_pricing_query("quanto custa o vip")[0] == True
+
+    # Russian & Translit
+    assert pricing_detector.is_pricing_query("сколько стоит вип?")[0] == True
+    assert pricing_detector.is_pricing_query("цена ключа")[0] == True
+    assert pricing_detector.is_pricing_query("skolko stoit vip")[0] == True
+
+    # Indonesian & Turkish
+    assert pricing_detector.is_pricing_query("berapa harga vip key?")[0] == True
+    assert pricing_detector.is_pricing_query("vip fiyati ne kadar?")[0] == True
+
+    # French & German
+    assert pricing_detector.is_pricing_query("combien coute le vip?")[0] == True
+    assert pricing_detector.is_pricing_query("wie viel kostet der key?")[0] == True
+
+    # Tagalog & Arabic & Hindi
+    assert pricing_detector.is_pricing_query("magkano ang vip key?")[0] == True
+    assert pricing_detector.is_pricing_query("كم سعر")[0] == True
+    assert pricing_detector.is_pricing_query("vip key price kya hai?")[0] == True
+
+    # Negative test
+    assert pricing_detector.is_pricing_query("hello how are you")[0] == False
+
+    pricing_text = get_pricing_info_text()
+    assert "$1 USD" in pricing_text or "1$" in pricing_text
+    assert "2 Days" in pricing_text or "2/ngày" in pricing_text
+    assert "$7 USD" in pricing_text or "7$" in pricing_text
+    assert "30 Days" in pricing_text or "30 ngày" in pricing_text
+    assert "wolfmod.xyz/dragon-city" in pricing_text or "dragon-city" in pricing_text
+    assert "pay" in pricing_text
+    print("Multilingual pricing detector tests passed ✅")
+
     print("6. Testing Script & Tool Detection (Bilingual)...")
     from filters.script_filter import script_detector
     from utils.emoji_helper import get_script_tool_info_text

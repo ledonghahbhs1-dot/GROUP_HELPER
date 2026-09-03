@@ -5,12 +5,22 @@ from datetime import datetime, timedelta
 from aiogram import Router, F, Bot
 from aiogram.types import Message, ChatPermissions, MessageOriginUser
 from database.db import db
-from utils.emoji_helper import emoji_mgr, safe_answer, safe_send_message, schedule_auto_delete, get_payment_info_text, get_script_tool_info_text, get_issue_support_text
+from utils.emoji_helper import (
+    emoji_mgr,
+    safe_answer,
+    safe_send_message,
+    schedule_auto_delete,
+    get_payment_info_text,
+    get_script_tool_info_text,
+    get_issue_support_text,
+    get_pricing_info_text
+)
 from utils.auth import is_user_allowed_private, is_admin_or_owner
 from utils.logger import logger
 from filters.spam_filter import spam_filter
 from filters.link_filter import link_filter
 from filters.profanity_filter import profanity_filter
+from filters.pricing_filter import pricing_detector
 from filters.payment_filter import payment_detector
 from filters.script_filter import script_detector
 from filters.issue_filter import issue_detector
@@ -115,13 +125,19 @@ async def handle_private_messages(message: Message):
         await safe_answer(message, emoji_mgr.format_msg(text_issue), parse_mode="HTML")
         return
 
-    # 2. Check Payment query (pay, payment, bank, stk, etc.)
+    # 2. Check Pricing query (price, pricing, cost, gia, etc.)
+    if text and pricing_detector.is_pricing_query(text)[0]:
+        text_pricing = get_pricing_info_text()
+        await safe_answer(message, emoji_mgr.format_msg(text_pricing), parse_mode="HTML", disable_web_page_preview=True)
+        return
+
+    # 3. Check Payment query (pay, payment, bank, stk, etc.)
     if text and payment_detector.is_payment_query(text):
         text_pay = get_payment_info_text()
         await safe_answer(message, emoji_mgr.format_msg(text_pay), parse_mode="HTML", disable_web_page_preview=True)
         return
 
-    # 3. Check Script / Tool query (script, tool, key, dc, etc.)
+    # 4. Check Script / Tool query (script, tool, key, dc, etc.)
     if text and script_detector.is_script_query(text):
         text_script = get_script_tool_info_text()
         await safe_answer(message, emoji_mgr.format_msg(text_script), parse_mode="HTML", disable_web_page_preview=True)
@@ -141,6 +157,7 @@ async def handle_private_messages(message: Message):
         f"Your Group Security & Anti-Spam Guard Bot is operational:\n"
         f"{emoji_mgr.star} Add the bot to your group and grant Administrator permissions to activate defense.\n"
         f"{emoji_mgr.star} In group chats, the bot will moderate in <b>English</b> and delete offending messages.\n"
+        f"{emoji_mgr.star} Type <code>/price</code> or <code>price</code> to view VIP Key Pricing.\n"
         f"{emoji_mgr.star} Type <code>/pay</code> or <code>pay</code> to view Payment Methods.\n"
         f"{emoji_mgr.star} Type <code>/help</code> to view all group management commands."
     )
@@ -177,10 +194,14 @@ async def inspect_message(message: Message, bot: Bot):
 
     # If sender is an Admin / Owner / Channel / Bot:
     if is_sender_exempt:
-        # Check if they queried issue, payment or script
+        # Check if they queried issue, pricing, payment or script
         if text and issue_detector.is_issue_query(text)[0]:
             text_issue = get_issue_support_text(user_id, user.full_name if user else "")
             await safe_answer(message, emoji_mgr.format_msg(text_issue), parse_mode="HTML")
+            return
+        if text and pricing_detector.is_pricing_query(text)[0]:
+            text_pricing = get_pricing_info_text()
+            await safe_answer(message, emoji_mgr.format_msg(text_pricing), parse_mode="HTML", disable_web_page_preview=True)
             return
         if text and payment_detector.is_payment_query(text):
             text_pay = get_payment_info_text()
@@ -383,8 +404,16 @@ async def inspect_message(message: Message, bot: Bot):
             return
 
     # -------------------------------------------------------------
-    # 9. Check Payment & Script Queries for regular members (Clean message)
+    # 9. Check Pricing, Payment & Script Queries for regular members (Clean message)
     # -------------------------------------------------------------
+    if text:
+        is_price, matched_price_kw = pricing_detector.is_pricing_query(text)
+        if is_price:
+            logger.info("Pricing query detected from member: kw=%r, text=%r", matched_price_kw, text)
+            text_pricing = get_pricing_info_text()
+            await safe_answer(message, emoji_mgr.format_msg(text_pricing), parse_mode="HTML", disable_web_page_preview=True)
+            return
+
     if text and payment_detector.is_payment_query(text):
         logger.info("Payment query detected from member: %r", text)
         text_pay = get_payment_info_text()

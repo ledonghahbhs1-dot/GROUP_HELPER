@@ -262,3 +262,16 @@ def get_issue_support_text(user_id: int = 0, user_name: str = "") -> str:
         f"{emoji_mgr.star} <b>Direct Admin Contact:</b> @wolfmodyt"
     )
 
+def get_pricing_info_text() -> str:
+    """Returns formatted VIP Key Pricing & Subscription details with VIP custom emojis"""
+    return (
+        f"{emoji_mgr.vip} <b>DRAGON CITY VIP KEY PRICING</b> {emoji_mgr.vip}\n\n"
+        f"{emoji_mgr.star} <b>2 Days VIP Access:</b> <code>$1 USD</code> (1$ / 2 Days)\n"
+        f"{emoji_mgr.star} <b>30 Days VIP Access:</b> <code>$7 USD</code> (7$ / 30 Days)\n\n"
+        f"━━━━━━━━━━━━━━━━━━━━\n"
+        f"{emoji_mgr.diamond} <b>HOW TO PURCHASE VIP:</b>\n"
+        f"{emoji_mgr.star} <b>Buy Online:</b> <a href=\"https://www.wolfmod.xyz/dragon-city\">https://www.wolfmod.xyz/dragon-city</a>\n"
+        f"{emoji_mgr.star} <b>Payment Methods:</b> Type <code>pay</code> or <code>/pay</code>\n"
+        f"{emoji_mgr.star} <b>Direct Purchase via DM:</b> Contact Master Admin {emoji_mgr.vip} :@wolfmodyt {emoji_mgr.vip}"
+    )
+
