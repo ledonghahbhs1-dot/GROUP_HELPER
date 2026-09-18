@@ -1,5 +1,7 @@
 import base64
 import io
+import json
+import os
 from typing import Any, Dict, Optional
 
 import aiohttp
@@ -7,6 +9,24 @@ import qrcode
 
 import config
 from utils.logger import logger
+
+# Matches the backend's XOR "encryptData"/"decryptData" (api/index.ts) used to wrap
+# a few legacy JSON responses. Not real encryption - just obfuscation - but the
+# response of /api/buy-vip/vietqr-create is only readable through it.
+# Kept out of source control: set WOLFMOD_ENC_KEY to the same literal string the
+# backend's ENCRYPTION_KEY constant uses.
+_ENCRYPTION_KEY = os.getenv("WOLFMOD_ENC_KEY", "")
+
+
+def _decrypt_enc_field(hex_str: str) -> Any:
+    if not _ENCRYPTION_KEY:
+        raise RuntimeError("WOLFMOD_ENC_KEY is not configured - cannot decrypt backend response")
+    chars = []
+    for i in range(0, len(hex_str), 4):
+        part = hex_str[i:i + 4]
+        code = int(part, 16) ^ ord(_ENCRYPTION_KEY[(i // 4) % len(_ENCRYPTION_KEY)])
+        chars.append(chr(code))
+    return json.loads("".join(chars))
 
 
 async def create_vip_invoice(plan: str) -> Optional[Dict[str, Any]]:
@@ -51,6 +71,59 @@ async def check_vip_order(order_id: str) -> Optional[Dict[str, Any]]:
                 return None
     except Exception as e:
         logger.error("Exception checking VIP order %s: %s", order_id, e)
+        return None
+
+
+async def create_vietqr_invoice(username: str, amount_vnd: int) -> Optional[Dict[str, Any]]:
+    """
+    Creates a Vietnamese bank-transfer (VietQR / SePay) payment order via the
+    wolfmod.xyz backend. amount_vnd must be one of the backend's accepted VND
+    tiers (25000 = 2-day, 150000 = 30-day, 700000 = lifetime).
+    Returns the decrypted response dict (pendingId, transferCode, memo, amount,
+    bankName, accountName, accountNo, qrUrl, qrBase64) on success, or None.
+    """
+    url = f"{config.WOLFMOD_API_BASE_URL}/api/buy-vip/vietqr-create"
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                url, json={"username": username, "amount": amount_vnd},
+                timeout=aiohttp.ClientTimeout(total=15)
+            ) as resp:
+                raw = await resp.json(content_type=None)
+                if resp.status != 200 or "enc" not in raw:
+                    logger.error("Failed to create VietQR invoice (amount=%s): status=%s body=%s", amount_vnd, resp.status, raw)
+                    return None
+                data = _decrypt_enc_field(raw["enc"])
+                if data.get("success") and data.get("qrUrl"):
+                    return data
+                logger.error("Unexpected VietQR invoice payload (amount=%s): %s", amount_vnd, data)
+                return None
+    except Exception as e:
+        logger.error("Exception creating VietQR invoice (amount=%s): %s", amount_vnd, e)
+        return None
+
+
+async def check_vietqr_order(pending_id: str, transfer_code: str) -> Optional[Dict[str, Any]]:
+    """
+    Checks payment status of a VietQR/SePay order via the wolfmod.xyz backend
+    (guest mode: pendingId + transferCode together act as the bearer secret).
+    Returns {"status": "pending"|"confirmed"|"expired", "licenseKey": ...} on
+    success, or None if the check itself failed.
+    """
+    url = f"{config.WOLFMOD_API_BASE_URL}/api/buy-vip/vietqr-check"
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                url, params={"pendingId": pending_id, "transferCode": transfer_code},
+                timeout=aiohttp.ClientTimeout(total=15)
+            ) as resp:
+                data = await resp.json(content_type=None)
+                if resp.status == 200 and data.get("success"):
+                    return data
+                logger.error("Failed to check VietQR order %s: status=%s body=%s", pending_id, resp.status, data)
+                return None
+    except Exception as e:
+        logger.error("Exception checking VietQR order %s: %s", pending_id, e)
         return None
 
 
