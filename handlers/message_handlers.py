@@ -70,11 +70,10 @@ async def send_arena_battle_video(bot: Bot, message: Message):
             "Failed to forward Arena Battle guide video (from_chat=%s, message_id=%s) to chat %s: %s",
             config.ARENA_VIDEO_CHAT, config.ARENA_VIDEO_MESSAGE_ID, message.chat.id, e
         )
-        # Fallback so the request is never silently ignored (e.g. channel has forwarding restricted)
+        # Fallback so the request is never silently ignored (e.g. bot not yet added to the source channel)
         fallback_text = (
             f"{emoji_mgr.vip} <b>ARENA BATTLE GUIDE</b> {emoji_mgr.vip}\n\n"
-            f"{emoji_mgr.star} <a href=\"https://t.me/youtubewolfmod/280\">Watch the Arena Battle guide video here</a>\n\n"
-            f"{emoji_mgr.warn} <i>(Auto-forward failed: {html.escape(str(e))})</i>"
+            f"{emoji_mgr.star} <a href=\"https://t.me/youtubewolfmod/280\">Watch the Arena Battle guide video here</a>"
         )
         try:
             await safe_send_message(
