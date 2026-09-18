@@ -210,8 +210,16 @@ def parse_admin_cmd(text: str, has_reply: bool) -> Optional[tuple[str, str]]:
 # START & HELP COMMANDS (Bilingual: VN in private, EN in group)
 # -------------------------------------------------------------
 @router.message(Command("start"))
-async def cmd_start(message: Message, bot: Bot):
+async def cmd_start(message: Message, bot: Bot, command: CommandObject):
     is_private = message.chat.type == "private"
+
+    # "Buy VIP Key" deep link (from the group welcome message button) - open to ANY user,
+    # bypassing the owner-only private chat restriction below.
+    if is_private and command.args == "buyvip":
+        from handlers.vip_handlers import send_vip_plan_menu
+        await send_vip_plan_menu(bot, message.chat.id)
+        return
+
     if is_private and not is_user_allowed_private(message.from_user):
         return
 

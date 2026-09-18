@@ -12,6 +12,7 @@ from utils.logger import logger
 from filters.spam_filter import spam_filter
 
 from handlers.admin_handlers import router as admin_router
+from handlers.vip_handlers import router as vip_router
 from handlers.callback_handlers import router as callback_router
 from handlers.member_handlers import router as member_router
 from handlers.message_handlers import router as message_router
@@ -81,7 +82,11 @@ async def main():
     dp = Dispatcher()
 
     # 4. Register Handlers in priority order
+    # vip_router must come before callback_router: callback_handlers.py has a
+    # catch-all @router.callback_query() with no filter that would otherwise
+    # swallow the "vipbuy:"/"vipcheck:" callback buttons first.
     dp.include_router(admin_router)
+    dp.include_router(vip_router)
     dp.include_router(callback_router)
     dp.include_router(member_router)
     dp.include_router(message_router)

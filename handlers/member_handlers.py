@@ -2,7 +2,7 @@ import asyncio
 import html
 import time
 from aiogram import Router, F, Bot
-from aiogram.types import ChatMemberUpdated, Message, ChatPermissions
+from aiogram.types import ChatMemberUpdated, Message, ChatPermissions, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.filters.chat_member_updated import ChatMemberUpdatedFilter, MEMBER, KICKED, LEFT, RESTRICTED
 from database.db import db
 from utils.emoji_helper import emoji_mgr, safe_send_message, safe_answer, schedule_auto_delete
@@ -58,7 +58,11 @@ async def handle_welcome_for_user(bot: Bot, chat_id: int, chat_title: str, user)
         return
     try:
         welcome_text = build_welcome_text(chat_title or "THE GROUP", user.id, user.full_name)
-        await safe_send_message(bot, chat_id, welcome_text, parse_mode="HTML")
+        bot_info = await bot.get_me()
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="💎 Buy VIP Key", url=f"https://t.me/{bot_info.username}?start=buyvip")]
+        ])
+        await safe_send_message(bot, chat_id, welcome_text, parse_mode="HTML", reply_markup=keyboard)
         logger.info("Sent welcome message to user %s in chat %s", user.id, chat_id)
     except Exception as e:
         logger.error("Failed to send welcome message to user %s: %s", user.id, e)

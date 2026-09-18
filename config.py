@@ -41,6 +41,9 @@ BYPASSVERIFY_VIDEO_MESSAGE_ID: int = int(os.getenv("BYPASSVERIFY_VIDEO_MESSAGE_I
 NOTRADE_VIDEO_MESSAGE_ID: int = int(os.getenv("NOTRADE_VIDEO_MESSAGE_ID", 298))  # Trading Without Sample guide: t.me/youtubewolfmod/298
 FREEKEY_VIDEO_MESSAGE_ID: int = int(os.getenv("FREEKEY_VIDEO_MESSAGE_ID", 315))  # How to get Free Key guide: t.me/youtubewolfmod/315
 
+# WolfMod.xyz VIP Key checkout API (live production backend, shared with the website itself)
+WOLFMOD_API_BASE_URL: str = os.getenv("WOLFMOD_API_BASE_URL", "https://www.wolfmod.xyz")
+
 # Default Group Settings (Mặc định: Cảnh cáo tối đa 5 lần, quá 5 lần là BAN, tự xoá thông báo sau 30 giây)
 DEFAULT_MAX_WARNS: int = int(os.getenv("DEFAULT_MAX_WARNS", 5))
 DEFAULT_WARN_ACTION: str = os.getenv("DEFAULT_WARN_ACTION", "ban").lower()  # "ban", "mute", "kick"
