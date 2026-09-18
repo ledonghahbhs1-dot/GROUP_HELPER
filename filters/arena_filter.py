@@ -7,7 +7,7 @@ from utils.text_cleaner import normalize_text_for_filter, strip_all_delimiters
 # Russian, Indonesian, Turkish, French, German, Italian, Tagalog, Arabic, Hindi
 ARENA_KEYWORDS_RAW = [
     # 1. English (25+ keywords)
-    "arena battle", "arena battles", "easy arena battle", "easy arena", "arena win",
+    "arena", "arenas", "arena battle", "arena battles", "easy arena battle", "easy arena", "arena win",
     "auto arena", "arena auto win", "how to win arena", "arena guide", "arena tutorial",
     "arena hack", "arena mod", "win arena", "arena instructions", "arena help",
     "arena video", "how to use arena battle", "arena battle guide", "arena battle tutorial",
