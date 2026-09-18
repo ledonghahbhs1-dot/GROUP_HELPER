@@ -25,6 +25,7 @@ from filters.feature_filter import feature_detector
 from filters.arena_filter import arena_detector
 from filters.orbquest_filter import orbquest_detector
 from filters.maxstats_filter import maxstats_detector
+from filters.recall_filter import recall_detector
 from filters.pricing_filter import pricing_detector
 from filters.payment_filter import payment_detector
 from filters.script_filter import script_detector
@@ -96,6 +97,10 @@ async def send_orbquest_video(bot: Bot, message: Message):
 async def send_maxstats_video(bot: Bot, message: Message):
     """Forwards the official Max Health / Max Damage / Max Star / Max Level guide video (t.me/youtubewolfmod/283)"""
     await forward_guide_video(bot, message, config.MAXSTATS_VIDEO_MESSAGE_ID, "https://t.me/youtubewolfmod/283", "Max Health, Damage, Star & Level")
+
+async def send_recall_video(bot: Bot, message: Message):
+    """Forwards the official Force Recall / No-Duplicate Recall guide video (t.me/youtubewolfmod/284)"""
+    await forward_guide_video(bot, message, config.RECALL_VIDEO_MESSAGE_ID, "https://t.me/youtubewolfmod/284", "Force Recall (No-Duplicate)")
 
 async def announce_username_change(bot: Bot, chat_id: int, user, old_username: str, new_username: str):
     """Announces in the group when a member sets, changes, or removes their Telegram @username"""
@@ -209,6 +214,11 @@ async def handle_private_messages(message: Message):
         await send_maxstats_video(message.bot, message)
         return
 
+    # 2e. Check Force Recall / No-Duplicate Recall query
+    if text and recall_detector.is_recall_query(text)[0]:
+        await send_recall_video(message.bot, message)
+        return
+
     # 2b. Check Feature query (feature, features, tinh nang, chuc nang, menu, etc.)
     if text and feature_detector.is_feature_query(text)[0]:
         text_feature = get_features_info_text()
@@ -305,6 +315,9 @@ async def inspect_message(message: Message, bot: Bot):
             return
         if text and maxstats_detector.is_maxstats_query(text)[0]:
             await send_maxstats_video(bot, message)
+            return
+        if text and recall_detector.is_recall_query(text)[0]:
+            await send_recall_video(bot, message)
             return
         if text and feature_detector.is_feature_query(text)[0]:
             text_feature = get_features_info_text()
@@ -536,6 +549,13 @@ async def inspect_message(message: Message, bot: Bot):
         if is_maxstats:
             logger.info("Max Stats query detected from member: kw=%r, text=%r", matched_maxstats_kw, text)
             await send_maxstats_video(bot, message)
+            return
+
+    if text:
+        is_recall, matched_recall_kw = recall_detector.is_recall_query(text)
+        if is_recall:
+            logger.info("Force Recall query detected from member: kw=%r, text=%r", matched_recall_kw, text)
+            await send_recall_video(bot, message)
             return
 
     if text:
