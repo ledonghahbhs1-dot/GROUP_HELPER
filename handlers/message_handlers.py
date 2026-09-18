@@ -26,6 +26,11 @@ from filters.arena_filter import arena_detector
 from filters.orbquest_filter import orbquest_detector
 from filters.maxstats_filter import maxstats_detector
 from filters.recall_filter import recall_detector
+from filters.habitat_filter import habitat_detector
+from filters.heroicrace_filter import heroicrace_detector
+from filters.bypassverify_filter import bypassverify_detector
+from filters.notrade_filter import notrade_detector
+from filters.freekey_filter import freekey_detector
 from filters.pricing_filter import pricing_detector
 from filters.payment_filter import payment_detector
 from filters.script_filter import script_detector
@@ -101,6 +106,26 @@ async def send_maxstats_video(bot: Bot, message: Message):
 async def send_recall_video(bot: Bot, message: Message):
     """Forwards the official Force Recall / No-Duplicate Recall guide video (t.me/youtubewolfmod/284)"""
     await forward_guide_video(bot, message, config.RECALL_VIDEO_MESSAGE_ID, "https://t.me/youtubewolfmod/284", "Force Recall (No-Duplicate)")
+
+async def send_habitat_video(bot: Bot, message: Message):
+    """Forwards the official Move Habitat & Building guide video (t.me/youtubewolfmod/285)"""
+    await forward_guide_video(bot, message, config.HABITAT_VIDEO_MESSAGE_ID, "https://t.me/youtubewolfmod/285", "Move Habitat & Building")
+
+async def send_heroicrace_video(bot: Bot, message: Message):
+    """Forwards the official Skip Heroic Race Battle Time guide video (t.me/youtubewolfmod/290)"""
+    await forward_guide_video(bot, message, config.HEROICRACE_VIDEO_MESSAGE_ID, "https://t.me/youtubewolfmod/290", "Skip Heroic Race Battle Time")
+
+async def send_bypassverify_video(bot: Bot, message: Message):
+    """Forwards the official Bypass Verified Attack Skill guide video (t.me/youtubewolfmod/295)"""
+    await forward_guide_video(bot, message, config.BYPASSVERIFY_VIDEO_MESSAGE_ID, "https://t.me/youtubewolfmod/295", "Bypass Verified Skill")
+
+async def send_notrade_video(bot: Bot, message: Message):
+    """Forwards the official No-Sample Trade guide video (t.me/youtubewolfmod/298)"""
+    await forward_guide_video(bot, message, config.NOTRADE_VIDEO_MESSAGE_ID, "https://t.me/youtubewolfmod/298", "Trading Without Sample")
+
+async def send_freekey_video(bot: Bot, message: Message):
+    """Forwards the official How to get Free Key guide video (t.me/youtubewolfmod/315)"""
+    await forward_guide_video(bot, message, config.FREEKEY_VIDEO_MESSAGE_ID, "https://t.me/youtubewolfmod/315", "How to Get Free Key")
 
 async def announce_username_change(bot: Bot, chat_id: int, user, old_username: str, new_username: str):
     """Announces in the group when a member sets, changes, or removes their Telegram @username"""
@@ -219,6 +244,31 @@ async def handle_private_messages(message: Message):
         await send_recall_video(message.bot, message)
         return
 
+    # 2f. Check Move Habitat & Building query
+    if text and habitat_detector.is_habitat_query(text)[0]:
+        await send_habitat_video(message.bot, message)
+        return
+
+    # 2g. Check Skip Heroic Race Battle Time query
+    if text and heroicrace_detector.is_heroicrace_query(text)[0]:
+        await send_heroicrace_video(message.bot, message)
+        return
+
+    # 2h. Check Bypass Verified Skill query
+    if text and bypassverify_detector.is_bypassverify_query(text)[0]:
+        await send_bypassverify_video(message.bot, message)
+        return
+
+    # 2i. Check Trading Without Sample query
+    if text and notrade_detector.is_notrade_query(text)[0]:
+        await send_notrade_video(message.bot, message)
+        return
+
+    # 2j. Check How to Get Free Key query
+    if text and freekey_detector.is_freekey_query(text)[0]:
+        await send_freekey_video(message.bot, message)
+        return
+
     # 2b. Check Feature query (feature, features, tinh nang, chuc nang, menu, etc.)
     if text and feature_detector.is_feature_query(text)[0]:
         text_feature = get_features_info_text()
@@ -318,6 +368,21 @@ async def inspect_message(message: Message, bot: Bot):
             return
         if text and recall_detector.is_recall_query(text)[0]:
             await send_recall_video(bot, message)
+            return
+        if text and habitat_detector.is_habitat_query(text)[0]:
+            await send_habitat_video(bot, message)
+            return
+        if text and heroicrace_detector.is_heroicrace_query(text)[0]:
+            await send_heroicrace_video(bot, message)
+            return
+        if text and bypassverify_detector.is_bypassverify_query(text)[0]:
+            await send_bypassverify_video(bot, message)
+            return
+        if text and notrade_detector.is_notrade_query(text)[0]:
+            await send_notrade_video(bot, message)
+            return
+        if text and freekey_detector.is_freekey_query(text)[0]:
+            await send_freekey_video(bot, message)
             return
         if text and feature_detector.is_feature_query(text)[0]:
             text_feature = get_features_info_text()
@@ -556,6 +621,41 @@ async def inspect_message(message: Message, bot: Bot):
         if is_recall:
             logger.info("Force Recall query detected from member: kw=%r, text=%r", matched_recall_kw, text)
             await send_recall_video(bot, message)
+            return
+
+    if text:
+        is_habitat, matched_habitat_kw = habitat_detector.is_habitat_query(text)
+        if is_habitat:
+            logger.info("Move Habitat & Building query detected from member: kw=%r, text=%r", matched_habitat_kw, text)
+            await send_habitat_video(bot, message)
+            return
+
+    if text:
+        is_heroicrace, matched_heroicrace_kw = heroicrace_detector.is_heroicrace_query(text)
+        if is_heroicrace:
+            logger.info("Skip Heroic Race query detected from member: kw=%r, text=%r", matched_heroicrace_kw, text)
+            await send_heroicrace_video(bot, message)
+            return
+
+    if text:
+        is_bypassverify, matched_bypassverify_kw = bypassverify_detector.is_bypassverify_query(text)
+        if is_bypassverify:
+            logger.info("Bypass Verified Skill query detected from member: kw=%r, text=%r", matched_bypassverify_kw, text)
+            await send_bypassverify_video(bot, message)
+            return
+
+    if text:
+        is_notrade, matched_notrade_kw = notrade_detector.is_notrade_query(text)
+        if is_notrade:
+            logger.info("Trading Without Sample query detected from member: kw=%r, text=%r", matched_notrade_kw, text)
+            await send_notrade_video(bot, message)
+            return
+
+    if text:
+        is_freekey, matched_freekey_kw = freekey_detector.is_freekey_query(text)
+        if is_freekey:
+            logger.info("Free Key query detected from member: kw=%r, text=%r", matched_freekey_kw, text)
+            await send_freekey_video(bot, message)
             return
 
     if text:

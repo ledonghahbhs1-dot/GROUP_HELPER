@@ -35,6 +35,11 @@ ARENA_VIDEO_MESSAGE_ID: int = int(os.getenv("ARENA_VIDEO_MESSAGE_ID", 280))  # A
 ORBQUEST_VIDEO_MESSAGE_ID: int = int(os.getenv("ORBQUEST_VIDEO_MESSAGE_ID", 281))  # Farm Orb / Quest / Rank Up guide: t.me/youtubewolfmod/281
 MAXSTATS_VIDEO_MESSAGE_ID: int = int(os.getenv("MAXSTATS_VIDEO_MESSAGE_ID", 283))  # Max Health/Damage/Star/Level guide: t.me/youtubewolfmod/283
 RECALL_VIDEO_MESSAGE_ID: int = int(os.getenv("RECALL_VIDEO_MESSAGE_ID", 284))  # Force Recall / No-Duplicate Recall guide: t.me/youtubewolfmod/284
+HABITAT_VIDEO_MESSAGE_ID: int = int(os.getenv("HABITAT_VIDEO_MESSAGE_ID", 285))  # Move Habitat & Building guide: t.me/youtubewolfmod/285
+HEROICRACE_VIDEO_MESSAGE_ID: int = int(os.getenv("HEROICRACE_VIDEO_MESSAGE_ID", 290))  # Skip Heroic Race Battle Time guide: t.me/youtubewolfmod/290
+BYPASSVERIFY_VIDEO_MESSAGE_ID: int = int(os.getenv("BYPASSVERIFY_VIDEO_MESSAGE_ID", 295))  # Bypass Verified Skill guide: t.me/youtubewolfmod/295
+NOTRADE_VIDEO_MESSAGE_ID: int = int(os.getenv("NOTRADE_VIDEO_MESSAGE_ID", 298))  # Trading Without Sample guide: t.me/youtubewolfmod/298
+FREEKEY_VIDEO_MESSAGE_ID: int = int(os.getenv("FREEKEY_VIDEO_MESSAGE_ID", 315))  # How to get Free Key guide: t.me/youtubewolfmod/315
 
 # Default Group Settings (Mặc định: Cảnh cáo tối đa 5 lần, quá 5 lần là BAN, tự xoá thông báo sau 30 giây)
 DEFAULT_MAX_WARNS: int = int(os.getenv("DEFAULT_MAX_WARNS", 5))
