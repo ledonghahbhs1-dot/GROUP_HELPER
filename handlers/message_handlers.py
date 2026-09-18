@@ -66,7 +66,23 @@ async def send_arena_battle_video(bot: Bot, message: Message):
         )
         logger.info("Forwarded Arena Battle guide video to chat %s", message.chat.id)
     except Exception as e:
-        logger.error("Failed to forward Arena Battle guide video to chat %s: %s", message.chat.id, e)
+        logger.error(
+            "Failed to forward Arena Battle guide video (from_chat=%s, message_id=%s) to chat %s: %s",
+            config.ARENA_VIDEO_CHAT, config.ARENA_VIDEO_MESSAGE_ID, message.chat.id, e
+        )
+        # Fallback so the request is never silently ignored (e.g. channel has forwarding restricted)
+        fallback_text = (
+            f"{emoji_mgr.vip} <b>ARENA BATTLE GUIDE</b> {emoji_mgr.vip}\n\n"
+            f"{emoji_mgr.star} <a href=\"https://t.me/youtubewolfmod/280\">Watch the Arena Battle guide video here</a>\n\n"
+            f"{emoji_mgr.warn} <i>(Auto-forward failed: {html.escape(str(e))})</i>"
+        )
+        try:
+            await safe_send_message(
+                bot, message.chat.id, emoji_mgr.format_msg(fallback_text),
+                parse_mode="HTML", disable_web_page_preview=False
+            )
+        except Exception as e2:
+            logger.error("Fallback Arena Battle message also failed for chat %s: %s", message.chat.id, e2)
 
 async def announce_username_change(bot: Bot, chat_id: int, user, old_username: str, new_username: str):
     """Announces in the group when a member sets, changes, or removes their Telegram @username"""
