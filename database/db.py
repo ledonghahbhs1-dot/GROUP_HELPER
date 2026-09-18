@@ -295,10 +295,10 @@ class Database:
                 INSERT INTO users_cache (user_id, username, full_name, updated_at)
                 VALUES (?, ?, ?, CURRENT_TIMESTAMP)
                 ON CONFLICT(user_id) DO UPDATE SET
-                    username = CASE WHEN ? != '' THEN ? ELSE users_cache.username END,
+                    username = ?,
                     full_name = CASE WHEN ? != '' THEN ? ELSE users_cache.full_name END,
                     updated_at = CURRENT_TIMESTAMP
-            """, (user_id, clean_username, full_name, clean_username, clean_username, full_name, full_name))
+            """, (user_id, clean_username, full_name, clean_username, full_name, full_name))
             await db.commit()
 
     async def get_user_by_username(self, username: str) -> Optional[Dict[str, Any]]:

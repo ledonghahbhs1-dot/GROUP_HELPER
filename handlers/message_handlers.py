@@ -68,6 +68,30 @@ async def send_arena_battle_video(bot: Bot, message: Message):
     except Exception as e:
         logger.error("Failed to forward Arena Battle guide video to chat %s: %s", message.chat.id, e)
 
+async def announce_username_change(bot: Bot, chat_id: int, user, old_username: str, new_username: str):
+    """Announces in the group when a member sets, changes, or removes their Telegram @username"""
+    user_mention = f"<a href='tg://user?id={user.id}'>{html.escape(user.full_name or str(user.id))}</a>"
+    old_display = f"@{html.escape(old_username)}" if old_username else "<i>none</i>"
+    new_display = f"@{html.escape(new_username)}" if new_username else "<i>none</i>"
+
+    if not old_username:
+        action_line = f"{emoji_mgr.star} <b>Set a new username:</b> {new_display}"
+    elif not new_username:
+        action_line = f"{emoji_mgr.warn} <b>Removed their username</b> (was {old_display})"
+    else:
+        action_line = f"{emoji_mgr.star} <b>Changed username:</b> {old_display} ➜ {new_display}"
+
+    text = (
+        f"{emoji_mgr.bell} <b>USERNAME CHANGE DETECTED</b> {emoji_mgr.vip}\n\n"
+        f"{emoji_mgr.star} <b>Member:</b> {user_mention} (<code>{user.id}</code>)\n"
+        f"{action_line}"
+    )
+    try:
+        await safe_send_message(bot, chat_id, emoji_mgr.format_msg(text), parse_mode="HTML")
+        logger.info("Username change announced for user %s in chat %s: %r -> %r", user.id, chat_id, old_username, new_username)
+    except Exception as e:
+        logger.error("Failed to announce username change for user %s in chat %s: %s", user.id, chat_id, e)
+
 async def apply_punishment(
     bot: Bot,
     chat_id: int,
@@ -202,12 +226,19 @@ async def inspect_message(message: Message, bot: Bot):
     user_id = user.id if user else 0
     logger.info("GROUP MSG [%s in %s (%s)]: text=%r", user_id, chat_id, message.chat.type, text)
 
-    # Cache user for @username command resolution
+    # Cache user for @username command resolution + announce username changes
     if user and not user.is_bot:
         try:
-            await db.save_user(user.id, user.username or "", user.full_name or "")
-        except Exception:
-            pass
+            old_record = await db.get_user_by_id(user.id)
+            new_username = (user.username or "").strip()
+            await db.save_user(user.id, new_username, user.full_name or "")
+
+            if old_record:
+                old_username = (old_record.get("username") or "").strip()
+                if old_username.lower() != new_username.lower():
+                    await announce_username_change(bot, chat_id, user, old_username, new_username)
+        except Exception as e:
+            logger.warning("Failed to cache user / detect username change for %s: %s", user_id, e)
 
     # 1. 100% Exempt Anonymous Admins, Group Senders & Channel Senders from MODERATION
     is_sender_exempt = False
