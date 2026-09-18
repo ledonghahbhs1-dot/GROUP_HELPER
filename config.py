@@ -33,6 +33,7 @@ DATABASE_PATH: str = os.getenv("DATABASE_PATH", str(BASE_DIR / "data" / "guard_b
 ARENA_VIDEO_CHAT: str = os.getenv("ARENA_VIDEO_CHAT", "@youtubewolfmod")
 ARENA_VIDEO_MESSAGE_ID: int = int(os.getenv("ARENA_VIDEO_MESSAGE_ID", 280))  # Arena Battle guide: t.me/youtubewolfmod/280
 ORBQUEST_VIDEO_MESSAGE_ID: int = int(os.getenv("ORBQUEST_VIDEO_MESSAGE_ID", 281))  # Farm Orb / Quest / Rank Up guide: t.me/youtubewolfmod/281
+MAXSTATS_VIDEO_MESSAGE_ID: int = int(os.getenv("MAXSTATS_VIDEO_MESSAGE_ID", 283))  # Max Health/Damage/Star/Level guide: t.me/youtubewolfmod/283
 
 # Default Group Settings (Mặc định: Cảnh cáo tối đa 5 lần, quá 5 lần là BAN, tự xoá thông báo sau 30 giây)
 DEFAULT_MAX_WARNS: int = int(os.getenv("DEFAULT_MAX_WARNS", 5))
