@@ -22,6 +22,7 @@ from filters.spam_filter import spam_filter
 from filters.link_filter import link_filter
 from filters.profanity_filter import profanity_filter
 from filters.feature_filter import feature_detector
+from filters.arena_filter import arena_detector
 from filters.pricing_filter import pricing_detector
 from filters.payment_filter import payment_detector
 from filters.script_filter import script_detector
@@ -53,6 +54,19 @@ def check_bot_forward(message: Message) -> tuple[bool, str]:
         return True, f"Sent via inline bot ({bot_handle})"
 
     return False, ""
+
+async def send_arena_battle_video(bot: Bot, message: Message):
+    """Forwards the official Arena Battle / Easy Arena Battle guide video (t.me/youtubewolfmod/280)"""
+    try:
+        await bot.forward_message(
+            chat_id=message.chat.id,
+            from_chat_id=config.ARENA_VIDEO_CHAT,
+            message_id=config.ARENA_VIDEO_MESSAGE_ID,
+            message_thread_id=message.message_thread_id
+        )
+        logger.info("Forwarded Arena Battle guide video to chat %s", message.chat.id)
+    except Exception as e:
+        logger.error("Failed to forward Arena Battle guide video to chat %s: %s", message.chat.id, e)
 
 async def apply_punishment(
     bot: Bot,
@@ -127,7 +141,12 @@ async def handle_private_messages(message: Message):
         await safe_answer(message, emoji_mgr.format_msg(text_issue), parse_mode="HTML")
         return
 
-    # 2. Check Feature query (feature, features, tinh nang, chuc nang, menu, etc.)
+    # 2. Check Arena Battle query (arena battle, dau truong, easy arena, etc.)
+    if text and arena_detector.is_arena_query(text)[0]:
+        await send_arena_battle_video(message.bot, message)
+        return
+
+    # 2b. Check Feature query (feature, features, tinh nang, chuc nang, menu, etc.)
     if text and feature_detector.is_feature_query(text)[0]:
         text_feature = get_features_info_text()
         await safe_answer(message, emoji_mgr.format_msg(text_feature), parse_mode="HTML", disable_web_page_preview=True)
@@ -207,6 +226,9 @@ async def inspect_message(message: Message, bot: Bot):
         if text and issue_detector.is_issue_query(text)[0]:
             text_issue = get_issue_support_text(user_id, user.full_name if user else "")
             await safe_answer(message, emoji_mgr.format_msg(text_issue), parse_mode="HTML")
+            return
+        if text and arena_detector.is_arena_query(text)[0]:
+            await send_arena_battle_video(bot, message)
             return
         if text and feature_detector.is_feature_query(text)[0]:
             text_feature = get_features_info_text()
@@ -417,8 +439,15 @@ async def inspect_message(message: Message, bot: Bot):
             return
 
     # -------------------------------------------------------------
-    # 9. Check Features, Pricing, Payment & Script Queries for regular members (Clean message)
+    # 9. Check Arena Battle, Features, Pricing, Payment & Script Queries for regular members (Clean message)
     # -------------------------------------------------------------
+    if text:
+        is_arena, matched_arena_kw = arena_detector.is_arena_query(text)
+        if is_arena:
+            logger.info("Arena Battle query detected from member: kw=%r, text=%r", matched_arena_kw, text)
+            await send_arena_battle_video(bot, message)
+            return
+
     if text:
         is_feat, matched_feat_kw = feature_detector.is_feature_query(text)
         if is_feat:
