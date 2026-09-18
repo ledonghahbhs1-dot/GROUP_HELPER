@@ -12,6 +12,18 @@ import config
 
 router = Router(name="member_handlers")
 
+# The 8 major VIP feature categories (matches get_features_info_text() section headers)
+VIP_FEATURE_CATEGORIES = [
+    ("🛠", "App & Memory Tools"),
+    ("🗡️", "Battle Mods"),
+    ("🐉", "Dragon Mods"),
+    ("🌳", "Tree of Life Mods"),
+    ("🔱", "Skill Hacks"),
+    ("⏱️", "Time & Speed"),
+    ("🎪", "Event Mods & Islands"),
+    ("📦", "Extra Tools"),
+]
+
 # Prevent duplicate welcome messages for same user within 30s
 _welcomed_users = {}
 
@@ -40,6 +52,11 @@ def build_welcome_text(chat_title: str, user_id: int, user_name: str) -> str:
         f"• {emoji_mgr.vip} <b>Owner / Master Admin:</b> @wolfmodyt {emoji_mgr.vip}\n"
         f"• {emoji_mgr.star} <b>Payment Methods (VIP Key):</b> Type <code>pay</code> in chat or DM {emoji_mgr.vip} :@wolfmodyt\n"
         f"• {emoji_mgr.star} <b>Dragon City Tool & Script:</b> Type <code>tool</code> or <code>script</code>\n\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"🔥 <b>DRAGON CITY VIP FEATURES</b> 🔥\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        + "".join(f"{icon} {name}\n" for icon, name in VIP_FEATURE_CATEGORIES)
+        + f"\n{emoji_mgr.star} <i>Tap a category below to unlock it with VIP!</i>\n\n"
         f"{emoji_mgr.warn} <b>GROUP SECURITY & RULES:</b>\n"
         f"• {emoji_mgr.error} No spamming or excessive flood messages\n"
         f"• {emoji_mgr.link} No unauthorized links / Telegram invite links\n"
@@ -59,8 +76,18 @@ async def handle_welcome_for_user(bot: Bot, chat_id: int, chat_title: str, user)
     try:
         welcome_text = build_welcome_text(chat_title or "THE GROUP", user.id, user.full_name)
         bot_info = await bot.get_me()
-        keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="💎 Buy VIP Key", url=f"https://t.me/{bot_info.username}?start=buyvip")]
+        buyvip_url = f"https://t.me/{bot_info.username}?start=buyvip"
+
+        # Every VIP feature category is itself a "Buy VIP Now" entry point (2 per row),
+        # plus one prominent full-width button at the bottom. The rules/warnings section
+        # above intentionally gets no button.
+        category_buttons = [
+            InlineKeyboardButton(text=f"{icon} {name}", url=buyvip_url)
+            for icon, name in VIP_FEATURE_CATEGORIES
+        ]
+        category_rows = [category_buttons[i:i + 2] for i in range(0, len(category_buttons), 2)]
+        keyboard = InlineKeyboardMarkup(inline_keyboard=category_rows + [
+            [InlineKeyboardButton(text="💎 BUY VIP NOW", url=buyvip_url)]
         ])
         await safe_send_message(bot, chat_id, welcome_text, parse_mode="HTML", reply_markup=keyboard)
         logger.info("Sent welcome message to user %s in chat %s", user.id, chat_id)
