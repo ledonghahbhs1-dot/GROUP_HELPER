@@ -29,9 +29,10 @@ ALLOWED_PRIVATE_USERNAMES: List[str] = [
 # Database Path
 DATABASE_PATH: str = os.getenv("DATABASE_PATH", str(BASE_DIR / "data" / "guard_bot.db"))
 
-# Arena Battle guide video source (Telegram channel post to forward: https://t.me/youtubewolfmod/280)
+# Guide video source channel (Telegram posts to forward)
 ARENA_VIDEO_CHAT: str = os.getenv("ARENA_VIDEO_CHAT", "@youtubewolfmod")
-ARENA_VIDEO_MESSAGE_ID: int = int(os.getenv("ARENA_VIDEO_MESSAGE_ID", 280))
+ARENA_VIDEO_MESSAGE_ID: int = int(os.getenv("ARENA_VIDEO_MESSAGE_ID", 280))  # Arena Battle guide: t.me/youtubewolfmod/280
+ORBQUEST_VIDEO_MESSAGE_ID: int = int(os.getenv("ORBQUEST_VIDEO_MESSAGE_ID", 281))  # Farm Orb / Quest / Rank Up guide: t.me/youtubewolfmod/281
 
 # Default Group Settings (Mặc định: Cảnh cáo tối đa 5 lần, quá 5 lần là BAN, tự xoá thông báo sau 30 giây)
 DEFAULT_MAX_WARNS: int = int(os.getenv("DEFAULT_MAX_WARNS", 5))

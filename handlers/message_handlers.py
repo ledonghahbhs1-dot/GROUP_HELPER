@@ -23,6 +23,7 @@ from filters.link_filter import link_filter
 from filters.profanity_filter import profanity_filter
 from filters.feature_filter import feature_detector
 from filters.arena_filter import arena_detector
+from filters.orbquest_filter import orbquest_detector
 from filters.pricing_filter import pricing_detector
 from filters.payment_filter import payment_detector
 from filters.script_filter import script_detector
@@ -55,25 +56,25 @@ def check_bot_forward(message: Message) -> tuple[bool, str]:
 
     return False, ""
 
-async def send_arena_battle_video(bot: Bot, message: Message):
-    """Forwards the official Arena Battle / Easy Arena Battle guide video (t.me/youtubewolfmod/280)"""
+async def forward_guide_video(bot: Bot, message: Message, message_id: int, guide_url: str, title: str):
+    """Forwards a guide video post from the official WOLF Team channel, with a link fallback on failure"""
     try:
         await bot.forward_message(
             chat_id=message.chat.id,
             from_chat_id=config.ARENA_VIDEO_CHAT,
-            message_id=config.ARENA_VIDEO_MESSAGE_ID,
+            message_id=message_id,
             message_thread_id=message.message_thread_id
         )
-        logger.info("Forwarded Arena Battle guide video to chat %s", message.chat.id)
+        logger.info("Forwarded %s guide video to chat %s", title, message.chat.id)
     except Exception as e:
         logger.error(
-            "Failed to forward Arena Battle guide video (from_chat=%s, message_id=%s) to chat %s: %s",
-            config.ARENA_VIDEO_CHAT, config.ARENA_VIDEO_MESSAGE_ID, message.chat.id, e
+            "Failed to forward %s guide video (from_chat=%s, message_id=%s) to chat %s: %s",
+            title, config.ARENA_VIDEO_CHAT, message_id, message.chat.id, e
         )
         # Fallback so the request is never silently ignored (e.g. bot not yet added to the source channel)
         fallback_text = (
-            f"{emoji_mgr.vip} <b>ARENA BATTLE GUIDE</b> {emoji_mgr.vip}\n\n"
-            f"{emoji_mgr.star} <a href=\"https://t.me/youtubewolfmod/280\">Watch the Arena Battle guide video here</a>"
+            f"{emoji_mgr.vip} <b>{title.upper()}</b> {emoji_mgr.vip}\n\n"
+            f"{emoji_mgr.star} <a href=\"{guide_url}\">Watch the {title} guide video here</a>"
         )
         try:
             await safe_send_message(
@@ -81,7 +82,15 @@ async def send_arena_battle_video(bot: Bot, message: Message):
                 parse_mode="HTML", disable_web_page_preview=False
             )
         except Exception as e2:
-            logger.error("Fallback Arena Battle message also failed for chat %s: %s", message.chat.id, e2)
+            logger.error("Fallback %s message also failed for chat %s: %s", title, message.chat.id, e2)
+
+async def send_arena_battle_video(bot: Bot, message: Message):
+    """Forwards the official Arena Battle / Easy Arena Battle guide video (t.me/youtubewolfmod/280)"""
+    await forward_guide_video(bot, message, config.ARENA_VIDEO_MESSAGE_ID, "https://t.me/youtubewolfmod/280", "Arena Battle")
+
+async def send_orbquest_video(bot: Bot, message: Message):
+    """Forwards the official Farm Orb / Quest / Rank Up guide video (t.me/youtubewolfmod/281)"""
+    await forward_guide_video(bot, message, config.ORBQUEST_VIDEO_MESSAGE_ID, "https://t.me/youtubewolfmod/281", "Farm Orb & Quest / Rank Up")
 
 async def announce_username_change(bot: Bot, chat_id: int, user, old_username: str, new_username: str):
     """Announces in the group when a member sets, changes, or removes their Telegram @username"""
@@ -185,6 +194,11 @@ async def handle_private_messages(message: Message):
         await send_arena_battle_video(message.bot, message)
         return
 
+    # 2c. Check Farm Orb / Quest / Rank Up query
+    if text and orbquest_detector.is_orbquest_query(text)[0]:
+        await send_orbquest_video(message.bot, message)
+        return
+
     # 2b. Check Feature query (feature, features, tinh nang, chuc nang, menu, etc.)
     if text and feature_detector.is_feature_query(text)[0]:
         text_feature = get_features_info_text()
@@ -275,6 +289,9 @@ async def inspect_message(message: Message, bot: Bot):
             return
         if text and arena_detector.is_arena_query(text)[0]:
             await send_arena_battle_video(bot, message)
+            return
+        if text and orbquest_detector.is_orbquest_query(text)[0]:
+            await send_orbquest_video(bot, message)
             return
         if text and feature_detector.is_feature_query(text)[0]:
             text_feature = get_features_info_text()
@@ -492,6 +509,13 @@ async def inspect_message(message: Message, bot: Bot):
         if is_arena:
             logger.info("Arena Battle query detected from member: kw=%r, text=%r", matched_arena_kw, text)
             await send_arena_battle_video(bot, message)
+            return
+
+    if text:
+        is_orbquest, matched_orbquest_kw = orbquest_detector.is_orbquest_query(text)
+        if is_orbquest:
+            logger.info("Farm Orb / Quest / Rank Up query detected from member: kw=%r, text=%r", matched_orbquest_kw, text)
+            await send_orbquest_video(bot, message)
             return
 
     if text:
