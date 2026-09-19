@@ -55,7 +55,7 @@ async def send_vip_plan_menu(bot: Bot, chat_id: int):
         f"your key is delivered <b>automatically</b> right after payment is confirmed.\n\n"
         f"<b>💎 2 Days:</b> $1 USD\n"
         f"<b>👑 30 Days:</b> $7 USD\n\n"
-        f"{emoji_mgr.diamond} <i>Need help?</i> DM {emoji_mgr.vip} :@wolfmodyt"
+        f"{emoji_mgr.diamond} <i>Need help?</i> DM {emoji_mgr.vip} {emoji_mgr.tele_logo} :@wolfmodyt"
     )
     await safe_send_message(
         bot, chat_id, emoji_mgr.format_msg(text),
