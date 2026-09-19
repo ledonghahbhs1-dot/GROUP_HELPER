@@ -41,8 +41,8 @@ def build_plan_keyboard() -> InlineKeyboardMarkup:
 
 def build_method_keyboard(plan: str) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="💳 Pay with USDT (Crypto)", callback_data=f"vippay:{plan}:usdt")],
-        [InlineKeyboardButton(text="🏦 Pay with Bank Transfer (VietQR/SePay)", callback_data=f"vippay:{plan}:vietqr")],
+        [InlineKeyboardButton(text="👑 💳 Pay with USDT (Crypto)", callback_data=f"vippay:{plan}:usdt")],
+        [InlineKeyboardButton(text="👑 🏦 Pay with Bank Transfer (VietQR/SePay)", callback_data=f"vippay:{plan}:vietqr")],
         [InlineKeyboardButton(text="⬅️ Back", callback_data="vipbuy:menu")],
     ])
 
@@ -197,8 +197,8 @@ async def on_vip_method_selected(callback: CallbackQuery, bot: Bot):
             f"{emoji_mgr.diamond} <i>This invoice expires in 2 hours.</i>"
         )
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="🔗 Open Payment Page", url=invoice_url)],
-            [InlineKeyboardButton(text="🔄 I've Paid - Check Now", callback_data=f"vipcheck:usdt:{order_id}")],
+            [InlineKeyboardButton(text="👑 🔗 Open Payment Page", url=invoice_url)],
+            [InlineKeyboardButton(text="👑 🔄 I've Paid - Check Now", callback_data=f"vipcheck:usdt:{order_id}")],
         ])
 
         try:
@@ -251,7 +251,7 @@ async def on_vip_method_selected(callback: CallbackQuery, bot: Bot):
             f"{emoji_mgr.diamond} <i>This order expires in 5 minutes.</i>"
         )
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="🔄 I've Paid - Check Now", callback_data=f"vipcheck:vietqr:{pending_id}:{transfer_code}")],
+            [InlineKeyboardButton(text="👑 🔄 I've Paid - Check Now", callback_data=f"vipcheck:vietqr:{pending_id}:{transfer_code}")],
         ])
 
         try:
