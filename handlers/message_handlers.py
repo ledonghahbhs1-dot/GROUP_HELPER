@@ -278,7 +278,7 @@ async def handle_private_messages(message: Message):
 
     # 2k. Check direct "buy vip" / "mua vip" intent
     if text and buyvip_detector.is_buyvip_query(text)[0]:
-        keyboard = await build_buyvip_keyboard(message.bot)
+        keyboard = await build_buyvip_keyboard(message.bot, "private")
         await safe_answer(
             message,
             emoji_mgr.format_msg(f"{emoji_mgr.vip} <b>Ready to go VIP?</b> Tap the button below to pick a plan!"),
@@ -289,7 +289,7 @@ async def handle_private_messages(message: Message):
     # 2b. Check Feature query (feature, features, tinh nang, chuc nang, menu, etc.)
     if text and feature_detector.is_feature_query(text)[0]:
         text_feature = get_features_info_text()
-        keyboard = await build_buyvip_keyboard(message.bot)
+        keyboard = await build_buyvip_keyboard(message.bot, "private")
         await safe_answer(message, emoji_mgr.format_msg(text_feature), parse_mode="HTML", disable_web_page_preview=True, reply_markup=keyboard)
         return
 
@@ -302,7 +302,7 @@ async def handle_private_messages(message: Message):
     # 4. Check Payment query (pay, payment, bank, stk, etc.)
     if text and payment_detector.is_payment_query(text):
         text_pay = get_payment_info_text()
-        keyboard = await build_buyvip_keyboard(message.bot)
+        keyboard = await build_buyvip_keyboard(message.bot, "private")
         await safe_answer(message, emoji_mgr.format_msg(text_pay), parse_mode="HTML", disable_web_page_preview=True, reply_markup=keyboard)
         return
 
@@ -404,7 +404,7 @@ async def inspect_message(message: Message, bot: Bot):
             await send_freekey_video(bot, message)
             return
         if text and buyvip_detector.is_buyvip_query(text)[0]:
-            keyboard = await build_buyvip_keyboard(bot)
+            keyboard = await build_buyvip_keyboard(bot, "group")
             await safe_answer(
                 message,
                 emoji_mgr.format_msg(f"{emoji_mgr.vip} <b>Ready to go VIP?</b> Tap the button below to pick a plan!"),
@@ -413,7 +413,7 @@ async def inspect_message(message: Message, bot: Bot):
             return
         if text and feature_detector.is_feature_query(text)[0]:
             text_feature = get_features_info_text()
-            keyboard = await build_buyvip_keyboard(bot)
+            keyboard = await build_buyvip_keyboard(bot, "group")
             await safe_answer(message, emoji_mgr.format_msg(text_feature), parse_mode="HTML", disable_web_page_preview=True, reply_markup=keyboard)
             return
         if text and pricing_detector.is_pricing_query(text)[0]:
@@ -422,7 +422,7 @@ async def inspect_message(message: Message, bot: Bot):
             return
         if text and payment_detector.is_payment_query(text):
             text_pay = get_payment_info_text()
-            keyboard = await build_buyvip_keyboard(bot)
+            keyboard = await build_buyvip_keyboard(bot, "group")
             await safe_answer(message, emoji_mgr.format_msg(text_pay), parse_mode="HTML", disable_web_page_preview=True, reply_markup=keyboard)
             return
         if text and script_detector.is_script_query(text):
@@ -691,7 +691,7 @@ async def inspect_message(message: Message, bot: Bot):
         is_buyvip, matched_buyvip_kw = buyvip_detector.is_buyvip_query(text)
         if is_buyvip:
             logger.info("Buy VIP query detected from member: kw=%r, text=%r", matched_buyvip_kw, text)
-            keyboard = await build_buyvip_keyboard(bot)
+            keyboard = await build_buyvip_keyboard(bot, "group")
             await safe_answer(
                 message,
                 emoji_mgr.format_msg(f"{emoji_mgr.vip} <b>Ready to go VIP?</b> Tap the button below to pick a plan!"),
@@ -704,7 +704,7 @@ async def inspect_message(message: Message, bot: Bot):
         if is_feat:
             logger.info("Feature query detected from member: kw=%r, text=%r", matched_feat_kw, text)
             text_feature = get_features_info_text()
-            keyboard = await build_buyvip_keyboard(bot)
+            keyboard = await build_buyvip_keyboard(bot, "group")
             await safe_answer(message, emoji_mgr.format_msg(text_feature), parse_mode="HTML", disable_web_page_preview=True, reply_markup=keyboard)
             return
 
@@ -719,7 +719,7 @@ async def inspect_message(message: Message, bot: Bot):
     if text and payment_detector.is_payment_query(text):
         logger.info("Payment query detected from member: %r", text)
         text_pay = get_payment_info_text()
-        keyboard = await build_buyvip_keyboard(bot)
+        keyboard = await build_buyvip_keyboard(bot, "group")
         await safe_answer(message, emoji_mgr.format_msg(text_pay), parse_mode="HTML", disable_web_page_preview=True, reply_markup=keyboard)
         return
 

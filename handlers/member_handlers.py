@@ -70,15 +70,22 @@ def build_welcome_text(chat_title: str, user_id: int, user_name: str) -> str:
     )
     return emoji_mgr.format_msg(text)
 
-async def build_buyvip_keyboard(bot: Bot) -> InlineKeyboardMarkup:
+async def build_buyvip_keyboard(bot: Bot, chat_type: str = "private") -> InlineKeyboardMarkup:
     """Shared "BUY VIP NOW" button used on the welcome message, the feature
-    list, and the buy-vip keyword reply — kept in one place so all three stay
-    in sync. Tapping it reveals the VIP plan menu in place (same chat) via the
-    "show_buyvip_menu" callback in vip_handlers.py; the deeper "choose a plan"
-    step already refuses to continue outside a private chat, so this is safe
-    to show from a group message too."""
+    list, the buy-vip keyword reply, and the payment-info reply — kept in one
+    place so all four stay in sync.
+    In a group, this is a t.me deep-link URL that switches the user into a
+    private chat with the bot (payment/plan details should never sit in a
+    group). In a private chat it's a plain callback that reveals the VIP plan
+    menu immediately, since there's no group to leak into."""
+    if chat_type == "private":
+        return InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="💎 BUY VIP NOW", callback_data="show_buyvip_menu")]
+        ])
+    bot_info = await bot.get_me()
+    buyvip_url = f"https://t.me/{bot_info.username}?start=buyvip"
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="💎 BUY VIP NOW", callback_data="show_buyvip_menu")]
+        [InlineKeyboardButton(text="💎 BUY VIP NOW", url=buyvip_url)]
     ])
 
 
@@ -95,7 +102,7 @@ async def handle_welcome_for_user(bot: Bot, chat_id: int, chat_title: str, user)
         # animated check icon) instead of per-category buttons — Telegram
         # buttons can't render animated <tg-emoji>, so a button per category
         # would show the icon-less name. Just one prominent action button.
-        keyboard = await build_buyvip_keyboard(bot)
+        keyboard = await build_buyvip_keyboard(bot, "group")
         await safe_send_message(bot, chat_id, welcome_text, parse_mode="HTML", reply_markup=keyboard)
         logger.info("Sent welcome message to user %s in chat %s", user.id, chat_id)
     except Exception as e:
