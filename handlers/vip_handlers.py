@@ -43,9 +43,11 @@ POLL_MAX_ATTEMPTS = 180
 
 
 def build_plan_keyboard() -> InlineKeyboardMarkup:
+    # Buttons can't render animated <tg-emoji>, so the "choose" cue uses its
+    # plain-text fallback (👉) prefixed onto each plan's own icon/label.
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text=VIP_PLANS["2day"]["label"], callback_data="vipbuy:2day")],
-        [InlineKeyboardButton(text=VIP_PLANS["1month"]["label"], callback_data="vipbuy:1month")],
+        [InlineKeyboardButton(text=f"👉 {VIP_PLANS['2day']['label']}", callback_data="vipbuy:2day")],
+        [InlineKeyboardButton(text=f"👉 {VIP_PLANS['1month']['label']}", callback_data="vipbuy:1month")],
     ])
 
 

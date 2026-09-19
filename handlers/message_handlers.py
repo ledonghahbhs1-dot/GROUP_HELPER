@@ -31,11 +31,13 @@ from filters.heroicrace_filter import heroicrace_detector
 from filters.bypassverify_filter import bypassverify_detector
 from filters.notrade_filter import notrade_detector
 from filters.freekey_filter import freekey_detector
+from filters.buyvip_filter import buyvip_detector
 from filters.pricing_filter import pricing_detector
 from filters.payment_filter import payment_detector
 from filters.script_filter import script_detector
 from filters.issue_filter import issue_detector
 from filters.scam_filter import scam_detector
+from handlers.member_handlers import build_buyvip_keyboard
 import config
 
 router = Router(name="message_handlers")
@@ -273,10 +275,21 @@ async def handle_private_messages(message: Message):
         await send_freekey_video(message.bot, message)
         return
 
+    # 2k. Check direct "buy vip" / "mua vip" intent
+    if text and buyvip_detector.is_buyvip_query(text)[0]:
+        keyboard = await build_buyvip_keyboard(message.bot)
+        await safe_answer(
+            message,
+            emoji_mgr.format_msg(f"{emoji_mgr.vip} <b>Ready to go VIP?</b> Tap the button below to pick a plan!"),
+            parse_mode="HTML", reply_markup=keyboard,
+        )
+        return
+
     # 2b. Check Feature query (feature, features, tinh nang, chuc nang, menu, etc.)
     if text and feature_detector.is_feature_query(text)[0]:
         text_feature = get_features_info_text()
-        await safe_answer(message, emoji_mgr.format_msg(text_feature), parse_mode="HTML", disable_web_page_preview=True)
+        keyboard = await build_buyvip_keyboard(message.bot)
+        await safe_answer(message, emoji_mgr.format_msg(text_feature), parse_mode="HTML", disable_web_page_preview=True, reply_markup=keyboard)
         return
 
     # 3. Check Pricing query (price, pricing, cost, gia, etc.)
@@ -388,9 +401,18 @@ async def inspect_message(message: Message, bot: Bot):
         if text and freekey_detector.is_freekey_query(text)[0]:
             await send_freekey_video(bot, message)
             return
+        if text and buyvip_detector.is_buyvip_query(text)[0]:
+            keyboard = await build_buyvip_keyboard(bot)
+            await safe_answer(
+                message,
+                emoji_mgr.format_msg(f"{emoji_mgr.vip} <b>Ready to go VIP?</b> Tap the button below to pick a plan!"),
+                parse_mode="HTML", reply_markup=keyboard,
+            )
+            return
         if text and feature_detector.is_feature_query(text)[0]:
             text_feature = get_features_info_text()
-            await safe_answer(message, emoji_mgr.format_msg(text_feature), parse_mode="HTML", disable_web_page_preview=True)
+            keyboard = await build_buyvip_keyboard(bot)
+            await safe_answer(message, emoji_mgr.format_msg(text_feature), parse_mode="HTML", disable_web_page_preview=True, reply_markup=keyboard)
             return
         if text and pricing_detector.is_pricing_query(text)[0]:
             text_pricing = get_pricing_info_text()
@@ -663,11 +685,24 @@ async def inspect_message(message: Message, bot: Bot):
             return
 
     if text:
+        is_buyvip, matched_buyvip_kw = buyvip_detector.is_buyvip_query(text)
+        if is_buyvip:
+            logger.info("Buy VIP query detected from member: kw=%r, text=%r", matched_buyvip_kw, text)
+            keyboard = await build_buyvip_keyboard(bot)
+            await safe_answer(
+                message,
+                emoji_mgr.format_msg(f"{emoji_mgr.vip} <b>Ready to go VIP?</b> Tap the button below to pick a plan!"),
+                parse_mode="HTML", reply_markup=keyboard,
+            )
+            return
+
+    if text:
         is_feat, matched_feat_kw = feature_detector.is_feature_query(text)
         if is_feat:
             logger.info("Feature query detected from member: kw=%r, text=%r", matched_feat_kw, text)
             text_feature = get_features_info_text()
-            await safe_answer(message, emoji_mgr.format_msg(text_feature), parse_mode="HTML", disable_web_page_preview=True)
+            keyboard = await build_buyvip_keyboard(bot)
+            await safe_answer(message, emoji_mgr.format_msg(text_feature), parse_mode="HTML", disable_web_page_preview=True, reply_markup=keyboard)
             return
 
     if text:
