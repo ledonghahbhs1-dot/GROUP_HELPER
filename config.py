@@ -57,7 +57,7 @@ SPAM_DUPLICATE_LIMIT: int = 3      # Identical messages in a row
 SPAM_DUPLICATE_INTERVAL: int = 30  # Seconds
 
 # Telegram Premium Custom Emoji IDs — XÁC MINH HOẠT ĐỘNG 100% TRONG GROUP
-VIP_ID    = "5217822164362739968"  # 👑 confirmed group ✅
+VIP_ID    = "5204100216298432738"  # 👑 confirmed group ✅
 STAR_ID   = "5202036282649244841"  # ⭐ confirmed group ✅
 WARN_ID   = "5213205860498549992"  # ⚠️ confirmed group ✅
 TELE_ID   = "5211129162206560202"  # ✈️ confirmed group ✅
