@@ -664,7 +664,7 @@ async def execute_unmute(message: Message, bot: Bot, command: Optional[CommandOb
         if target_name and target_name.startswith("@"):
             err_txt = f"{emoji_mgr.warn} <b>USERNAME NOT FOUND:</b> No User ID found for {html.escape(target_name)} in group records!\n\n💡 Please reply directly to their message or enter User ID (e.g. <code>/unmute 123456789</code>)!"
         else:
-            err_txt = f"{emoji_mgr.warn} <b>TARGET REQUIRED:</b> Please enter a @username, User ID, or reply to a message (e.g. <code>/unmute @masteroogwayv1</code> hoặc <code>/unmute 123456789</code>)!"
+            err_txt = f"{emoji_mgr.warn} <b>TARGET REQUIRED:</b> Please enter a @username, User ID, or reply to a message (e.g. <code>/unmute @masteroogwayv1</code> or <code>/unmute 123456789</code>)!"
         err_msg = await safe_answer(message, emoji_mgr.format_msg(err_txt), parse_mode="HTML")
         schedule_auto_delete(err_msg, 30)
         return
