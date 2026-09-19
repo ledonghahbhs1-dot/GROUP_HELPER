@@ -146,6 +146,11 @@ class EmojiManager:
         """Animated checkmark — used as the bullet for individual features."""
         return self.get("check", "✅")
 
+    @property
+    def prohibited(self) -> str:
+        """Animated prohibition sign — used for "No ..." group rule bullets."""
+        return self.get("prohibited", "🚫")
+
 
 from utils.logger import logger
 

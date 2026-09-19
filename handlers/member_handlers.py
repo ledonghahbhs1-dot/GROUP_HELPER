@@ -61,9 +61,9 @@ def build_welcome_text(chat_title: str, user_id: int, user_name: str) -> str:
         + "".join(f"{emoji_mgr.check} {name}\n" for _icon, name in VIP_FEATURE_CATEGORIES)
         + f"\n{emoji_mgr.star} <i>Tap a category below to unlock it with VIP!</i>\n\n"
         f"{emoji_mgr.warn} <b>GROUP SECURITY & RULES:</b>\n"
-        f"• {emoji_mgr.error} No spamming or excessive flood messages\n"
-        f"• {emoji_mgr.link} No unauthorized links / Telegram invite links\n"
-        f"• {emoji_mgr.bot} No forwarded messages from bots / inline bots\n"
+        f"• {emoji_mgr.prohibited} No spamming or excessive flood messages\n"
+        f"• {emoji_mgr.prohibited} No unauthorized links / Telegram invite links\n"
+        f"• {emoji_mgr.prohibited} No forwarded messages from bots / inline bots\n"
         f"• {emoji_mgr.warn} <i>Violators will receive warnings (5 warnings = PERMANENT BAN).</i>\n"
         f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
         f"{emoji_mgr.diamond} <i>Wishing you a wonderful experience!</i>"

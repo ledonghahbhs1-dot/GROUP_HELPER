@@ -68,6 +68,7 @@ TELE_ID   = "5211129162206560202"  # ✈️ confirmed group ✅
 LOA_ID    = "6154375023462191177"  # 📢 welcome banner
 FIRE_ID   = "5424972470023104089"  # 🔥 dragon VIP feature (animated)
 CHECK_ID  = "5204236147718387299"  # ✅ feature bullet (animated)
+PROHIBITED_ID = "5201841261069236516"  # 🚫 prohibited-rule bullets ("No ...")
 
 DEFAULT_EMOJIS: Dict[str, Dict[str, str]] = {
     "tele_logo": {"id": TELE_ID, "fallback": "✈️"},
@@ -91,6 +92,7 @@ DEFAULT_EMOJIS: Dict[str, Dict[str, str]] = {
     "welcome":   {"id": LOA_ID,   "fallback": "📢"},
     "fire":      {"id": FIRE_ID,  "fallback": "🔥"},
     "check":     {"id": CHECK_ID, "fallback": "✅"},
+    "prohibited": {"id": PROHIBITED_ID, "fallback": "🚫"},
 }
 
 
