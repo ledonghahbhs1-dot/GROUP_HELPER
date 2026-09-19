@@ -417,6 +417,38 @@ async def send_free_script_prompt(bot: Bot, chat_id: int, user_id: int):
     await safe_send_message(bot, chat_id, emoji_mgr.format_msg(text), parse_mode="HTML", reply_markup=keyboard)
 
 
+async def send_freekey_entry_button(bot: Bot, chat_id: int):
+    """Single "Free Key" button (shown after the guide video) - tapping it
+    reveals the actual Link4M/Linkvertise unlock buttons via send_free_script_prompt,
+    same two-step pattern as "BUY VIP NOW" -> plan menu."""
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🔑 Free Key", callback_data="show_freekey_links")]
+    ])
+    await safe_send_message(
+        bot, chat_id,
+        emoji_mgr.format_msg(f"{emoji_mgr.key} <b>Tap below to get your Free Key</b>"),
+        parse_mode="HTML", reply_markup=keyboard,
+    )
+
+
+@router.callback_query(F.data == "show_freekey_links")
+async def on_freekey_button(callback: CallbackQuery, bot: Bot):
+    if not callback.message or not callback.from_user:
+        await callback.answer()
+        return
+    await callback.answer()
+    await send_free_script_prompt(bot, callback.message.chat.id, callback.from_user.id)
+
+
+@router.callback_query(F.data == "show_buyvip_menu")
+async def on_buyvip_button(callback: CallbackQuery, bot: Bot):
+    if not callback.message:
+        await callback.answer()
+        return
+    await callback.answer()
+    await send_vip_plan_menu(bot, callback.message.chat.id)
+
+
 @router.message(Command("freescript"))
 async def cmd_free_script(message: Message, bot: Bot):
     """Entry point for the "Get Free Script" flow."""

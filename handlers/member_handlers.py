@@ -71,13 +71,14 @@ def build_welcome_text(chat_title: str, user_id: int, user_name: str) -> str:
     return emoji_mgr.format_msg(text)
 
 async def build_buyvip_keyboard(bot: Bot) -> InlineKeyboardMarkup:
-    """Shared "BUY VIP NOW" button (deep-links to /start buyvip) used on the
-    welcome message, the feature list, and the buy-vip keyword reply — kept in
-    one place so all three stay in sync."""
-    bot_info = await bot.get_me()
-    buyvip_url = f"https://t.me/{bot_info.username}?start=buyvip"
+    """Shared "BUY VIP NOW" button used on the welcome message, the feature
+    list, and the buy-vip keyword reply — kept in one place so all three stay
+    in sync. Tapping it reveals the VIP plan menu in place (same chat) via the
+    "show_buyvip_menu" callback in vip_handlers.py; the deeper "choose a plan"
+    step already refuses to continue outside a private chat, so this is safe
+    to show from a group message too."""
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="💎 BUY VIP NOW", url=buyvip_url)]
+        [InlineKeyboardButton(text="💎 BUY VIP NOW", callback_data="show_buyvip_menu")]
     ])
 
 
