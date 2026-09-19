@@ -75,16 +75,30 @@ async def send_vip_plan_menu(bot: Bot, chat_id: int):
     )
 
 
+async def _get_display_username(bot: Bot, chat_id: int) -> str:
+    """Best-effort Telegram username for `chat_id` (a private-chat ID, which for
+    a DM is the same as the user's own ID). Falls back to first name, then the
+    raw ID, if the user has no @username set."""
+    try:
+        chat = await bot.get_chat(chat_id)
+        return chat.username or chat.first_name or str(chat_id)
+    except Exception as e:
+        logger.warning("Could not resolve username for chat %s: %s", chat_id, e)
+        return str(chat_id)
+
+
 async def deliver_vip_key(bot: Bot, chat_id: int, dedup_key: str, license_key: str, duration: str):
     """Sends the purchased VIP key to the buyer. Safe to call more than once (deduped)."""
     if dedup_key in _delivered_orders:
         return
     _delivered_orders.add(dedup_key)
 
+    username = await _get_display_username(bot, chat_id)
+    activation_pair = f"{html.escape(username)},{html.escape(license_key)}"
     text = (
         f"{emoji_mgr.vip} <b>PAYMENT SUCCESSFUL!</b> {emoji_mgr.vip}\n\n"
         f"{emoji_mgr.star} <b>Plan:</b> VIP {duration}\n"
-        f"{emoji_mgr.key} <b>Your VIP Key:</b>\n<code>{html.escape(license_key)}</code>\n\n"
+        f"{emoji_mgr.key} <b>Your VIP Key</b> (username,key - tap to reveal):\n<tg-spoiler>{activation_pair}</tg-spoiler>\n\n"
         f"{emoji_mgr.fire} <b>Download VIP Script:</b> <a href=\"{config.VIP_SCRIPT_URL}\">Click here</a>\n"
         f"{emoji_mgr.diamond} <b>Activate at:</b> <a href=\"https://www.wolfmod.xyz/dragon-city\">https://www.wolfmod.xyz/dragon-city</a>\n"
         f"{emoji_mgr.star} <i>Need help activating?</i> DM {emoji_mgr.vip} :@wolfmodyt"
@@ -337,7 +351,9 @@ async def deliver_free_script(bot: Bot, chat_id: int):
     chat_id doubles as the user's Telegram user ID for the free-key request."""
     key_result = await generate_free_key(chat_id)
     if key_result.get("success") and key_result.get("key"):
-        key_line = f"{emoji_mgr.key} <b>Your Free Key:</b> <code>{html.escape(key_result['key'])}</code> (tap to copy)\n"
+        username = await _get_display_username(bot, chat_id)
+        activation_pair = f"{html.escape(username)},{html.escape(key_result['key'])}"
+        key_line = f"{emoji_mgr.key} <b>Your Free Key</b> (username,key - tap to reveal):\n<tg-spoiler>{activation_pair}</tg-spoiler>\n"
     else:
         key_line = f"{emoji_mgr.warn} <i>{html.escape(key_result.get('error') or 'Free key unavailable right now.')}</i>\n"
 
