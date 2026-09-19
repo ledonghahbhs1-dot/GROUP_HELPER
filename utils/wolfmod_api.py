@@ -170,10 +170,27 @@ def get_qr_image_bytes(qr_code_field: Optional[str], invoice_url: str) -> io.Byt
 
 async def shorten_link4m(url: str) -> Optional[str]:
     """
-    Wraps `url` behind Link4M's ad-gate (same service/token the website's free-key
-    unlock flow uses). Returns the shortened URL, or None if LINK4M_TOKEN isn't
-    configured or the API call fails — callers should fall back to the raw `url`.
+    Wraps `url` behind Link4M's ad-gate for the /freescript unlock flow. Calls the
+    wolfmod.xyz backend's own /api/utils/shorten-link4m (which already holds the
+    Link4M account token) instead of needing a separate LINK4M_TOKEN configured on
+    the bot itself. Falls back to config.LINK4M_TOKEN + a direct Link4M API call if
+    that's set (e.g. for local testing without the backend). Returns None (caller
+    falls back to the raw `url`) if neither is available or the call fails.
     """
+    backend_url = f"{config.WOLFMOD_API_BASE_URL}/api/utils/shorten-link4m"
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                backend_url, json={"url": url}, timeout=aiohttp.ClientTimeout(total=8)
+            ) as resp:
+                if resp.status == 200:
+                    data = await resp.json(content_type=None)
+                    if data.get("success") and data.get("shortUrl"):
+                        return data["shortUrl"]
+                logger.warning("Backend shorten-link4m failed: status=%s", resp.status)
+    except Exception as e:
+        logger.warning("Backend shorten-link4m exception: %s", e)
+
     if not config.LINK4M_TOKEN:
         return None
     api_url = f"https://link4m.co/api-shorten/v2?api={config.LINK4M_TOKEN}&url={quote(url, safe='')}"
