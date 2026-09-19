@@ -342,9 +342,10 @@ async def deliver_free_script(bot: Bot, chat_id: int):
 
 
 async def send_free_script_prompt(bot: Bot, chat_id: int, user_id: int):
-    """Shows the Link4M-gated "Get Free Script" unlock button. Works from any
-    chat, but the actual unlock always happens in DM (Link4M redirects back to a
-    /start deep link, which only fires in a private chat)."""
+    """Shows "Get Free Script" ad-gate unlock buttons (Link4M + Linkvertise).
+    Works from any chat, but the actual unlock always happens in DM (both
+    services redirect back to a /start deep link, which only fires in a
+    private chat)."""
     now = time.time()
     last = _freescript_last_request.get(user_id, 0)
     if now - last < FREESCRIPT_COOLDOWN_SEC:
@@ -361,18 +362,29 @@ async def send_free_script_prompt(bot: Bot, chat_id: int, user_id: int):
 
     bot_info = await bot.get_me()
     deep_link = f"https://t.me/{bot_info.username}?start=freescript_{user_id}"
+
+    # Link4M: server-side shortener, no page needed - the button opens Telegram directly.
     short_url = await shorten_link4m(deep_link)
-    unlock_url = short_url or deep_link
+    link4m_url = short_url or deep_link
+
+    # Linkvertise: can only gate clicks on a page with its script embedded, so this
+    # opens a small wolfmod.xyz bridge page whose own "Continue" link is what
+    # actually gets ad-gated before it hands the user back to the deep link.
+    linkvertise_url = (
+        f"{config.WOLFMOD_API_BASE_URL}/free-script-unlock.html"
+        f"?uid={user_id}&bot={bot_info.username}"
+    )
 
     text = (
         f"{emoji_mgr.check} <b>GET FREE DRAGON CITY SCRIPT</b> {emoji_mgr.check}\n\n"
-        f"{emoji_mgr.star} Tap the button below and complete the short unlock step "
+        f"{emoji_mgr.star} Tap either button below and complete the short unlock step "
         f"(a few seconds of ads) - you'll be redirected back here automatically once done, "
         f"and the free script link will be sent to you instantly.\n\n"
         f"{emoji_mgr.warn} <i>Make sure pop-ups aren't blocked so the redirect can complete.</i>"
     )
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🔓 Unlock Free Script", url=unlock_url)],
+        [InlineKeyboardButton(text="🔓 Unlock via Link4M", url=link4m_url)],
+        [InlineKeyboardButton(text="🔓 Unlock via Linkvertise", url=linkvertise_url)],
     ])
     await safe_send_message(bot, chat_id, emoji_mgr.format_msg(text), parse_mode="HTML", reply_markup=keyboard)
 
