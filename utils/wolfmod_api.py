@@ -168,6 +168,38 @@ def get_qr_image_bytes(qr_code_field: Optional[str], invoice_url: str) -> io.Byt
     return buf
 
 
+async def generate_free_key(telegram_id: int) -> Dict[str, Any]:
+    """
+    Requests a real, redeemable license key (FREE20-XXXXXX, 20 credits, 30-day
+    expiry) from the wolfmod.xyz backend's POST /api/bot/generate-free-key -
+    limited to once per telegramId per 24h (enforced server-side).
+    Returns the parsed response dict as-is: {"success": true, "key": "..."} on
+    success, or {"success": false, "error": "..."} both for the expected
+    "already claimed today" case and for any actual failure (network/server
+    error), so the caller can always show *some* message instead of silently
+    dropping the free-key line.
+    """
+    if not config.WOLFMOD_BOT_SECRET:
+        logger.warning("WOLFMOD_BOT_SECRET is not configured - skipping free-key request for %s", telegram_id)
+        return {"success": False, "error": "Free key service is not configured yet."}
+
+    url = f"{config.WOLFMOD_API_BASE_URL}/api/bot/generate-free-key"
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                url,
+                json={"telegramId": str(telegram_id), "secret": config.WOLFMOD_BOT_SECRET},
+                timeout=aiohttp.ClientTimeout(total=15),
+            ) as resp:
+                data = await resp.json(content_type=None)
+                if resp.status != 200:
+                    logger.error("generate-free-key failed for %s: status=%s body=%s", telegram_id, resp.status, data)
+                return data
+    except Exception as e:
+        logger.error("generate-free-key exception for %s: %s", telegram_id, e)
+        return {"success": False, "error": "Could not reach the key server right now."}
+
+
 async def shorten_link4m(url: str) -> Optional[str]:
     """
     Wraps `url` behind Link4M's ad-gate for the /freescript unlock flow. Calls the

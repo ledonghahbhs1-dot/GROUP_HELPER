@@ -17,6 +17,7 @@ from utils.wolfmod_api import (
     check_vietqr_order,
     get_qr_image_bytes,
     shorten_link4m,
+    generate_free_key,
 )
 
 router = Router(name="vip_handlers")
@@ -329,16 +330,25 @@ async def on_vip_check(callback: CallbackQuery, bot: Bot):
 
 async def deliver_free_script(bot: Bot, chat_id: int):
     """Thanks the user and hands over the free script link. Called once the user
-    completes the Link4M ad-gate and returns via the /start freescript_<uid> deep link."""
+    completes the Link4M ad-gate and returns via the /start freescript_<uid> deep link.
+    This flow always runs in DM (see send_free_script_prompt's docstring), so
+    chat_id doubles as the user's Telegram user ID for the free-key request."""
+    key_result = await generate_free_key(chat_id)
+    if key_result.get("success") and key_result.get("key"):
+        key_line = f"{emoji_mgr.key} <b>Your Free Key:</b> <code>{html.escape(key_result['key'])}</code> (tap to copy)\n"
+    else:
+        key_line = f"{emoji_mgr.warn} <i>{html.escape(key_result.get('error') or 'Free key unavailable right now.')}</i>\n"
+
     text = (
         f"{emoji_mgr.check} <b>THANK YOU!</b> {emoji_mgr.check}\n\n"
         f"{emoji_mgr.star} You've unlocked the <b>Dragon City Free Script</b>.\n\n"
         f"{emoji_mgr.fire} <b>Download Free Script:</b> <a href=\"{config.FREE_SCRIPT_URL}\">Click here</a>\n"
-        f"{emoji_mgr.diamond} <b>Activate/Use at:</b> <a href=\"https://www.wolfmod.xyz/dragon-city\">https://www.wolfmod.xyz/dragon-city</a>\n\n"
+        f"{emoji_mgr.diamond} <b>Activate/Use at:</b> <a href=\"https://www.wolfmod.xyz/dragon-city\">https://www.wolfmod.xyz/dragon-city</a>\n"
+        f"{key_line}\n"
         f"{emoji_mgr.vip} <i>Want the full VIP feature set instead?</i> Type <code>/start buyvip</code>"
     )
     await safe_send_message(bot, chat_id, emoji_mgr.format_msg(text), parse_mode="HTML", disable_web_page_preview=True)
-    logger.info("Free script delivered to chat %s", chat_id)
+    logger.info("Free script delivered to chat %s (key_success=%s)", chat_id, key_result.get("success"))
 
 
 async def send_free_script_prompt(bot: Bot, chat_id: int, user_id: int):

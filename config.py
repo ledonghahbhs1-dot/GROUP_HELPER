@@ -60,6 +60,13 @@ FREE_SCRIPT_URL: str = os.getenv(
     "https://www.mediafire.com/file/xyyl50kklt3g142/[DragonCity_2.0_FREE_ALL_SERVER.lua+(3).lua/file",
 )
 
+# Shared secret for POST /api/bot/generate-free-key on the wolfmod.xyz backend
+# (that endpoint checks `secret === getSecret()`, i.e. the backend's
+# ADMIN_PASSWORD env var). Must be set to that exact same value via Railway/.env
+# - deliberately has NO hardcoded default here, since this repo is public and a
+# committed real secret would let anyone call that endpoint as the bot.
+WOLFMOD_BOT_SECRET: str = os.getenv("WOLFMOD_BOT_SECRET", "")
+
 # Default Group Settings (Mặc định: Cảnh cáo tối đa 5 lần, quá 5 lần là BAN, tự xoá thông báo sau 30 giây)
 DEFAULT_MAX_WARNS: int = int(os.getenv("DEFAULT_MAX_WARNS", 5))
 DEFAULT_WARN_ACTION: str = os.getenv("DEFAULT_WARN_ACTION", "ban").lower()  # "ban", "mute", "kick"
