@@ -44,6 +44,22 @@ FREEKEY_VIDEO_MESSAGE_ID: int = int(os.getenv("FREEKEY_VIDEO_MESSAGE_ID", 315)) 
 # WolfMod.xyz VIP Key checkout API (live production backend, shared with the website itself)
 WOLFMOD_API_BASE_URL: str = os.getenv("WOLFMOD_API_BASE_URL", "https://www.wolfmod.xyz")
 
+# Link4M ad-gate shortener (same token/service as the website's free-key unlock flow).
+# Used to wrap the /freescript deep-link so users complete a short ad step before
+# the bot delivers the free script. If unset, /freescript falls back to handing
+# out the deep link directly (no ad gate).
+LINK4M_TOKEN: str = os.getenv("LINK4M_TOKEN", "")
+
+# Direct download links for the Dragon City scripts delivered to buyers/free users.
+VIP_SCRIPT_URL: str = os.getenv(
+    "VIP_SCRIPT_URL",
+    "https://www.mediafire.com/file/7ktpiduqz94naxk/%255BDragonCity_V9.1_VIP%255D_%25283%2529.lua/file",
+)
+FREE_SCRIPT_URL: str = os.getenv(
+    "FREE_SCRIPT_URL",
+    "https://www.mediafire.com/file/xyyl50kklt3g142/[DragonCity_2.0_FREE_ALL_SERVER.lua+(3).lua/file",
+)
+
 # Default Group Settings (Mặc định: Cảnh cáo tối đa 5 lần, quá 5 lần là BAN, tự xoá thông báo sau 30 giây)
 DEFAULT_MAX_WARNS: int = int(os.getenv("DEFAULT_MAX_WARNS", 5))
 DEFAULT_WARN_ACTION: str = os.getenv("DEFAULT_WARN_ACTION", "ban").lower()  # "ban", "mute", "kick"

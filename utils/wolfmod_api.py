@@ -3,6 +3,7 @@ import io
 import json
 import os
 from typing import Any, Dict, Optional
+from urllib.parse import quote
 
 import aiohttp
 import qrcode
@@ -165,3 +166,33 @@ def get_qr_image_bytes(qr_code_field: Optional[str], invoice_url: str) -> io.Byt
     img.save(buf, format="PNG")
     buf.seek(0)
     return buf
+
+
+async def shorten_link4m(url: str) -> Optional[str]:
+    """
+    Wraps `url` behind Link4M's ad-gate (same service/token the website's free-key
+    unlock flow uses). Returns the shortened URL, or None if LINK4M_TOKEN isn't
+    configured or the API call fails — callers should fall back to the raw `url`.
+    """
+    if not config.LINK4M_TOKEN:
+        return None
+    api_url = f"https://link4m.co/api-shorten/v2?api={config.LINK4M_TOKEN}&url={quote(url, safe='')}"
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(api_url, timeout=aiohttp.ClientTimeout(total=8)) as resp:
+                if resp.status != 200:
+                    logger.error("Link4m shorten failed: status=%s", resp.status)
+                    return None
+                data = await resp.json(content_type=None)
+                short = (
+                    data.get("shortenedUrl")
+                    or data.get("shortened_url")
+                    or data.get("short_url")
+                    or data.get("url")
+                )
+                if not short:
+                    logger.error("Link4m response missing shortened URL: %s", data)
+                return short
+    except Exception as e:
+        logger.error("Link4m shorten exception: %s", e)
+        return None

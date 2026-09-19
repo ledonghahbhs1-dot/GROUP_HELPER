@@ -1,10 +1,13 @@
 import asyncio
 import html
+import time
 from typing import Dict, Set
 
 from aiogram import Router, F, Bot
-from aiogram.types import CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton, BufferedInputFile
+from aiogram.filters import Command
+from aiogram.types import CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton, BufferedInputFile, Message
 
+import config
 from utils.emoji_helper import emoji_mgr, safe_send_message
 from utils.logger import logger
 from utils.wolfmod_api import (
@@ -13,6 +16,7 @@ from utils.wolfmod_api import (
     create_vietqr_invoice,
     check_vietqr_order,
     get_qr_image_bytes,
+    shorten_link4m,
 )
 
 router = Router(name="vip_handlers")
@@ -26,6 +30,11 @@ VIP_PLANS: Dict[str, Dict[str, str]] = {
 
 # In-memory guard against delivering the same key twice (background poll + manual check race)
 _delivered_orders: Set[str] = set()
+
+# Per-user cooldown for /freescript so someone can't spam-generate Link4M links
+# (each call burns a real API quota hit against LINK4M_TOKEN).
+FREESCRIPT_COOLDOWN_SEC = 600  # 10 minutes
+_freescript_last_request: Dict[int, float] = {}
 
 # Background poll: check every 10s for up to 30 minutes before giving up (manual "Check" button still works after)
 POLL_INTERVAL_SEC = 10
@@ -73,6 +82,7 @@ async def deliver_vip_key(bot: Bot, chat_id: int, dedup_key: str, license_key: s
         f"{emoji_mgr.vip} <b>PAYMENT SUCCESSFUL!</b> {emoji_mgr.vip}\n\n"
         f"{emoji_mgr.star} <b>Plan:</b> VIP {duration}\n"
         f"{emoji_mgr.key} <b>Your VIP Key:</b>\n<code>{html.escape(license_key)}</code>\n\n"
+        f"{emoji_mgr.fire} <b>Download VIP Script:</b> <a href=\"{config.VIP_SCRIPT_URL}\">Click here</a>\n"
         f"{emoji_mgr.diamond} <b>Activate at:</b> <a href=\"https://www.wolfmod.xyz/dragon-city\">https://www.wolfmod.xyz/dragon-city</a>\n"
         f"{emoji_mgr.star} <i>Need help activating?</i> DM {emoji_mgr.vip} :@wolfmodyt"
     )
@@ -313,3 +323,64 @@ async def on_vip_check(callback: CallbackQuery, bot: Bot):
             await callback.answer("⌛ This order has expired. Please create a new one with /start buyvip.", show_alert=True)
         else:
             await callback.answer("⏳ Payment not received yet. Please wait a few minutes after transferring and try again.", show_alert=True)
+
+
+# ── Free Script (Link4M ad-gate unlock) ──────────────────────────────────────
+
+async def deliver_free_script(bot: Bot, chat_id: int):
+    """Thanks the user and hands over the free script link. Called once the user
+    completes the Link4M ad-gate and returns via the /start freescript_<uid> deep link."""
+    text = (
+        f"{emoji_mgr.check} <b>THANK YOU!</b> {emoji_mgr.check}\n\n"
+        f"{emoji_mgr.star} You've unlocked the <b>Dragon City Free Script</b>.\n\n"
+        f"{emoji_mgr.fire} <b>Download Free Script:</b> <a href=\"{config.FREE_SCRIPT_URL}\">Click here</a>\n"
+        f"{emoji_mgr.diamond} <b>Activate/Use at:</b> <a href=\"https://www.wolfmod.xyz/dragon-city\">https://www.wolfmod.xyz/dragon-city</a>\n\n"
+        f"{emoji_mgr.vip} <i>Want the full VIP feature set instead?</i> Type <code>/start buyvip</code>"
+    )
+    await safe_send_message(bot, chat_id, emoji_mgr.format_msg(text), parse_mode="HTML", disable_web_page_preview=True)
+    logger.info("Free script delivered to chat %s", chat_id)
+
+
+async def send_free_script_prompt(bot: Bot, chat_id: int, user_id: int):
+    """Shows the Link4M-gated "Get Free Script" unlock button. Works from any
+    chat, but the actual unlock always happens in DM (Link4M redirects back to a
+    /start deep link, which only fires in a private chat)."""
+    now = time.time()
+    last = _freescript_last_request.get(user_id, 0)
+    if now - last < FREESCRIPT_COOLDOWN_SEC:
+        wait_min = max(1, round((FREESCRIPT_COOLDOWN_SEC - (now - last)) / 60))
+        await safe_send_message(
+            bot, chat_id,
+            emoji_mgr.format_msg(
+                f"{emoji_mgr.warn} <b>Please wait {wait_min} more minute(s)</b> before requesting another free script link."
+            ),
+            parse_mode="HTML",
+        )
+        return
+    _freescript_last_request[user_id] = now
+
+    bot_info = await bot.get_me()
+    deep_link = f"https://t.me/{bot_info.username}?start=freescript_{user_id}"
+    short_url = await shorten_link4m(deep_link)
+    unlock_url = short_url or deep_link
+
+    text = (
+        f"{emoji_mgr.check} <b>GET FREE DRAGON CITY SCRIPT</b> {emoji_mgr.check}\n\n"
+        f"{emoji_mgr.star} Tap the button below and complete the short unlock step "
+        f"(a few seconds of ads) - you'll be redirected back here automatically once done, "
+        f"and the free script link will be sent to you instantly.\n\n"
+        f"{emoji_mgr.warn} <i>Make sure pop-ups aren't blocked so the redirect can complete.</i>"
+    )
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🔓 Unlock Free Script", url=unlock_url)],
+    ])
+    await safe_send_message(bot, chat_id, emoji_mgr.format_msg(text), parse_mode="HTML", reply_markup=keyboard)
+
+
+@router.message(Command("freescript"))
+async def cmd_free_script(message: Message, bot: Bot):
+    """Entry point for the "Get Free Script" flow."""
+    user_id = message.from_user.id if message.from_user else None
+    if not user_id:
+        return
+    await send_free_script_prompt(bot, message.chat.id, user_id)

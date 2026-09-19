@@ -124,8 +124,12 @@ async def send_notrade_video(bot: Bot, message: Message):
     await forward_guide_video(bot, message, config.NOTRADE_VIDEO_MESSAGE_ID, "https://t.me/youtubewolfmod/298", "Trading Without Sample")
 
 async def send_freekey_video(bot: Bot, message: Message):
-    """Forwards the official How to get Free Key guide video (t.me/youtubewolfmod/315)"""
+    """Forwards the official How to get Free Key guide video (t.me/youtubewolfmod/315),
+    then offers the instant "Get Free Script" Link4M unlock as a faster alternative."""
     await forward_guide_video(bot, message, config.FREEKEY_VIDEO_MESSAGE_ID, "https://t.me/youtubewolfmod/315", "How to Get Free Key")
+    if message.from_user:
+        from handlers.vip_handlers import send_free_script_prompt
+        await send_free_script_prompt(bot, message.chat.id, message.from_user.id)
 
 async def announce_username_change(bot: Bot, chat_id: int, user, old_username: str, new_username: str):
     """Announces in the group when a member sets, changes, or removes their Telegram @username"""

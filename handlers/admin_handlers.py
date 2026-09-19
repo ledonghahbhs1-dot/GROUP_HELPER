@@ -220,6 +220,17 @@ async def cmd_start(message: Message, bot: Bot, command: CommandObject):
         await send_vip_plan_menu(bot, message.chat.id)
         return
 
+    # "Get Free Script" deep link - Link4M redirects here once the user completes
+    # the ad-gate from /freescript. The uid in the payload must match whoever is
+    # actually opening the link (Telegram authenticates message.from_user itself),
+    # so a completed link can't be screenshotted/shared to skip the ad step.
+    if is_private and command.args and command.args.startswith("freescript_"):
+        target_uid = command.args[len("freescript_"):]
+        if message.from_user and str(message.from_user.id) == target_uid:
+            from handlers.vip_handlers import deliver_free_script
+            await deliver_free_script(bot, message.chat.id)
+        return
+
     if is_private and not is_user_allowed_private(message.from_user):
         return
 
@@ -253,6 +264,7 @@ async def cmd_help(message: Message):
         f"{emoji_mgr.star} <code>/price</code> - View VIP Key Pricing & Packages\n"
         f"{emoji_mgr.star} <code>/pay</code> - View Payment Methods\n"
         f"{emoji_mgr.star} <code>/script</code> - View Dragon City Tool & Script Link\n"
+        f"{emoji_mgr.star} <code>/freescript</code> - Unlock the free script (Link4M)\n"
         f"{emoji_mgr.star} <code>/stats</code> - View security and violation statistics\n\n"
         f"{emoji_mgr.warn} <b>MODERATION (Max 5 Warnings -> BAN):</b>\n"
         f"{emoji_mgr.star} <code>/warn [user_id / @username / reply] [reason]</code> - Warn member\n"
