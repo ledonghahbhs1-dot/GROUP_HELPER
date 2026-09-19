@@ -248,7 +248,7 @@ async def on_vip_method_selected(callback: CallbackQuery, bot: Bot):
             f"{emoji_mgr.warn} Scan the QR code with your banking app, or transfer manually using the info above "
             f"(the transfer content <b>must</b> match exactly). Your key is delivered <b>automatically</b> right "
             f"after payment is confirmed (usually within 1-2 minutes).\n\n"
-            f"{emoji_mgr.diamond} <i>This order expires in 15 minutes.</i>"
+            f"{emoji_mgr.diamond} <i>This order expires in 5 minutes.</i>"
         )
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text="🔄 I've Paid - Check Now", callback_data=f"vipcheck:vietqr:{pending_id}:{transfer_code}")],

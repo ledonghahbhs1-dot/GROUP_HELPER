@@ -62,6 +62,13 @@ STAR_ID   = "5202036282649244841"  # ⭐ confirmed group ✅
 WARN_ID   = "5213205860498549992"  # ⚠️ confirmed group ✅
 TELE_ID   = "5211129162206560202"  # ✈️ confirmed group ✅
 
+# Animated icons (user-supplied, matched against the "GROUP_HELPER" icon board):
+# welcome banner (📢, animated), dragon VIP feature headers (🔥, animated),
+# and per-feature checkmark bullets (✅, animated).
+LOA_ID    = "6154375023462191177"  # 📢 welcome banner
+FIRE_ID   = "5424972470023104089"  # 🔥 dragon VIP feature (animated)
+CHECK_ID  = "5204236147718387299"  # ✅ feature bullet (animated)
+
 DEFAULT_EMOJIS: Dict[str, Dict[str, str]] = {
     "tele_logo": {"id": TELE_ID, "fallback": "✈️"},
     "clock":     {"id": WARN_ID, "fallback": "⚠️"},
@@ -81,6 +88,9 @@ DEFAULT_EMOJIS: Dict[str, Dict[str, str]] = {
     "star":      {"id": STAR_ID, "fallback": "⭐"},
     "lock":      {"id": WARN_ID, "fallback": "⚠️"},
     "bell":      {"id": STAR_ID, "fallback": "⭐"},
+    "welcome":   {"id": LOA_ID,   "fallback": "📢"},
+    "fire":      {"id": FIRE_ID,  "fallback": "🔥"},
+    "check":     {"id": CHECK_ID, "fallback": "✅"},
 }
 
 

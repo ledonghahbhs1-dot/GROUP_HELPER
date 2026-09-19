@@ -6,6 +6,8 @@ from typing import Any, Dict, Optional
 
 import aiohttp
 import qrcode
+from qrcode.image.styledpil import StyledPilImage
+from qrcode.image.styles.moduledrawers import RoundedModuleDrawer
 
 import config
 from utils.logger import logger
@@ -142,7 +144,23 @@ def get_qr_image_bytes(qr_code_field: Optional[str], invoice_url: str) -> io.Byt
         except Exception as e:
             logger.warning("Failed to decode Plisio-provided QR code, generating locally instead: %s", e)
 
-    img = qrcode.make(invoice_url)
+    # Locally-generated fallback (used whenever Plisio doesn't hand back its own
+    # rendered QR) — bigger modules + more quiet zone + rounded dots instead of
+    # qrcode.make()'s tiny default squares, so it's easy to scan and doesn't
+    # look like a placeholder next to the rest of the bot's VIP messaging.
+    qr = qrcode.QRCode(
+        error_correction=qrcode.constants.ERROR_CORRECT_M,
+        box_size=14,
+        border=3,
+    )
+    qr.add_data(invoice_url)
+    qr.make(fit=True)
+    img = qr.make_image(
+        image_factory=StyledPilImage,
+        module_drawer=RoundedModuleDrawer(),
+        fill_color="black",
+        back_color="white",
+    )
     buf = io.BytesIO()
     img.save(buf, format="PNG")
     buf.seek(0)
