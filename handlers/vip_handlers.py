@@ -53,8 +53,8 @@ async def send_vip_plan_menu(bot: Bot, chat_id: int):
         f"{emoji_mgr.vip} <b>BUY VIP KEY - DRAGON CITY</b> {emoji_mgr.vip}\n\n"
         f"{emoji_mgr.star} Choose a plan below. Pay with crypto (USDT) or bank transfer (VietQR) - "
         f"your key is delivered <b>automatically</b> right after payment is confirmed.\n\n"
-        f"{emoji_mgr.star} <b>💎 2 Days:</b> $1 USD\n"
-        f"{emoji_mgr.star} <b>👑 30 Days:</b> $7 USD\n\n"
+        f"<b>💎 2 Days:</b> $1 USD\n"
+        f"<b>👑 30 Days:</b> $7 USD\n\n"
         f"{emoji_mgr.diamond} <i>Need help?</i> DM {emoji_mgr.vip} :@wolfmodyt"
     )
     await safe_send_message(
