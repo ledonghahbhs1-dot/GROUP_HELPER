@@ -151,6 +151,11 @@ class EmojiManager:
         """Animated prohibition sign — used for "No ..." group rule bullets."""
         return self.get("prohibited", "🚫")
 
+    @property
+    def key(self) -> str:
+        """Animated key icon — used where a license key is delivered to the buyer."""
+        return self.get("key", "🔑")
+
 
 from utils.logger import logger
 

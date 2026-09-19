@@ -69,6 +69,8 @@ LOA_ID    = "6154375023462191177"  # 📢 welcome banner
 FIRE_ID   = "5424972470023104089"  # 🔥 dragon VIP feature (animated)
 CHECK_ID  = "5204236147718387299"  # ✅ feature bullet (animated)
 PROHIBITED_ID = "5201841261069236516"  # 🚫 prohibited-rule bullets ("No ...")
+DIAMOND_ID = "5202158242540583408"  # 💎 real diamond icon (was reusing VIP_ID before)
+KEY_ID = "5201761348907725593"  # 🔑 license key delivered to the buyer
 
 DEFAULT_EMOJIS: Dict[str, Dict[str, str]] = {
     "tele_logo": {"id": TELE_ID, "fallback": "✈️"},
@@ -85,7 +87,7 @@ DEFAULT_EMOJIS: Dict[str, Dict[str, str]] = {
     "error":     {"id": WARN_ID, "fallback": "⚠️"},
     "settings":  {"id": STAR_ID, "fallback": "⭐"},
     "setting":   {"id": STAR_ID, "fallback": "⭐"},
-    "diamond":   {"id": VIP_ID,  "fallback": "👑"},
+    "diamond":   {"id": DIAMOND_ID, "fallback": "💎"},
     "star":      {"id": STAR_ID, "fallback": "⭐"},
     "lock":      {"id": WARN_ID, "fallback": "⚠️"},
     "bell":      {"id": STAR_ID, "fallback": "⭐"},
@@ -93,6 +95,7 @@ DEFAULT_EMOJIS: Dict[str, Dict[str, str]] = {
     "fire":      {"id": FIRE_ID,  "fallback": "🔥"},
     "check":     {"id": CHECK_ID, "fallback": "✅"},
     "prohibited": {"id": PROHIBITED_ID, "fallback": "🚫"},
+    "key":       {"id": KEY_ID, "fallback": "🔑"},
 }
 
 
