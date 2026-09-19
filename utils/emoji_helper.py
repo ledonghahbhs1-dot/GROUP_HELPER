@@ -156,6 +156,11 @@ class EmojiManager:
         """Animated key icon — used where a license key is delivered to the buyer."""
         return self.get("key", "🔑")
 
+    @property
+    def choose(self) -> str:
+        """Animated pointer icon — used on "Choose a plan/method" prompts."""
+        return self.get("choose", "👉")
+
 
 from utils.logger import logger
 

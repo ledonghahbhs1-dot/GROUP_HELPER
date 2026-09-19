@@ -60,7 +60,7 @@ async def send_vip_plan_menu(bot: Bot, chat_id: int):
     """Shows the VIP plan picker. Entry point for the "Buy VIP Key" deep link."""
     text = (
         f"{emoji_mgr.vip} <b>BUY VIP KEY - DRAGON CITY</b> {emoji_mgr.vip}\n\n"
-        f"{emoji_mgr.star} Choose a plan below. Pay with crypto (USDT) or bank transfer (VietQR) - "
+        f"{emoji_mgr.choose} Choose a plan below. Pay with crypto (USDT) or bank transfer (VietQR) - "
         f"your key is delivered <b>automatically</b> right after payment is confirmed.\n\n"
         f"<b>💎 2 Days:</b> $1 USD\n"
         f"<b>👑 30 Days:</b> $7 USD\n\n"
@@ -157,7 +157,7 @@ async def on_vip_plan_selected(callback: CallbackQuery, bot: Bot):
     await callback.answer()
     text = (
         f"{emoji_mgr.vip} <b>{plan_info['label']}</b> {emoji_mgr.vip}\n\n"
-        f"{emoji_mgr.star} Choose a payment method:"
+        f"{emoji_mgr.choose} Choose a payment method:"
     )
     await safe_send_message(
         bot, callback.message.chat.id, emoji_mgr.format_msg(text),
