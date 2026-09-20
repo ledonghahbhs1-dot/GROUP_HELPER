@@ -1,7 +1,7 @@
 import asyncio
 import html
 import time
-from typing import Dict, Set
+from typing import Any, Dict, Set
 
 from aiogram import Router, F, Bot
 from aiogram.filters import Command
@@ -18,6 +18,7 @@ from utils.wolfmod_api import (
     get_qr_image_bytes,
     shorten_link4m,
     generate_free_key,
+    get_flash_sale_status,
 )
 
 router = Router(name="vip_handlers")
@@ -42,12 +43,40 @@ POLL_INTERVAL_SEC = 10
 POLL_MAX_ATTEMPTS = 180
 
 
-def build_plan_keyboard() -> InlineKeyboardMarkup:
+async def get_plan_pricing(plan: str) -> Dict[str, Any]:
+    """Pricing for `plan`, live-overridden with the flash-sale price for the
+    30-day plan when one is active right now. This is for display and for
+    picking which VND amount to request - the backend independently
+    re-checks the sale window at actual purchase time regardless of what
+    this says, so a stale/wrong read here can never grant an unearned
+    discount, only (rarely) show/request the normal price a few seconds
+    into or out of a window."""
+    info = dict(VIP_PLANS[plan])
+    info["on_sale"] = False
+    if plan == "1month":
+        sale = await get_flash_sale_status()
+        if sale.get("active") and sale.get("plan") == "1month":
+            info["usd"] = str(sale["priceUsd"])
+            info["vnd"] = sale["priceVnd"]
+            info["on_sale"] = True
+    return info
+
+
+def format_plan_button_label(plan: str, info: Dict[str, Any]) -> str:
+    if info.get("on_sale"):
+        original = VIP_PLANS[plan]["usd"]
+        return f"🔥 30 Days - ${original}→${info['usd']} FLASH SALE!"
+    return info["label"]
+
+
+async def build_plan_keyboard() -> InlineKeyboardMarkup:
     # Buttons can't render animated <tg-emoji>, so the "choose" cue uses its
     # plain-text fallback (👉) prefixed onto each plan's own icon/label.
+    plan_2day = await get_plan_pricing("2day")
+    plan_1month = await get_plan_pricing("1month")
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text=f"👉 {VIP_PLANS['2day']['label']}", callback_data="vipbuy:2day")],
-        [InlineKeyboardButton(text=f"👉 {VIP_PLANS['1month']['label']}", callback_data="vipbuy:1month")],
+        [InlineKeyboardButton(text=f"👉 {format_plan_button_label('2day', plan_2day)}", callback_data="vipbuy:2day")],
+        [InlineKeyboardButton(text=f"👉 {format_plan_button_label('1month', plan_1month)}", callback_data="vipbuy:1month")],
     ])
 
 
@@ -61,17 +90,23 @@ def build_method_keyboard(plan: str) -> InlineKeyboardMarkup:
 
 async def send_vip_plan_menu(bot: Bot, chat_id: int):
     """Shows the VIP plan picker. Entry point for the "Buy VIP Key" deep link."""
+    plan_1month = await get_plan_pricing("1month")
+    month_line = (
+        f"<b>🔥 30 Days:</b> <s>${VIP_PLANS['1month']['usd']}</s> <b>${plan_1month['usd']} FLASH SALE!</b>"
+        if plan_1month["on_sale"] else
+        f"<b>👑 30 Days:</b> ${VIP_PLANS['1month']['usd']} USD"
+    )
     text = (
         f"{emoji_mgr.vip} <b>BUY VIP KEY - DRAGON CITY</b> {emoji_mgr.vip}\n\n"
         f"{emoji_mgr.choose} Choose a plan below. Pay with crypto (USDT) or bank transfer (VietQR) - "
         f"your key is delivered <b>automatically</b> right after payment is confirmed.\n\n"
         f"<b>💎 2 Days:</b> $1 USD\n"
-        f"<b>👑 30 Days:</b> $7 USD\n\n"
+        f"{month_line}\n\n"
         f"{emoji_mgr.diamond} <i>Need help?</i> DM {emoji_mgr.vip} {emoji_mgr.tele_logo} :@wolfmodyt"
     )
     await safe_send_message(
         bot, chat_id, emoji_mgr.format_msg(text),
-        parse_mode="HTML", reply_markup=build_plan_keyboard()
+        parse_mode="HTML", reply_markup=await build_plan_keyboard()
     )
 
 
@@ -166,14 +201,14 @@ async def on_vip_plan_selected(callback: CallbackQuery, bot: Bot):
         return
 
     plan = callback.data.split(":", 1)[1]
-    plan_info = VIP_PLANS.get(plan)
-    if not plan_info:
+    if plan not in VIP_PLANS:
         await callback.answer("Invalid plan.", show_alert=True)
         return
 
+    plan_info = await get_plan_pricing(plan)
     await callback.answer()
     text = (
-        f"{emoji_mgr.vip} <b>{plan_info['label']}</b> {emoji_mgr.vip}\n\n"
+        f"{emoji_mgr.vip} <b>{format_plan_button_label(plan, plan_info)}</b> {emoji_mgr.vip}\n\n"
         f"{emoji_mgr.choose} Choose a payment method:"
     )
     await safe_send_message(
@@ -189,10 +224,10 @@ async def on_vip_method_selected(callback: CallbackQuery, bot: Bot):
         return
 
     _, plan, method = callback.data.split(":", 2)
-    plan_info = VIP_PLANS.get(plan)
-    if not plan_info:
+    if plan not in VIP_PLANS:
         await callback.answer("Invalid plan.", show_alert=True)
         return
+    plan_info = await get_plan_pricing(plan)
 
     chat_id = callback.message.chat.id
     user = callback.from_user
@@ -217,7 +252,7 @@ async def on_vip_method_selected(callback: CallbackQuery, bot: Bot):
 
         caption = (
             f"{emoji_mgr.vip} <b>PAY VIP KEY - {plan_info['duration'].upper()} (USDT)</b> {emoji_mgr.vip}\n\n"
-            f"{emoji_mgr.star} <b>Amount:</b> <code>${plan_info['usd']} USD</code> (USDT - BEP20 network)\n"
+            f"{emoji_mgr.star} <b>Amount:</b> <code>${invoice.get('amountUsd', plan_info['usd'])} USD</code> (USDT - BEP20 network)\n"
             f"{emoji_mgr.star} <b>Order ID:</b> <code>{html.escape(order_id)}</code>\n\n"
             f"{emoji_mgr.warn} Scan the QR code or tap the button below to pay. Your key is delivered "
             f"<b>automatically</b> right after payment is confirmed (usually within 1-5 minutes).\n\n"
@@ -250,6 +285,10 @@ async def on_vip_method_selected(callback: CallbackQuery, bot: Bot):
         await callback.answer("⏳ Creating your payment order...")
         username = f"TG-{user.id}" if user else "TG-Unknown"
         invoice = await create_vietqr_invoice(username, plan_info["vnd"])
+        # If the sale window closed in the few seconds between opening this
+        # menu and tapping "Pay", the backend silently falls back to the
+        # normal VND tier - re-fetch what it actually stored so the caption
+        # below (which already renders invoice['amount']) is never wrong.
         if not invoice:
             await safe_send_message(
                 bot, chat_id,

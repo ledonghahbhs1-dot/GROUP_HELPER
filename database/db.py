@@ -140,6 +140,16 @@ class Database:
             await db.execute(query, (value, chat_id))
             await db.commit()
 
+    async def get_all_group_chat_ids(self) -> List[int]:
+        """Every group chat_id the bot has ever handled a moderated message
+        in (a row is upserted there by get_chat_settings on first contact).
+        Used to broadcast announcements (e.g. the VIP flash sale) everywhere
+        the bot is active."""
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute("SELECT chat_id FROM group_settings")
+            rows = await cursor.fetchall()
+            return [row[0] for row in rows]
+
     async def get_warns(self, chat_id: int, user_id: int) -> int:
         async with aiosqlite.connect(self.db_path) as db:
             cursor = await db.execute(

@@ -16,6 +16,7 @@ from handlers.vip_handlers import router as vip_router
 from handlers.callback_handlers import router as callback_router
 from handlers.member_handlers import router as member_router
 from handlers.message_handlers import router as message_router
+from handlers.flash_sale import flash_sale_loop
 
 async def set_bot_commands(bot: Bot):
     """Sets standard command list in Telegram menu for regular users and admins"""
@@ -100,6 +101,9 @@ async def main():
 
     # Start periodic background cleanup task
     asyncio.create_task(periodic_spam_cleanup())
+    # VIP flash-sale announcer (polls the backend, posts to groups when a
+    # discount window opens)
+    asyncio.create_task(flash_sale_loop(bot))
 
     print("\n" + "=" * 55)
     print(f"🛡️  TELEGRAM GUARD BOT IS RUNNING! 👑")

@@ -166,6 +166,11 @@ class EmojiManager:
         """Animated ID-badge icon — shown before a member's Telegram ID."""
         return self.get("uid", "🆔")
 
+    @property
+    def sale(self) -> str:
+        """Animated price-tag icon — used on flash-sale announcements."""
+        return self.get("sale", "🏷️")
+
 
 from utils.logger import logger
 

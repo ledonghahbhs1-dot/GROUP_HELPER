@@ -96,6 +96,7 @@ DIAMOND_ID = "5202158242540583408"  # 💎 real diamond icon (was reusing VIP_ID
 KEY_ID = "5201761348907725593"  # 🔑 license key delivered to the buyer
 CHOOSE_ID = "5204383160153963970"  # 👉 "Choose a plan/method" prompts
 UID_ID = "5778354210110183831"  # 🆔 shown before a member's Telegram ID in the welcome message
+SALE_ID = "5204311666128350421"  # 🏷️ VIP flash-sale price-drop announcement banner
 
 # Bot API 9.4+ (Feb 2026) button icons: InlineKeyboardButton.icon_custom_emoji_id
 # renders an actual animated/custom emoji ON the button itself (separate from the
@@ -128,6 +129,7 @@ DEFAULT_EMOJIS: Dict[str, Dict[str, str]] = {
     "key":       {"id": KEY_ID, "fallback": "🔑"},
     "choose":    {"id": CHOOSE_ID, "fallback": "👉"},
     "uid":       {"id": UID_ID, "fallback": "🆔"},
+    "sale":      {"id": SALE_ID, "fallback": "🏷️"},
 }
 
 

@@ -200,6 +200,30 @@ async def generate_free_key(telegram_id: int) -> Dict[str, Any]:
         return {"success": False, "error": "Could not reach the key server right now."}
 
 
+async def get_flash_sale_status() -> Dict[str, Any]:
+    """
+    Reads the wolfmod.xyz backend's GET /api/vip/flash-sale-status - the
+    backend is the sole authority on whether a flash sale is active (it
+    re-checks its own clock at actual purchase time regardless of what this
+    returns), so this is only used for display/scheduling, never trusted to
+    grant a discount by itself.
+    Returns {"active": False} on any failure, so callers can safely treat a
+    failed check the same as "no sale right now".
+    """
+    url = f"{config.WOLFMOD_API_BASE_URL}/api/vip/flash-sale-status"
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as resp:
+                if resp.status == 200:
+                    data = await resp.json(content_type=None)
+                    if data.get("success"):
+                        return data
+                logger.warning("flash-sale-status non-200/unsuccessful: status=%s", resp.status)
+    except Exception as e:
+        logger.warning("flash-sale-status exception: %s", e)
+    return {"active": False}
+
+
 async def shorten_link4m(url: str) -> Optional[str]:
     """
     Wraps `url` behind Link4M's ad-gate for the /freescript unlock flow. Calls the
