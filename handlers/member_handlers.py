@@ -99,6 +99,30 @@ async def build_buyvip_keyboard(bot: Bot, chat_type: str = "private") -> InlineK
     ])
 
 
+async def build_welcome_keyboard(bot: Bot) -> InlineKeyboardMarkup:
+    """One button per VIP feature category (Bot API 9.4+ icon_custom_emoji_id
+    puts the animated "choose" pointer on each), plus the main BUY VIP NOW
+    button - all deep-link to a private chat with the bot, since unlocking
+    any category means buying VIP. Brings back what used to be plain text
+    only, from back when buttons couldn't show a custom emoji at all."""
+    bot_info = await bot.get_me()
+    buyvip_url = f"https://t.me/{bot_info.username}?start=buyvip"
+    rows = []
+    row = []
+    for _icon, name in VIP_FEATURE_CATEGORIES:
+        row.append(InlineKeyboardButton(text=name, url=buyvip_url, icon_custom_emoji_id=config.CHOOSE_ID))
+        if len(row) == 2:
+            rows.append(row)
+            row = []
+    if row:
+        rows.append(row)
+    rows.append([InlineKeyboardButton(
+        text="BUY VIP NOW", url=buyvip_url,
+        icon_custom_emoji_id=config.BUYVIP_BUTTON_ICON_ID,
+    )])
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
 async def handle_welcome_for_user(bot: Bot, chat_id: int, chat_title: str, user):
     """Sends welcome message if not already sent recently"""
     if not user or user.is_bot:
@@ -107,12 +131,7 @@ async def handle_welcome_for_user(bot: Bot, chat_id: int, chat_title: str, user)
         return
     try:
         welcome_text = build_welcome_text(chat_title or "THE GROUP", user.id, user.full_name)
-
-        # Feature categories are listed as plain text in welcome_text (with the
-        # animated check icon) instead of per-category buttons — Telegram
-        # buttons can't render animated <tg-emoji>, so a button per category
-        # would show the icon-less name. Just one prominent action button.
-        keyboard = await build_buyvip_keyboard(bot, "group")
+        keyboard = await build_welcome_keyboard(bot)
         await safe_send_message(bot, chat_id, welcome_text, parse_mode="HTML", reply_markup=keyboard)
         logger.info("Sent welcome message to user %s in chat %s", user.id, chat_id)
     except Exception as e:
