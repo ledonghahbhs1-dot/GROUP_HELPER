@@ -95,6 +95,7 @@ PROHIBITED_ID = "5201841261069236516"  # 🚫 prohibited-rule bullets ("No ...")
 DIAMOND_ID = "5202158242540583408"  # 💎 real diamond icon (was reusing VIP_ID before)
 KEY_ID = "5201761348907725593"  # 🔑 license key delivered to the buyer
 CHOOSE_ID = "5204383160153963970"  # 👉 "Choose a plan/method" prompts
+UID_ID = "5778354210110183831"  # 🆔 shown before a member's Telegram ID in the welcome message
 
 DEFAULT_EMOJIS: Dict[str, Dict[str, str]] = {
     "tele_logo": {"id": TELE_ID, "fallback": "✈️"},
@@ -121,6 +122,7 @@ DEFAULT_EMOJIS: Dict[str, Dict[str, str]] = {
     "prohibited": {"id": PROHIBITED_ID, "fallback": "🚫"},
     "key":       {"id": KEY_ID, "fallback": "🔑"},
     "choose":    {"id": CHOOSE_ID, "fallback": "👉"},
+    "uid":       {"id": UID_ID, "fallback": "🆔"},
 }
 
 

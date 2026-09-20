@@ -46,7 +46,8 @@ def build_welcome_text(chat_title: str, user_id: int, user_name: str) -> str:
     group_name = html.escape(chat_title or "OUR GROUP")
     text = (
         f"{emoji_mgr.welcome} <b>WELCOME TO {group_name.upper()}!</b> {emoji_mgr.welcome}\n\n"
-        f"{emoji_mgr.star} <b>Welcome member:</b> {user_mention} (<code>{user_id}</code>)\n\n"
+        f"{emoji_mgr.star} <b>Welcome member:</b> {user_mention}\n"
+        f"{emoji_mgr.uid} <code>{user_id}</code>\n\n"
         f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
         f"{emoji_mgr.shield} <b>ADMIN & SUPPORT CONTACT:</b>\n"
         f"• {emoji_mgr.tele_logo} <b>Owner / Master Admin:</b> @wolfmodyt {emoji_mgr.tele_logo}\n"

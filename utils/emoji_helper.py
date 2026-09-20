@@ -161,6 +161,11 @@ class EmojiManager:
         """Animated pointer icon — used on "Choose a plan/method" prompts."""
         return self.get("choose", "👉")
 
+    @property
+    def uid(self) -> str:
+        """Animated ID-badge icon — shown before a member's Telegram ID."""
+        return self.get("uid", "🆔")
+
 
 from utils.logger import logger
 
