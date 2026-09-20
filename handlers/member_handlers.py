@@ -78,15 +78,24 @@ async def build_buyvip_keyboard(bot: Bot, chat_type: str = "private") -> InlineK
     In a group, this is a t.me deep-link URL that switches the user into a
     private chat with the bot (payment/plan details should never sit in a
     group). In a private chat it's a plain callback that reveals the VIP plan
-    menu immediately, since there's no group to leak into."""
+    menu immediately, since there's no group to leak into.
+    icon_custom_emoji_id (Bot API 9.4+) puts an actual animated icon on the
+    button itself; "BUY VIP NOW" stays as plain text since the button `text`
+    field still can't carry a <tg-emoji> tag."""
     if chat_type == "private":
         return InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="💎 BUY VIP NOW", callback_data="show_buyvip_menu")]
+            [InlineKeyboardButton(
+                text="BUY VIP NOW", callback_data="show_buyvip_menu",
+                icon_custom_emoji_id=config.BUYVIP_BUTTON_ICON_ID,
+            )]
         ])
     bot_info = await bot.get_me()
     buyvip_url = f"https://t.me/{bot_info.username}?start=buyvip"
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="💎 BUY VIP NOW", url=buyvip_url)]
+        [InlineKeyboardButton(
+            text="BUY VIP NOW", url=buyvip_url,
+            icon_custom_emoji_id=config.BUYVIP_BUTTON_ICON_ID,
+        )]
     ])
 
 

@@ -97,6 +97,11 @@ KEY_ID = "5201761348907725593"  # 🔑 license key delivered to the buyer
 CHOOSE_ID = "5204383160153963970"  # 👉 "Choose a plan/method" prompts
 UID_ID = "5778354210110183831"  # 🆔 shown before a member's Telegram ID in the welcome message
 
+# Bot API 9.4+ (Feb 2026) button icons: InlineKeyboardButton.icon_custom_emoji_id
+# renders an actual animated/custom emoji ON the button itself (separate from the
+# plain-text `text` field, which still needs its own fallback character).
+BUYVIP_BUTTON_ICON_ID = "5203915043078436374"  # shown on the "BUY VIP NOW" button
+
 DEFAULT_EMOJIS: Dict[str, Dict[str, str]] = {
     "tele_logo": {"id": TELE_ID, "fallback": "✈️"},
     "clock":     {"id": WARN_ID, "fallback": "⚠️"},
