@@ -79,7 +79,7 @@ async def build_plan_keyboard() -> InlineKeyboardMarkup:
         )],
         [InlineKeyboardButton(
             text=format_plan_button_label('1month', plan_1month), callback_data="vipbuy:1month",
-            icon_custom_emoji_id=config.PLAN30_BUTTON_ICON_ID,
+            icon_custom_emoji_id=config.CHOOSE_ID,
         )],
     ])
 
