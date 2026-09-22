@@ -171,6 +171,22 @@ class EmojiManager:
         """Animated price-tag icon — used on flash-sale announcements."""
         return self.get("sale", "🏷️")
 
+    @property
+    def moneybag(self) -> str:
+        return self.get("moneybag", "💰")
+
+    @property
+    def bank(self) -> str:
+        return self.get("bank", "🏦")
+
+    @property
+    def card(self) -> str:
+        return self.get("card", "💳")
+
+    @property
+    def memo(self) -> str:
+        return self.get("memo", "📝")
+
 
 from utils.logger import logger
 

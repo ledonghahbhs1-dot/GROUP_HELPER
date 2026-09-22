@@ -95,13 +95,18 @@ PROHIBITED_ID = "5201841261069236516"  # 🚫 prohibited-rule bullets ("No ...")
 DIAMOND_ID = "5202158242540583408"  # 💎 real diamond icon (was reusing VIP_ID before)
 KEY_ID = "5201761348907725593"  # 🔑 license key delivered to the buyer
 CHOOSE_ID = "5204383160153963970"  # 👉 "Choose a plan/method" prompts
-UID_ID = "5778354210110183831"  # 🆔 shown before a member's Telegram ID in the welcome message
+UID_ID = "5778354210110183831"  # 🆔 shown before a member's Telegram ID in the welcome message; also the "Account Name" line on the VietQR payment caption
 SALE_ID = "5204311666128350421"  # 🏷️ VIP flash-sale price-drop announcement banner
+MONEYBAG_ID = "5213094908608392768"  # 💰 "Amount" line on the VietQR payment caption
+BANK_ID = "5332455502917949981"  # 🏦 "Bank" line on the VietQR payment caption; also the "Pay with Bank Transfer" button
+CARD_ID = "5445353829304387411"  # 💳 "Account Number" line on the VietQR payment caption; also the "Pay with USDT" button
+MEMO_ID = "5395444784611480792"  # 📝 "Transfer Content (required)" line on the VietQR payment caption
 
 # Bot API 9.4+ (Feb 2026) button icons: InlineKeyboardButton.icon_custom_emoji_id
 # renders an actual animated/custom emoji ON the button itself (separate from the
 # plain-text `text` field, which still needs its own fallback character).
 BUYVIP_BUTTON_ICON_ID = "5203915043078436374"  # shown on the "BUY VIP NOW" button
+PLAN30_BUTTON_ICON_ID = "5201906965478930360"  # shown on the "30 Days" plan button, replacing the plain-text 👑
 
 DEFAULT_EMOJIS: Dict[str, Dict[str, str]] = {
     "tele_logo": {"id": TELE_ID, "fallback": "✈️"},
@@ -130,6 +135,10 @@ DEFAULT_EMOJIS: Dict[str, Dict[str, str]] = {
     "choose":    {"id": CHOOSE_ID, "fallback": "👉"},
     "uid":       {"id": UID_ID, "fallback": "🆔"},
     "sale":      {"id": SALE_ID, "fallback": "🏷️"},
+    "moneybag":  {"id": MONEYBAG_ID, "fallback": "💰"},
+    "bank":      {"id": BANK_ID, "fallback": "🏦"},
+    "card":      {"id": CARD_ID, "fallback": "💳"},
+    "memo":      {"id": MEMO_ID, "fallback": "📝"},
 }
 
 

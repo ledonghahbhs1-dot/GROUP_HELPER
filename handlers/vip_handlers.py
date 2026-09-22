@@ -27,7 +27,7 @@ router = Router(name="vip_handlers")
 # (api/index.ts: POST /api/vip/purchase-usdt, POST /api/buy-vip/vietqr-create)
 VIP_PLANS: Dict[str, Dict[str, str]] = {
     "2day": {"label": "💎 2 Days - $1 USD", "usd": "1", "vnd": 25000, "duration": "2 Days"},
-    "1month": {"label": "👑 30 Days - $7 USD", "usd": "7", "vnd": 150000, "duration": "30 Days"},
+    "1month": {"label": "30 Days - $7 USD", "usd": "7", "vnd": 150000, "duration": "30 Days"},
 }
 
 # In-memory guard against delivering the same key twice (background poll + manual check race)
@@ -79,15 +79,21 @@ async def build_plan_keyboard() -> InlineKeyboardMarkup:
         )],
         [InlineKeyboardButton(
             text=format_plan_button_label('1month', plan_1month), callback_data="vipbuy:1month",
-            icon_custom_emoji_id=config.CHOOSE_ID,
+            icon_custom_emoji_id=config.PLAN30_BUTTON_ICON_ID,
         )],
     ])
 
 
 def build_method_keyboard(plan: str) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="💳 Pay with USDT (Crypto)", callback_data=f"vippay:{plan}:usdt")],
-        [InlineKeyboardButton(text="🏦 Pay with Bank Transfer (VietQR/SePay)", callback_data=f"vippay:{plan}:vietqr")],
+        [InlineKeyboardButton(
+            text="Pay with USDT (Crypto)", callback_data=f"vippay:{plan}:usdt",
+            icon_custom_emoji_id=config.CARD_ID,
+        )],
+        [InlineKeyboardButton(
+            text="Pay with Bank Transfer (VietQR/SePay)", callback_data=f"vippay:{plan}:vietqr",
+            icon_custom_emoji_id=config.BANK_ID,
+        )],
         [InlineKeyboardButton(text="⬅️ Back", callback_data="vipbuy:menu")],
     ])
 
@@ -310,11 +316,11 @@ async def on_vip_method_selected(callback: CallbackQuery, bot: Bot):
 
         caption = (
             f"{emoji_mgr.vip} <b>PAY VIP KEY - {plan_info['duration'].upper()} (BANK TRANSFER)</b> {emoji_mgr.vip}\n\n"
-            f"{emoji_mgr.star} <b>Amount:</b> <code>{invoice['amount']:,} VND</code>\n"
-            f"{emoji_mgr.star} <b>Bank:</b> {html.escape(invoice.get('bankName', ''))}\n"
-            f"{emoji_mgr.star} <b>Account Name:</b> {html.escape(invoice.get('accountName', ''))}\n"
-            f"{emoji_mgr.star} <b>Account Number:</b> <code>{html.escape(invoice.get('accountNo', ''))}</code>\n"
-            f"{emoji_mgr.star} <b>Transfer Content (required):</b> <code>{html.escape(invoice['memo'])}</code>\n\n"
+            f"{emoji_mgr.moneybag} <b>Amount:</b> <code>{invoice['amount']:,} VND</code>\n"
+            f"{emoji_mgr.bank} <b>Bank:</b> {html.escape(invoice.get('bankName', ''))}\n"
+            f"{emoji_mgr.uid} <b>Account Name:</b> {html.escape(invoice.get('accountName', ''))}\n"
+            f"{emoji_mgr.card} <b>Account Number:</b> <code>{html.escape(invoice.get('accountNo', ''))}</code>\n"
+            f"{emoji_mgr.memo} <b>Transfer Content (required):</b> <code>{html.escape(invoice['memo'])}</code>\n\n"
             f"{emoji_mgr.warn} Scan the QR code with your banking app, or transfer manually using the info above "
             f"(the transfer content <b>must</b> match exactly). Your key is delivered <b>automatically</b> right "
             f"after payment is confirmed (usually within 1-2 minutes).\n\n"
