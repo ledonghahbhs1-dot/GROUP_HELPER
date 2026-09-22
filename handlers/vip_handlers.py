@@ -104,7 +104,7 @@ async def send_vip_plan_menu(bot: Bot, chat_id: int):
     month_line = (
         f"<b>🔥 30 Days:</b> <s>${VIP_PLANS['1month']['usd']}</s> <b>${plan_1month['usd']} FLASH SALE!</b>"
         if plan_1month["on_sale"] else
-        f"<b>👑 30 Days:</b> ${VIP_PLANS['1month']['usd']} USD"
+        f"{emoji_mgr.vip} <b>30 Days:</b> ${VIP_PLANS['1month']['usd']} USD"
     )
     text = (
         f"{emoji_mgr.vip} <b>BUY VIP KEY - DRAGON CITY</b> {emoji_mgr.vip}\n\n"
