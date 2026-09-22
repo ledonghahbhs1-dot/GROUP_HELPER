@@ -74,12 +74,12 @@ async def build_plan_keyboard() -> InlineKeyboardMarkup:
     plan_1month = await get_plan_pricing("1month")
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(
-            text=f"👉 {format_plan_button_label('2day', plan_2day)}", callback_data="vipbuy:2day",
-            icon_custom_emoji_id=config.VIP_ID,
+            text=format_plan_button_label('2day', plan_2day), callback_data="vipbuy:2day",
+            icon_custom_emoji_id=config.CHOOSE_ID,
         )],
         [InlineKeyboardButton(
-            text=f"👉 {format_plan_button_label('1month', plan_1month)}", callback_data="vipbuy:1month",
-            icon_custom_emoji_id=config.VIP_ID,
+            text=format_plan_button_label('1month', plan_1month), callback_data="vipbuy:1month",
+            icon_custom_emoji_id=config.CHOOSE_ID,
         )],
     ])
 
