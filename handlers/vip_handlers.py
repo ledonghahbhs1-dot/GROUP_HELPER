@@ -94,7 +94,7 @@ def build_method_keyboard(plan: str) -> InlineKeyboardMarkup:
             text="Pay with Bank Transfer (VietQR/SePay)", callback_data=f"vippay:{plan}:vietqr",
             icon_custom_emoji_id=config.BANK_ID,
         )],
-        [InlineKeyboardButton(text="⬅️ Back", callback_data="vipbuy:menu")],
+        [InlineKeyboardButton(text="Back", callback_data="vipbuy:menu", icon_custom_emoji_id=config.BACK_ID)],
     ])
 
 
@@ -262,8 +262,8 @@ async def on_vip_method_selected(callback: CallbackQuery, bot: Bot):
 
         caption = (
             f"{emoji_mgr.vip} <b>PAY VIP KEY - {plan_info['duration'].upper()} (USDT)</b> {emoji_mgr.vip}\n\n"
-            f"{emoji_mgr.star} <b>Amount:</b> <code>${invoice.get('amountUsd', plan_info['usd'])} USD</code> (USDT - BEP20 network)\n"
-            f"{emoji_mgr.star} <b>Order ID:</b> <code>{html.escape(order_id)}</code>\n\n"
+            f"{emoji_mgr.moneybag} <b>Amount:</b> <code>${invoice.get('amountUsd', plan_info['usd'])} USD</code> (USDT - BEP20 network)\n"
+            f"{emoji_mgr.memo} <b>Order ID:</b> <code>{html.escape(order_id)}</code>\n\n"
             f"{emoji_mgr.warn} Scan the QR code or tap the button below to pay. Your key is delivered "
             f"<b>automatically</b> right after payment is confirmed (usually within 1-5 minutes).\n\n"
             f"{emoji_mgr.diamond} <i>This invoice expires in 2 hours.</i>"
@@ -466,8 +466,8 @@ async def send_free_script_prompt(bot: Bot, chat_id: int, user_id: int):
         f"{emoji_mgr.warn} <i>Make sure pop-ups aren't blocked so the redirect can complete.</i>"
     )
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🔓 Unlock via Link4M", url=link4m_url)],
-        [InlineKeyboardButton(text="🔓 Unlock via Linkvertise", url=linkvertise_url)],
+        [InlineKeyboardButton(text="Unlock via Link4M", url=link4m_url, icon_custom_emoji_id=config.BACK_ID)],
+        [InlineKeyboardButton(text="Unlock via Linkvertise", url=linkvertise_url, icon_custom_emoji_id=config.BACK_ID)],
     ])
     await safe_send_message(bot, chat_id, emoji_mgr.format_msg(text), parse_mode="HTML", reply_markup=keyboard)
 
@@ -477,7 +477,7 @@ async def send_freekey_entry_button(bot: Bot, chat_id: int):
     reveals the actual Link4M/Linkvertise unlock buttons via send_free_script_prompt,
     same two-step pattern as "BUY VIP NOW" -> plan menu."""
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🔑 Free Key", callback_data="show_freekey_links")]
+        [InlineKeyboardButton(text="Free Key", callback_data="show_freekey_links", icon_custom_emoji_id=config.KEY_ID)]
     ])
     await safe_send_message(
         bot, chat_id,

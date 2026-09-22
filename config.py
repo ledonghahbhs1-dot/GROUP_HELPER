@@ -103,6 +103,7 @@ CARD_ID = "5445353829304387411"  # 💳 "Account Number" line on the VietQR paym
 MEMO_ID = "5395444784611480792"  # 📝 "Transfer Content (required)" line on the VietQR payment caption
 CHECKPAID_ID = "5375338737028841420"  # 🔄 "I've Paid - Check Now" button
 OPENLINK_ID = "5440410042773824003"  # 🔗 "Open Payment Page" button
+BACK_ID = "5393368163628905240"  # ⬅️ "Back" button; also the "Unlock via ..." free-script buttons
 
 # Bot API 9.4+ (Feb 2026) button icons: InlineKeyboardButton.icon_custom_emoji_id
 # renders an actual animated/custom emoji ON the button itself (separate from the
