@@ -269,8 +269,11 @@ async def on_vip_method_selected(callback: CallbackQuery, bot: Bot):
             f"{emoji_mgr.diamond} <i>This invoice expires in 2 hours.</i>"
         )
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="🔗 Open Payment Page", url=invoice_url)],
-            [InlineKeyboardButton(text="🔄 I've Paid - Check Now", callback_data=f"vipcheck:usdt:{order_id}")],
+            [InlineKeyboardButton(text="Open Payment Page", url=invoice_url, icon_custom_emoji_id=config.OPENLINK_ID)],
+            [InlineKeyboardButton(
+                text="I've Paid - Check Now", callback_data=f"vipcheck:usdt:{order_id}",
+                icon_custom_emoji_id=config.CHECKPAID_ID,
+            )],
         ])
 
         try:
@@ -327,7 +330,10 @@ async def on_vip_method_selected(callback: CallbackQuery, bot: Bot):
             f"{emoji_mgr.diamond} <i>This order expires in 5 minutes.</i>"
         )
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="🔄 I've Paid - Check Now", callback_data=f"vipcheck:vietqr:{pending_id}:{transfer_code}")],
+            [InlineKeyboardButton(
+                text="I've Paid - Check Now", callback_data=f"vipcheck:vietqr:{pending_id}:{transfer_code}",
+                icon_custom_emoji_id=config.CHECKPAID_ID,
+            )],
         ])
 
         try:
