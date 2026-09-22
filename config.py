@@ -109,7 +109,6 @@ BACK_ID = "5393368163628905240"  # ⬅️ "Back" button; also the "Unlock via ..
 # renders an actual animated/custom emoji ON the button itself (separate from the
 # plain-text `text` field, which still needs its own fallback character).
 BUYVIP_BUTTON_ICON_ID = "5203915043078436374"  # shown on the "BUY VIP NOW" button
-PLAN30_BUTTON_ICON_ID = "5201906965478930360"  # shown on the "30 Days" plan button, replacing the plain-text 👑
 
 DEFAULT_EMOJIS: Dict[str, Dict[str, str]] = {
     "tele_logo": {"id": TELE_ID, "fallback": "✈️"},
