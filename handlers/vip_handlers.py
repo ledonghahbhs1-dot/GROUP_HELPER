@@ -70,13 +70,17 @@ def format_plan_button_label(plan: str, info: Dict[str, Any]) -> str:
 
 
 async def build_plan_keyboard() -> InlineKeyboardMarkup:
-    # Buttons can't render animated <tg-emoji>, so the "choose" cue uses its
-    # plain-text fallback (👉) prefixed onto each plan's own icon/label.
     plan_2day = await get_plan_pricing("2day")
     plan_1month = await get_plan_pricing("1month")
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text=f"👉 {format_plan_button_label('2day', plan_2day)}", callback_data="vipbuy:2day")],
-        [InlineKeyboardButton(text=f"👉 {format_plan_button_label('1month', plan_1month)}", callback_data="vipbuy:1month")],
+        [InlineKeyboardButton(
+            text=f"👉 {format_plan_button_label('2day', plan_2day)}", callback_data="vipbuy:2day",
+            icon_custom_emoji_id=config.VIP_ID,
+        )],
+        [InlineKeyboardButton(
+            text=f"👉 {format_plan_button_label('1month', plan_1month)}", callback_data="vipbuy:1month",
+            icon_custom_emoji_id=config.VIP_ID,
+        )],
     ])
 
 
