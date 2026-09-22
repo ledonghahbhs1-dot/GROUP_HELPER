@@ -27,7 +27,7 @@ router = Router(name="vip_handlers")
 # (api/index.ts: POST /api/vip/purchase-usdt, POST /api/buy-vip/vietqr-create)
 VIP_PLANS: Dict[str, Dict[str, str]] = {
     "2day": {"label": "💎 2 Days - $1 USD", "usd": "1", "vnd": 25000, "duration": "2 Days"},
-    "1month": {"label": "30 Days - $7 USD", "usd": "7", "vnd": 150000, "duration": "30 Days"},
+    "1month": {"label": "👑 30 Days - $7 USD", "usd": "7", "vnd": 150000, "duration": "30 Days"},
 }
 
 # In-memory guard against delivering the same key twice (background poll + manual check race)

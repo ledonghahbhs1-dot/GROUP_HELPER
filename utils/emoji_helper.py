@@ -40,8 +40,9 @@ class EmojiManager:
         if emoji_id and emoji_id.isdigit():
             return f'<tg-emoji emoji-id="{emoji_id}">{fallback}</tg-emoji>'
 
-        # Icon nào không có ID VIP thì không dùng (trả về chuỗi rỗng)
-        return ""
+        # No valid custom emoji ID — return the Unicode fallback character so
+        # the emoji still renders (plain text) instead of silently vanishing.
+        return fallback
 
     # Custom Emojis requested by user (Real valid IDs)
     @property

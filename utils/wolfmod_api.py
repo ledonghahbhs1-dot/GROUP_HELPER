@@ -120,8 +120,17 @@ async def check_vietqr_order(pending_id: str, transfer_code: str) -> Optional[Di
                 url, params={"pendingId": pending_id, "transferCode": transfer_code},
                 timeout=aiohttp.ClientTimeout(total=15)
             ) as resp:
-                data = await resp.json(content_type=None)
-                if resp.status == 200 and data.get("success"):
+                raw = await resp.json(content_type=None)
+                if resp.status != 200:
+                    logger.error("Failed to check VietQR order %s: status=%s body=%s", pending_id, resp.status, raw)
+                    return None
+                # Backend may wrap the response in the same XOR obfuscation
+                # used by vietqr-create — decrypt when present.
+                if "enc" in raw:
+                    data = _decrypt_enc_field(raw["enc"])
+                else:
+                    data = raw
+                if data.get("success"):
                     return data
                 logger.error("Failed to check VietQR order %s: status=%s body=%s", pending_id, resp.status, data)
                 return None
