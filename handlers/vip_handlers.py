@@ -61,7 +61,7 @@ _freescript_last_request: Dict[int, float] = {}
 POLL_INTERVAL_SEC = 10
 POLL_MAX_ATTEMPTS = 180
 RECONCILE_INTERVAL_SEC = 60
-_TRANSFER_CODE_RE = re.compile(r"^VIP\d{4,12}$", re.IGNORECASE)
+_TRANSFER_CODE_RE = re.compile(r"^VIP\d{3,10}$", re.IGNORECASE)
 
 
 async def get_plan_pricing(plan: str) -> Dict[str, Any]:
