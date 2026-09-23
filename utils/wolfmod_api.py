@@ -123,6 +123,10 @@ async def check_vietqr_order(pending_id: str, transfer_code: str) -> Optional[Di
                 raw = await resp.json(content_type=None)
                 if resp.status != 200:
                     logger.error("Failed to check VietQR order %s: status=%s body=%s", pending_id, resp.status, raw)
+                    # 404 = order deleted/expired on backend; let caller
+                    # distinguish this from a transient network error.
+                    if resp.status == 404:
+                        return {"success": False, "status": "not_found"}
                     return None
                 # Backend may wrap the response in the same XOR obfuscation
                 # used by vietqr-create — decrypt when present.

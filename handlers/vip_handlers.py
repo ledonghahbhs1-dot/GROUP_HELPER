@@ -225,6 +225,13 @@ async def check_and_deliver_vip_order(bot: Bot, order: Dict[str, Any]) -> Option
         return "error"
 
     status = str(result.get("status") or "pending").lower()
+
+    # Backend returned 404 → order deleted/expired on server
+    if status == "not_found":
+        logger.info("VIP order %s not found on backend (expired/deleted), marking expired", order_id)
+        await db.mark_vip_order_checked(order_id, "expired")
+        return "expired"
+
     if _is_paid_status(result):
         license_key = _extract_license_key(result)
         if license_key:
