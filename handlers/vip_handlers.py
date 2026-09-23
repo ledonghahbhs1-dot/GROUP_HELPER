@@ -207,10 +207,7 @@ async def check_and_deliver_vip_order(bot: Bot, order: Dict[str, Any]) -> Option
     method = order.get("method")
     try:
         if method == "vietqr":
-            # Backend expects the original transferCode (DHxxxxxx), not the
-            # SePay-facing memo (VIPxxxxxx) we show the buyer.
-            backend_tc = str(order.get("backend_transfer_code") or order.get("transfer_code") or "")
-            result = await check_vietqr_order(str(order.get("pending_id") or ""), backend_tc)
+            result = await check_vietqr_order(str(order.get("pending_id") or ""), str(order.get("transfer_code") or ""))
         elif method == "usdt":
             result = await check_vip_order(str(order.get("order_id") or ""))
         else:
