@@ -117,6 +117,7 @@ class Database:
                     amount INTEGER DEFAULT 0,
                     pending_id TEXT,
                     transfer_code TEXT,
+                    backend_transfer_code TEXT,
                     order_id TEXT,
                     status TEXT DEFAULT 'created',
                     license_key TEXT,
@@ -130,8 +131,16 @@ class Database:
             await db.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_vip_orders_pending_id ON vip_orders(method, pending_id) WHERE pending_id IS NOT NULL")
             await db.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_vip_orders_order_id ON vip_orders(method, order_id) WHERE order_id IS NOT NULL")
             await db.execute("CREATE INDEX IF NOT EXISTS idx_vip_orders_transfer_code ON vip_orders(transfer_code)")
+            await db.execute("CREATE INDEX IF NOT EXISTS idx_vip_orders_backend_tc ON vip_orders(backend_transfer_code)")
             await db.execute("CREATE INDEX IF NOT EXISTS idx_vip_orders_status ON vip_orders(status)")
             await db.execute("CREATE INDEX IF NOT EXISTS idx_vip_orders_chat_id ON vip_orders(chat_id)")
+
+            # Migration: add backend_transfer_code column if missing (existing DBs)
+            try:
+                await db.execute("ALTER TABLE vip_orders ADD COLUMN backend_transfer_code TEXT")
+            except Exception:
+                pass  # column already exists
+
             await db.commit()
             logger.info("Database initialized successfully at %s", self.db_path)
 
@@ -140,13 +149,14 @@ class Database:
             await db.execute("""
                 INSERT INTO vip_orders (
                     method, chat_id, user_id, username, plan, duration, amount,
-                    pending_id, transfer_code, order_id, status
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    pending_id, transfer_code, backend_transfer_code, order_id, status
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT DO NOTHING
             """, (
                 order.get("method"), order.get("chat_id"), order.get("user_id", 0),
                 order.get("username", ""), order.get("plan"), order.get("duration"),
-                order.get("amount", 0), order.get("pending_id"), order.get("transfer_code"),
+                order.get("amount", 0), order.get("pending_id"),
+                order.get("transfer_code"), order.get("backend_transfer_code"),
                 order.get("order_id"), order.get("status", "created"),
             ))
 
@@ -161,13 +171,15 @@ class Database:
                     duration = ?,
                     amount = ?,
                     transfer_code = COALESCE(?, transfer_code),
+                    backend_transfer_code = COALESCE(?, backend_transfer_code),
                     status = ?,
                     updated_at = CURRENT_TIMESTAMP
                 WHERE method = ? AND {key_field} = ?
             """, (
                 order.get("chat_id"), order.get("user_id", 0), order.get("username", ""),
                 order.get("plan"), order.get("duration"), order.get("amount", 0),
-                order.get("transfer_code"), order.get("status", "created"),
+                order.get("transfer_code"), order.get("backend_transfer_code"),
+                order.get("status", "created"),
                 order.get("method"), key_value,
             ))
             await db.commit()
@@ -192,15 +204,18 @@ class Database:
             if chat_id:
                 cursor = await db.execute("""
                     SELECT * FROM vip_orders
-                    WHERE method = 'vietqr' AND transfer_code = ? AND chat_id = ?
+                    WHERE method = 'vietqr'
+                      AND (transfer_code = ? OR backend_transfer_code = ?)
+                      AND chat_id = ?
                     ORDER BY id DESC LIMIT 1
-                """, (transfer_code, chat_id))
+                """, (transfer_code, transfer_code, chat_id))
             else:
                 cursor = await db.execute("""
                     SELECT * FROM vip_orders
-                    WHERE method = 'vietqr' AND transfer_code = ?
+                    WHERE method = 'vietqr'
+                      AND (transfer_code = ? OR backend_transfer_code = ?)
                     ORDER BY id DESC LIMIT 1
-                """, (transfer_code,))
+                """, (transfer_code, transfer_code))
             row = await cursor.fetchone()
             return dict(row) if row else None
 

@@ -207,7 +207,10 @@ async def check_and_deliver_vip_order(bot: Bot, order: Dict[str, Any]) -> Option
     method = order.get("method")
     try:
         if method == "vietqr":
-            result = await check_vietqr_order(str(order.get("pending_id") or ""), str(order.get("transfer_code") or ""))
+            # Backend expects the original transferCode (DHxxxxxx), not the
+            # SePay-facing memo (VIPxxxxxx) we show the buyer.
+            backend_tc = str(order.get("backend_transfer_code") or order.get("transfer_code") or "")
+            result = await check_vietqr_order(str(order.get("pending_id") or ""), backend_tc)
         elif method == "usdt":
             result = await check_vip_order(str(order.get("order_id") or ""))
         else:
@@ -484,7 +487,7 @@ async def on_vip_method_selected(callback: CallbackQuery, bot: Bot):
         )
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(
-                text="I've Paid - Check Now", callback_data=f"vipcheck:vietqr:{pending_id}:{transfer_code}",
+                text="I've Paid - Check Now", callback_data=f"vipcheck:vietqr:{pending_id}:{backend_transfer_code}",
                 icon_custom_emoji_id=config.CHECKPAID_ID,
             )],
         ])
