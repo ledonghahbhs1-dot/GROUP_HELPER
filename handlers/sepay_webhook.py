@@ -54,9 +54,16 @@ async def _sepay_webhook(request: web.Request) -> web.Response:
         return web.json_response({"success": True, "message": "Order not found in bot DB"})
 
     order_status = str(order.get("status") or "").lower()
-    if order.get("delivered_at") or order_status in ("delivered", "expired"):
-        logger.info("SePay webhook: order %s already %s, skipping", order["id"], order_status or "delivered")
-        return web.json_response({"success": True, "message": f"Order already {order_status or 'delivered'}"})
+    if order.get("delivered_at") or order_status == "delivered":
+        logger.info("SePay webhook: order %s already delivered, skipping", order["id"])
+        return web.json_response({"success": True, "message": "Order already delivered"})
+
+    # If order was prematurely marked expired (e.g. poll checked before backend
+    # processed the bank transfer), reset to created so check_and_deliver works.
+    if order_status == "expired":
+        logger.info("SePay webhook: order %s was expired, resetting to created for re-check", order["id"])
+        await db.mark_vip_order_checked(int(order["id"]), "created")
+        order["status"] = "created"
 
     # Trigger immediate check+deliver via backend
     bot: Bot = request.app["bot"]
