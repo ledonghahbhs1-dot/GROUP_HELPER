@@ -12,7 +12,7 @@ from utils.logger import logger
 from filters.spam_filter import spam_filter
 
 from handlers.admin_handlers import router as admin_router
-from handlers.vip_handlers import router as vip_router
+from handlers.vip_handlers import router as vip_router, vip_reconcile_loop
 from handlers.callback_handlers import router as callback_router
 from handlers.member_handlers import router as member_router
 from handlers.message_handlers import router as message_router
@@ -104,6 +104,9 @@ async def main():
     # VIP flash-sale announcer (polls the backend, posts to groups when a
     # discount window opens)
     asyncio.create_task(flash_sale_loop(bot))
+    # VIP payment reconciler: survives restarts/deploys and delivers paid orders
+    # from the persisted vip_orders table.
+    asyncio.create_task(vip_reconcile_loop(bot))
 
     print("\n" + "=" * 55)
     print(f"🛡️  TELEGRAM GUARD BOT IS RUNNING! 👑")

@@ -1,13 +1,15 @@
 import asyncio
 import html
+import re
 import time
-from typing import Any, Dict, Set
+from typing import Any, Dict, Optional, Set
 
 from aiogram import Router, F, Bot
 from aiogram.filters import Command
 from aiogram.types import CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton, BufferedInputFile, Message
 
 import config
+from database.db import db
 from utils.emoji_helper import emoji_mgr, safe_send_message
 from utils.logger import logger
 from utils.wolfmod_api import (
@@ -58,6 +60,8 @@ _freescript_last_request: Dict[int, float] = {}
 # Background poll: check every 10s for up to 30 minutes before giving up (manual "Check" button still works after)
 POLL_INTERVAL_SEC = 10
 POLL_MAX_ATTEMPTS = 180
+RECONCILE_INTERVAL_SEC = 60
+_TRANSFER_CODE_RE = re.compile(r"^VIP\d{4,12}$", re.IGNORECASE)
 
 
 async def get_plan_pricing(plan: str) -> Dict[str, Any]:
@@ -169,6 +173,63 @@ async def deliver_vip_key(bot: Bot, chat_id: int, dedup_key: str, license_key: s
     logger.info("VIP key delivered for order %s to chat %s", dedup_key, chat_id)
 
 
+async def deliver_vip_order(bot: Bot, order: Dict[str, Any], license_key: str) -> bool:
+    """DB-backed idempotent delivery. Safe across restart/manual/reconcile races."""
+    order_id = int(order["id"])
+    claimed = await db.claim_vip_order_delivery(order_id, license_key)
+    if not claimed:
+        logger.info("VIP order %s already delivered or claimed by another task", order_id)
+        return False
+
+    dedup_key = f"{order.get('method')}:{order.get('pending_id') or order.get('order_id') or order_id}"
+    await deliver_vip_key(bot, int(order["chat_id"]), dedup_key, license_key, order.get("duration") or "VIP")
+    logger.info("VIP order %s marked delivered in DB", order_id)
+    return True
+
+
+async def check_and_deliver_vip_order(bot: Bot, order: Dict[str, Any]) -> Optional[str]:
+    order_id = int(order["id"])
+    method = order.get("method")
+    try:
+        if method == "vietqr":
+            result = await check_vietqr_order(str(order.get("pending_id") or ""), str(order.get("transfer_code") or ""))
+        elif method == "usdt":
+            result = await check_vip_order(str(order.get("order_id") or ""))
+        else:
+            logger.error("VIP order %s has unknown method: %s", order_id, method)
+            await db.mark_vip_order_checked(order_id, "check_error")
+            return "error"
+    except Exception as e:
+        logger.error("VIP order %s check exception: %s", order_id, e)
+        await db.mark_vip_order_checked(order_id, "check_error")
+        return "error"
+
+    if not result:
+        logger.error("VIP order %s check failed: method=%s pending_id=%s transfer_code=%s order_id=%s", order_id, method, order.get("pending_id"), order.get("transfer_code"), order.get("order_id"))
+        await db.mark_vip_order_checked(order_id, "check_error")
+        return "error"
+
+    status = str(result.get("status") or "pending").lower()
+    if _is_paid_status(result):
+        license_key = _extract_license_key(result)
+        if license_key:
+            await db.mark_vip_order_checked(order_id, status, license_key)
+            await deliver_vip_order(bot, order, license_key)
+            return "delivered"
+        logger.error("VIP order %s is paid but backend returned no key: %s", order_id, result)
+        await db.mark_vip_order_checked(order_id, "paid_no_key")
+        await safe_send_message(
+            bot, int(order["chat_id"]),
+            emoji_mgr.format_msg(f"{emoji_mgr.warn} <b>Payment found, but backend did not return a VIP key.</b>\nPlease contact {emoji_mgr.vip} :@wolfmodyt with code <code>{html.escape(str(order.get('transfer_code') or order.get('order_id') or order_id))}</code>."),
+            parse_mode="HTML",
+        )
+        return "paid_no_key"
+
+    await db.mark_vip_order_checked(order_id, status)
+    logger.info("VIP order %s not paid yet: status=%s result=%s", order_id, status, result)
+    return status
+
+
 async def poll_usdt_order(bot: Bot, chat_id: int, order_id: str, duration: str):
     """Background auto-check for a Plisio/USDT order so most buyers never have to press the manual button."""
     dedup_key = f"usdt:{order_id}"
@@ -191,6 +252,32 @@ async def poll_usdt_order(bot: Bot, chat_id: int, order_id: str, duration: str):
             return
 
     logger.info("USDT order %s polling timed out after %s attempts (manual check-button still works)", order_id, POLL_MAX_ATTEMPTS)
+
+
+async def poll_db_vip_order(bot: Bot, db_order_id: int):
+    for _ in range(POLL_MAX_ATTEMPTS):
+        await asyncio.sleep(POLL_INTERVAL_SEC)
+        order = await db.get_vip_order(db_order_id)
+        if not order or order.get("delivered_at"):
+            return
+        outcome = await check_and_deliver_vip_order(bot, order)
+        if outcome in {"delivered", "paid_no_key", "expired"}:
+            return
+
+    logger.info("VIP DB order %s polling timed out after %s attempts", db_order_id, POLL_MAX_ATTEMPTS)
+
+
+async def vip_reconcile_loop(bot: Bot):
+    while True:
+        try:
+            orders = await db.list_pending_vip_orders(limit=50)
+            for order in orders:
+                if order.get("delivered_at"):
+                    continue
+                await check_and_deliver_vip_order(bot, order)
+        except Exception as e:
+            logger.error("VIP reconcile loop error: %s", e)
+        await asyncio.sleep(RECONCILE_INTERVAL_SEC)
 
 
 async def poll_vietqr_order(bot: Bot, chat_id: int, pending_id: str, transfer_code: str, duration: str):
@@ -283,6 +370,18 @@ async def on_vip_method_selected(callback: CallbackQuery, bot: Bot):
 
         order_id = invoice["orderId"]
         invoice_url = invoice["invoiceUrl"]
+        db_order_id = await db.upsert_vip_order(
+            method="usdt",
+            chat_id=chat_id,
+            user_id=user.id if user else 0,
+            username=(user.username or "") if user else "",
+            plan=plan,
+            duration=plan_info["duration"],
+            amount=int(float(invoice.get("amountUsd", plan_info["usd"])) * 100),
+            order_id=order_id,
+            status="created",
+        )
+        logger.info("VIP USDT order saved: db_id=%s order_id=%s chat_id=%s", db_order_id, order_id, chat_id)
         qr_bytes = get_qr_image_bytes(invoice.get("qrCode"), invoice_url)
 
         caption = (
@@ -317,7 +416,7 @@ async def on_vip_method_selected(callback: CallbackQuery, bot: Bot):
                 parse_mode="HTML", reply_markup=keyboard
             )
 
-        asyncio.create_task(poll_usdt_order(bot, chat_id, order_id, plan_info["duration"]))
+        asyncio.create_task(poll_db_vip_order(bot, db_order_id))
 
     elif method == "vietqr":
         await callback.answer("⏳ Creating your payment order...")
@@ -341,6 +440,19 @@ async def on_vip_method_selected(callback: CallbackQuery, bot: Bot):
         pending_id = str(invoice["pendingId"])
         transfer_code = invoice["transferCode"]
         qr_url = invoice.get("qrUrl")
+        db_order_id = await db.upsert_vip_order(
+            method="vietqr",
+            chat_id=chat_id,
+            user_id=user.id if user else 0,
+            username=(user.username or "") if user else "",
+            plan=plan,
+            duration=plan_info["duration"],
+            amount=int(invoice.get("amount", plan_info["vnd"])),
+            pending_id=pending_id,
+            transfer_code=transfer_code,
+            status="created",
+        )
+        logger.info("VIP VietQR order saved: db_id=%s pending_id=%s transfer_code=%s chat_id=%s", db_order_id, pending_id, transfer_code, chat_id)
 
         caption = (
             f"{emoji_mgr.vip} <b>PAY VIP KEY - {plan_info['duration'].upper()} (BANK TRANSFER)</b> {emoji_mgr.vip}\n\n"
@@ -373,7 +485,7 @@ async def on_vip_method_selected(callback: CallbackQuery, bot: Bot):
             logger.error("Failed to send VietQR payment QR for order %s: %s", pending_id, e)
             await safe_send_message(bot, chat_id, emoji_mgr.format_msg(caption), parse_mode="HTML", reply_markup=keyboard)
 
-        asyncio.create_task(poll_vietqr_order(bot, chat_id, pending_id, transfer_code, plan_info["duration"]))
+        asyncio.create_task(poll_db_vip_order(bot, db_order_id))
 
 
 @router.callback_query(F.data.startswith("vipcheck:"))
@@ -384,12 +496,26 @@ async def on_vip_check(callback: CallbackQuery, bot: Bot):
 
     if method == "usdt":
         order_id = parts[2]
+        order = await db.get_vip_order_by_order_id(order_id, chat_id)
         dedup_key = f"usdt:{order_id}"
-        if dedup_key in _delivered_orders:
+        if dedup_key in _delivered_orders or (order and order.get("delivered_at")):
             await callback.answer("✅ Key already delivered, please check the message above!", show_alert=True)
             return
 
         await callback.answer("🔍 Checking payment...")
+        if order:
+            outcome = await check_and_deliver_vip_order(bot, order)
+            if outcome == "delivered":
+                return
+            if outcome == "paid_no_key":
+                await callback.answer("✅ Payment found, but key was not returned. Please contact @wolfmodyt.", show_alert=True)
+                return
+            if outcome == "error":
+                await callback.answer("❌ Could not check status right now, please try again later.", show_alert=True)
+                return
+            await callback.answer("⏳ Payment not received yet. Please wait a few minutes after paying and try again.", show_alert=True)
+            return
+
         result = await check_vip_order(order_id)
         if not result:
             await callback.answer("❌ Could not check status right now, please try again later.", show_alert=True)
@@ -407,12 +533,29 @@ async def on_vip_check(callback: CallbackQuery, bot: Bot):
 
     elif method == "vietqr":
         pending_id, transfer_code = parts[2].split(":", 1)
+        order = await db.get_vip_order_by_transfer_code(transfer_code, chat_id)
         dedup_key = f"vietqr:{pending_id}"
-        if dedup_key in _delivered_orders:
+        if dedup_key in _delivered_orders or (order and order.get("delivered_at")):
             await callback.answer("✅ Key already delivered, please check the message above!", show_alert=True)
             return
 
         await callback.answer("🔍 Checking payment...")
+        if order:
+            outcome = await check_and_deliver_vip_order(bot, order)
+            if outcome == "delivered":
+                return
+            if outcome == "paid_no_key":
+                await callback.answer("✅ Payment found, but key was not returned. Please contact @wolfmodyt.", show_alert=True)
+                return
+            if outcome == "expired":
+                await callback.answer("⌛ This order has expired. Please create a new one with /start buyvip.", show_alert=True)
+                return
+            if outcome == "error":
+                await callback.answer("❌ Could not check status right now, please try again later.", show_alert=True)
+                return
+            await callback.answer("⏳ Payment not received yet. Please wait a few minutes after transferring and try again.", show_alert=True)
+            return
+
         result = await check_vietqr_order(pending_id, transfer_code)
         if not result:
             await callback.answer("❌ Could not check status right now, please try again later.", show_alert=True)
@@ -430,6 +573,55 @@ async def on_vip_check(callback: CallbackQuery, bot: Bot):
             await callback.answer("⌛ This order has expired. Please create a new one with /start buyvip.", show_alert=True)
         else:
             await callback.answer("⏳ Payment not received yet. Please wait a few minutes after transferring and try again.", show_alert=True)
+
+
+async def check_vip_by_transfer_code(message: Message, bot: Bot, transfer_code: str):
+    transfer_code = transfer_code.strip().upper()
+    order = await db.get_vip_order_by_transfer_code(transfer_code, message.chat.id)
+    if not order:
+        logger.error("VIP transfer code %s not found in bot DB for chat %s", transfer_code, message.chat.id)
+        await message.answer(
+            emoji_mgr.format_msg(
+                f"{emoji_mgr.error} <b>Order not found in bot database.</b>\n"
+                f"Code: <code>{html.escape(transfer_code)}</code>\n"
+                f"Please send payment screenshot to {emoji_mgr.vip} :@wolfmodyt."
+            ),
+            parse_mode="HTML",
+        )
+        return
+
+    if order.get("delivered_at"):
+        await message.answer("✅ Key already delivered. Please check messages above.")
+        return
+
+    await message.answer("🔍 Checking payment now...")
+    outcome = await check_and_deliver_vip_order(bot, order)
+    if outcome == "delivered":
+        return
+    if outcome == "paid_no_key":
+        await message.answer("✅ Payment found, but backend did not return a key. Please contact @wolfmodyt.")
+        return
+    if outcome == "expired":
+        await message.answer("⌛ This order expired. If money left your bank, please contact @wolfmodyt with payment screenshot.")
+        return
+    if outcome == "error":
+        await message.answer("❌ Could not check status right now. Please try again later.")
+        return
+    await message.answer("⏳ Payment not received yet. Wait 1-2 minutes after bank transfer, then send the code again.")
+
+
+@router.message(Command("checkvip"))
+async def on_checkvip_command(message: Message, bot: Bot):
+    parts = (message.text or "").split(maxsplit=1)
+    if len(parts) < 2 or not _TRANSFER_CODE_RE.match(parts[1].strip()):
+        await message.answer("Usage: /checkvip VIP464402")
+        return
+    await check_vip_by_transfer_code(message, bot, parts[1])
+
+
+@router.message(F.chat.type == "private", F.text.regexp(_TRANSFER_CODE_RE.pattern))
+async def on_transfer_code_message(message: Message, bot: Bot):
+    await check_vip_by_transfer_code(message, bot, message.text or "")
 
 
 # ── Free Script (Link4M ad-gate unlock) ──────────────────────────────────────

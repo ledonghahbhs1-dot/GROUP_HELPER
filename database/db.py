@@ -104,8 +104,160 @@ class Database:
             await db.execute("""
                 CREATE INDEX IF NOT EXISTS idx_banned_users_username ON banned_users(username)
             """)
+
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS vip_orders (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    method TEXT NOT NULL,
+                    chat_id INTEGER NOT NULL,
+                    user_id INTEGER DEFAULT 0,
+                    username TEXT DEFAULT '',
+                    plan TEXT NOT NULL,
+                    duration TEXT NOT NULL,
+                    amount INTEGER DEFAULT 0,
+                    pending_id TEXT,
+                    transfer_code TEXT,
+                    order_id TEXT,
+                    status TEXT DEFAULT 'created',
+                    license_key TEXT,
+                    delivered_at TIMESTAMP,
+                    last_checked_at TIMESTAMP,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+
+            await db.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_vip_orders_pending_id ON vip_orders(method, pending_id) WHERE pending_id IS NOT NULL")
+            await db.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_vip_orders_order_id ON vip_orders(method, order_id) WHERE order_id IS NOT NULL")
+            await db.execute("CREATE INDEX IF NOT EXISTS idx_vip_orders_transfer_code ON vip_orders(transfer_code)")
+            await db.execute("CREATE INDEX IF NOT EXISTS idx_vip_orders_status ON vip_orders(status)")
+            await db.execute("CREATE INDEX IF NOT EXISTS idx_vip_orders_chat_id ON vip_orders(chat_id)")
             await db.commit()
             logger.info("Database initialized successfully at %s", self.db_path)
+
+    async def upsert_vip_order(self, **order: Any) -> int:
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute("""
+                INSERT INTO vip_orders (
+                    method, chat_id, user_id, username, plan, duration, amount,
+                    pending_id, transfer_code, order_id, status
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT DO NOTHING
+            """, (
+                order.get("method"), order.get("chat_id"), order.get("user_id", 0),
+                order.get("username", ""), order.get("plan"), order.get("duration"),
+                order.get("amount", 0), order.get("pending_id"), order.get("transfer_code"),
+                order.get("order_id"), order.get("status", "created"),
+            ))
+
+            key_field = "pending_id" if order.get("pending_id") else "order_id"
+            key_value = order.get(key_field)
+            await db.execute(f"""
+                UPDATE vip_orders SET
+                    chat_id = ?,
+                    user_id = ?,
+                    username = ?,
+                    plan = ?,
+                    duration = ?,
+                    amount = ?,
+                    transfer_code = COALESCE(?, transfer_code),
+                    status = ?,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE method = ? AND {key_field} = ?
+            """, (
+                order.get("chat_id"), order.get("user_id", 0), order.get("username", ""),
+                order.get("plan"), order.get("duration"), order.get("amount", 0),
+                order.get("transfer_code"), order.get("status", "created"),
+                order.get("method"), key_value,
+            ))
+            await db.commit()
+
+            cursor = await db.execute(
+                f"SELECT id FROM vip_orders WHERE method = ? AND {key_field} = ? LIMIT 1",
+                (order.get("method"), key_value),
+            )
+            row = await cursor.fetchone()
+            return int(row[0]) if row else 0
+
+    async def get_vip_order(self, order_id: int) -> Optional[Dict[str, Any]]:
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            cursor = await db.execute("SELECT * FROM vip_orders WHERE id = ?", (order_id,))
+            row = await cursor.fetchone()
+            return dict(row) if row else None
+
+    async def get_vip_order_by_transfer_code(self, transfer_code: str, chat_id: Optional[int] = None) -> Optional[Dict[str, Any]]:
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            if chat_id:
+                cursor = await db.execute("""
+                    SELECT * FROM vip_orders
+                    WHERE method = 'vietqr' AND transfer_code = ? AND chat_id = ?
+                    ORDER BY id DESC LIMIT 1
+                """, (transfer_code, chat_id))
+            else:
+                cursor = await db.execute("""
+                    SELECT * FROM vip_orders
+                    WHERE method = 'vietqr' AND transfer_code = ?
+                    ORDER BY id DESC LIMIT 1
+                """, (transfer_code,))
+            row = await cursor.fetchone()
+            return dict(row) if row else None
+
+    async def get_vip_order_by_order_id(self, order_id: str, chat_id: Optional[int] = None) -> Optional[Dict[str, Any]]:
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            if chat_id:
+                cursor = await db.execute("""
+                    SELECT * FROM vip_orders
+                    WHERE method = 'usdt' AND order_id = ? AND chat_id = ?
+                    ORDER BY id DESC LIMIT 1
+                """, (order_id, chat_id))
+            else:
+                cursor = await db.execute("""
+                    SELECT * FROM vip_orders
+                    WHERE method = 'usdt' AND order_id = ?
+                    ORDER BY id DESC LIMIT 1
+                """, (order_id,))
+            row = await cursor.fetchone()
+            return dict(row) if row else None
+
+    async def list_pending_vip_orders(self, limit: int = 50) -> List[Dict[str, Any]]:
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            cursor = await db.execute("""
+                SELECT * FROM vip_orders
+                WHERE delivered_at IS NULL
+                  AND status IN ('created', 'pending', 'check_error', 'paid_no_key')
+                  AND created_at >= datetime('now', '-2 days')
+                ORDER BY id ASC
+                LIMIT ?
+            """, (limit,))
+            rows = await cursor.fetchall()
+            return [dict(r) for r in rows]
+
+    async def mark_vip_order_checked(self, order_id: int, status: str, license_key: str = ""):
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute("""
+                UPDATE vip_orders
+                SET status = ?,
+                    license_key = CASE WHEN ? != '' THEN ? ELSE license_key END,
+                    last_checked_at = CURRENT_TIMESTAMP,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            """, (status, license_key, license_key, order_id))
+            await db.commit()
+
+    async def claim_vip_order_delivery(self, order_id: int, license_key: str) -> bool:
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute("""
+                UPDATE vip_orders
+                SET status = 'delivered', license_key = ?, delivered_at = CURRENT_TIMESTAMP,
+                    last_checked_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+                WHERE id = ? AND delivered_at IS NULL
+            """, (license_key, order_id))
+            await db.commit()
+            return cursor.rowcount == 1
 
     async def get_chat_settings(self, chat_id: int) -> Dict[str, Any]:
         async with aiosqlite.connect(self.db_path) as db:
