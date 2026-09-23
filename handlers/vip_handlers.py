@@ -33,6 +33,23 @@ VIP_PLANS: Dict[str, Dict[str, str]] = {
 # In-memory guard against delivering the same key twice (background poll + manual check race)
 _delivered_orders: Set[str] = set()
 
+_PAID_STATUSES = {"confirmed", "completed", "paid", "success", "successful"}
+
+
+def _extract_license_key(result: Dict[str, Any]) -> str:
+    """Backend variants may name the delivered key differently."""
+    return str(
+        result.get("licenseKey")
+        or result.get("key")
+        or result.get("vipKey")
+        or result.get("license")
+        or ""
+    ).strip()
+
+
+def _is_paid_status(result: Dict[str, Any]) -> bool:
+    return str(result.get("status", "")).lower() in _PAID_STATUSES
+
 # Per-user cooldown for /freescript so someone can't spam-generate Link4M links
 # (each call burns a real API quota hit against LINK4M_TOKEN).
 FREESCRIPT_COOLDOWN_SEC = 600  # 10 minutes
@@ -165,8 +182,12 @@ async def poll_usdt_order(bot: Bot, chat_id: int, order_id: str, duration: str):
             logger.error("Poll error for USDT order %s: %s", order_id, e)
             continue
 
-        if result and result.get("status") == "completed" and result.get("licenseKey"):
-            await deliver_vip_key(bot, chat_id, dedup_key, result["licenseKey"], duration)
+        if result and _is_paid_status(result):
+            license_key = _extract_license_key(result)
+            if license_key:
+                await deliver_vip_key(bot, chat_id, dedup_key, license_key, duration)
+                return
+            logger.error("USDT order %s is paid but response has no key: %s", order_id, result)
             return
 
     logger.info("USDT order %s polling timed out after %s attempts (manual check-button still works)", order_id, POLL_MAX_ATTEMPTS)
@@ -185,8 +206,12 @@ async def poll_vietqr_order(bot: Bot, chat_id: int, pending_id: str, transfer_co
             logger.error("Poll error for VietQR order %s: %s", pending_id, e)
             continue
 
-        if result and result.get("status") == "confirmed" and result.get("licenseKey"):
-            await deliver_vip_key(bot, chat_id, dedup_key, result["licenseKey"], duration)
+        if result and _is_paid_status(result):
+            license_key = _extract_license_key(result)
+            if license_key:
+                await deliver_vip_key(bot, chat_id, dedup_key, license_key, duration)
+                return
+            logger.error("VietQR order %s is paid but response has no key: %s", pending_id, result)
             return
         if result and result.get("status") == "expired":
             logger.info("VietQR order %s expired before payment", pending_id)
@@ -370,8 +395,13 @@ async def on_vip_check(callback: CallbackQuery, bot: Bot):
             await callback.answer("❌ Could not check status right now, please try again later.", show_alert=True)
             return
 
-        if result.get("status") == "completed" and result.get("licenseKey"):
-            await deliver_vip_key(bot, chat_id, dedup_key, result["licenseKey"], "VIP")
+        if _is_paid_status(result):
+            license_key = _extract_license_key(result)
+            if license_key:
+                await deliver_vip_key(bot, chat_id, dedup_key, license_key, "VIP")
+            else:
+                logger.error("USDT order %s is paid but response has no key: %s", order_id, result)
+                await callback.answer("✅ Payment found, but key was not returned. Please contact @wolfmodyt.", show_alert=True)
         else:
             await callback.answer("⏳ Payment not received yet. Please wait a few minutes after paying and try again.", show_alert=True)
 
@@ -389,8 +419,13 @@ async def on_vip_check(callback: CallbackQuery, bot: Bot):
             return
 
         status = result.get("status")
-        if status == "confirmed" and result.get("licenseKey"):
-            await deliver_vip_key(bot, chat_id, dedup_key, result["licenseKey"], "VIP")
+        if _is_paid_status(result):
+            license_key = _extract_license_key(result)
+            if license_key:
+                await deliver_vip_key(bot, chat_id, dedup_key, license_key, "VIP")
+            else:
+                logger.error("VietQR order %s is paid but response has no key: %s", pending_id, result)
+                await callback.answer("✅ Payment found, but key was not returned. Please contact @wolfmodyt.", show_alert=True)
         elif status == "expired":
             await callback.answer("⌛ This order has expired. Please create a new one with /start buyvip.", show_alert=True)
         else:
