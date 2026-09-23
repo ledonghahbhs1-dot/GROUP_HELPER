@@ -53,9 +53,10 @@ async def _sepay_webhook(request: web.Request) -> web.Response:
         logger.warning("SePay webhook: order not found in DB for transfer_code=%s", transfer_code)
         return web.json_response({"success": True, "message": "Order not found in bot DB"})
 
-    if order.get("delivered_at"):
-        logger.info("SePay webhook: order %s already delivered", order["id"])
-        return web.json_response({"success": True, "message": "Already delivered"})
+    order_status = str(order.get("status") or "").lower()
+    if order.get("delivered_at") or order_status in ("delivered", "expired"):
+        logger.info("SePay webhook: order %s already %s, skipping", order["id"], order_status or "delivered")
+        return web.json_response({"success": True, "message": f"Order already {order_status or 'delivered'}"})
 
     # Trigger immediate check+deliver via backend
     bot: Bot = request.app["bot"]

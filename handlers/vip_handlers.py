@@ -280,7 +280,7 @@ async def poll_db_vip_order(bot: Bot, db_order_id: int):
     for _ in range(POLL_MAX_ATTEMPTS):
         await asyncio.sleep(POLL_INTERVAL_SEC)
         order = await db.get_vip_order(db_order_id)
-        if not order or order.get("delivered_at"):
+        if not order or order.get("delivered_at") or str(order.get("status", "")).lower() in ("expired", "delivered"):
             return
         outcome = await check_and_deliver_vip_order(bot, order)
         if outcome in {"delivered", "paid_no_key", "expired"}:
@@ -324,6 +324,9 @@ async def poll_vietqr_order(bot: Bot, chat_id: int, pending_id: str, transfer_co
             return
         if result and result.get("status") == "expired":
             logger.info("VietQR order %s expired before payment", pending_id)
+            return
+        if result and result.get("status") == "not_found":
+            logger.info("VietQR order %s not found on backend", pending_id)
             return
 
     logger.info("VietQR order %s polling timed out after %s attempts (manual check-button still works)", pending_id, POLL_MAX_ATTEMPTS)
