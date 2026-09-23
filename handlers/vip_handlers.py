@@ -64,6 +64,21 @@ RECONCILE_INTERVAL_SEC = 60
 _TRANSFER_CODE_RE = re.compile(r"^VIP\d{3,10}$", re.IGNORECASE)
 
 
+def _select_vietqr_transfer_code(invoice: Dict[str, Any]) -> str:
+    """Use the exact transfer content shown to the buyer when it matches the
+    SePay VIP recognition rule. Some backend payloads expose an internal
+    transferCode (DHxxxxxx) plus a buyer-facing memo (VIPxxxxxx); checking with
+    the internal code leaves VIP payments pending forever.
+    """
+    memo = str(invoice.get("memo") or "").strip().upper()
+    transfer_code = str(invoice.get("transferCode") or "").strip().upper()
+    if _TRANSFER_CODE_RE.match(memo):
+        if transfer_code and transfer_code != memo:
+            logger.warning("VietQR payload transferCode/memo mismatch: transferCode=%s memo=%s; using memo", transfer_code, memo)
+        return memo
+    return transfer_code or memo
+
+
 async def get_plan_pricing(plan: str) -> Dict[str, Any]:
     """Pricing for `plan`, live-overridden with the flash-sale price for the
     30-day plan when one is active right now. This is for display and for
@@ -438,7 +453,8 @@ async def on_vip_method_selected(callback: CallbackQuery, bot: Bot):
             return
 
         pending_id = str(invoice["pendingId"])
-        transfer_code = invoice["transferCode"]
+        transfer_code = _select_vietqr_transfer_code(invoice)
+        invoice["memo"] = transfer_code
         qr_url = invoice.get("qrUrl")
         db_order_id = await db.upsert_vip_order(
             method="vietqr",
