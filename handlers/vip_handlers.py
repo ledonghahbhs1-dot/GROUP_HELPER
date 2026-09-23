@@ -491,7 +491,7 @@ async def on_vip_method_selected(callback: CallbackQuery, bot: Bot):
         )
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(
-                text="I've Paid - Check Now", callback_data=f"vipcheck:vietqr:{pending_id}:{backend_transfer_code}",
+                text="I've Paid - Check Now", callback_data=f"vipcheck:vietqr:{pending_id}:{transfer_code}",
                 icon_custom_emoji_id=config.CHECKPAID_ID,
             )],
         ])
