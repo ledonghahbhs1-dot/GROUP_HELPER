@@ -1,10 +1,12 @@
 import asyncio
 import sys
+import os
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.types import BotCommand, BotCommandScopeDefault, BotCommandScopeAllChatAdministrators
 
+from aiohttp import web
 import config
 from database.db import db
 from utils.emoji_helper import emoji_mgr
@@ -14,6 +16,7 @@ from filters.spam_filter import spam_filter
 from handlers.admin_handlers import router as admin_router
 from handlers.vip_handlers import router as vip_router, vip_reconcile_loop
 from handlers.callback_handlers import router as callback_router
+from handlers.sepay_webhook import create_sepay_app
 from handlers.member_handlers import router as member_router
 from handlers.message_handlers import router as message_router
 from handlers.flash_sale import flash_sale_loop
@@ -108,11 +111,21 @@ async def main():
     # from the persisted vip_orders table.
     asyncio.create_task(vip_reconcile_loop(bot))
 
+    # 5b. Start HTTP server for SePay webhook
+    port = int(os.getenv("PORT", "8080"))
+    sepay_app = create_sepay_app(bot)
+    runner = web.AppRunner(sepay_app)
+    await runner.setup()
+    site = web.TCPSite(runner, "0.0.0.0", port)
+    await site.start()
+    logger.info("SePay webhook HTTP server listening on 0.0.0.0:%s", port)
+
     print("\n" + "=" * 55)
     print(f"🛡️  TELEGRAM GUARD BOT IS RUNNING! 👑")
     print(f"• Username : @{bot_user.username}")
     print(f"• Bot ID   : {bot_user.id}")
     print(f"• Database : {config.DATABASE_PATH}")
+    print(f"• Webhook  : http://0.0.0.0:{port}/sepay-webhook")
     print(f"• VIP Emoji: Telegram Premium Custom Emoji Ready")
     print(f"• Scam Detect: ✅ ENABLED (140+ keywords - 13 languages)")
     print("=" * 55 + "\n")
