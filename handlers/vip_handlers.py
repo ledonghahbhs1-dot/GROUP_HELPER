@@ -207,10 +207,7 @@ async def check_and_deliver_vip_order(bot: Bot, order: Dict[str, Any]) -> Option
     method = order.get("method")
     try:
         if method == "vietqr":
-            # Use backend_transfer_code (DHxxxxxx) for the API call; fall back
-            # to transfer_code (VIPxxxxxx) only when the backend code is absent.
-            tc_for_api = str(order.get("backend_transfer_code") or order.get("transfer_code") or "")
-            result = await check_vietqr_order(str(order.get("pending_id") or ""), tc_for_api)
+            result = await check_vietqr_order(str(order.get("pending_id") or ""), str(order.get("transfer_code") or ""))
         elif method == "usdt":
             result = await check_vip_order(str(order.get("order_id") or ""))
         else:
@@ -467,10 +464,6 @@ async def on_vip_method_selected(callback: CallbackQuery, bot: Bot):
 
         pending_id = str(invoice["pendingId"])
         transfer_code = _select_vietqr_transfer_code(invoice)
-        # Backend stores the order under its own transferCode (DHxxxxxx) while
-        # SePay/user sees the memo (VIPxxxxxx).  We must send the backend's own
-        # code when calling vietqr-check, otherwise it returns 404.
-        backend_transfer_code = str(invoice.get("transferCode") or "").strip().upper() or transfer_code
         invoice["memo"] = transfer_code
         qr_url = invoice.get("qrUrl")
         db_order_id = await db.upsert_vip_order(
@@ -483,10 +476,9 @@ async def on_vip_method_selected(callback: CallbackQuery, bot: Bot):
             amount=int(invoice.get("amount", plan_info["vnd"])),
             pending_id=pending_id,
             transfer_code=transfer_code,
-            backend_transfer_code=backend_transfer_code,
             status="created",
         )
-        logger.info("VIP VietQR order saved: db_id=%s pending_id=%s transfer_code=%s backend_tc=%s chat_id=%s", db_order_id, pending_id, transfer_code, backend_transfer_code, chat_id)
+        logger.info("VIP VietQR order saved: db_id=%s pending_id=%s transfer_code=%s chat_id=%s", db_order_id, pending_id, transfer_code, chat_id)
 
         caption = (
             f"{emoji_mgr.vip} <b>PAY VIP KEY - {plan_info['duration'].upper()} (BANK TRANSFER)</b> {emoji_mgr.vip}\n\n"
