@@ -391,7 +391,7 @@ async def test():
     # 3. Test build_captcha_text
     cap_text = build_captcha_text("Dragon City VIP", 98765, "Test User", 8, 9)
     assert "8 + 9 = ?" in cap_text
-    assert "XÁC MINH" in cap_text
+    assert "MEMBER VERIFICATION" in cap_text
     assert "98765" in cap_text
     assert "Test User" in cap_text
 
@@ -452,21 +452,21 @@ async def test():
     cb_other = MockCallback("vcap:777:14:14", user_other, test_chat)
     await on_captcha_callback(cb_other, mock_bot)
     assert cb_other.alert == True
-    assert "không dành cho bạn" in cb_other.answered_text
+    assert "not for you" in cb_other.answered_text.lower()
     assert is_pending_captcha(test_chat, 777) == True
 
     # Case B: Target user clicks wrong answer
     cb_wrong = MockCallback("vcap:777:10:14", user_target, test_chat)
     await on_captcha_callback(cb_wrong, mock_bot)
     assert cb_wrong.alert == True
-    assert "chưa đúng" in cb_wrong.answered_text
+    assert "incorrect" in cb_wrong.answered_text.lower()
     assert is_pending_captcha(test_chat, 777) == True
 
     # Case C: Target user clicks correct answer
     cb_correct = MockCallback("vcap:777:14:14", user_target, test_chat)
     await on_captcha_callback(cb_correct, mock_bot)
     assert cb_correct.alert == False
-    assert "thành công" in cb_correct.answered_text
+    assert "verified successfully" in cb_correct.answered_text.lower()
     assert cb_correct.deleted == True
     assert is_pending_captcha(test_chat, 777) == False
     assert any(c == test_chat and u == 777 and can_send == True for c, u, can_send in mock_bot.restricted)

@@ -136,7 +136,7 @@ async def build_buyvip_keyboard(bot: Bot, chat_type: str = "private") -> InlineK
 async def build_vip_script_keyboard(bot: Bot, chat_type: str = "group") -> InlineKeyboardMarkup:
     """Builds inline keyboard with direct download button for VIP Script (https://t.me/youtubewolfmod/477)"""
     download_btn = InlineKeyboardButton(
-        text="🚀 Tải Script VIP (Download)",
+        text="🚀 Download VIP Script",
         url="https://t.me/youtubewolfmod/477"
     )
     if chat_type == "private":
@@ -156,7 +156,7 @@ async def build_vip_script_keyboard(bot: Bot, chat_type: str = "group") -> Inlin
 async def build_free_script_keyboard(bot: Bot, chat_type: str = "group") -> InlineKeyboardMarkup:
     """Builds inline keyboard with direct download button for Free Script (https://t.me/youtubewolfmod/434)"""
     download_btn = InlineKeyboardButton(
-        text="🎁 Tải Script Free (Download)",
+        text="🎁 Download Free Script",
         url="https://t.me/youtubewolfmod/434"
     )
     if chat_type == "private":
@@ -176,11 +176,11 @@ async def build_free_script_keyboard(bot: Bot, chat_type: str = "group") -> Inli
 async def build_all_scripts_keyboard(bot: Bot, chat_type: str = "group") -> InlineKeyboardMarkup:
     """Builds inline keyboard with both VIP & Free Script download buttons"""
     vip_btn = InlineKeyboardButton(
-        text="🚀 Tải Script VIP",
+        text="🚀 Download VIP Script",
         url="https://t.me/youtubewolfmod/477"
     )
     free_btn = InlineKeyboardButton(
-        text="🎁 Tải Script Free",
+        text="🎁 Download Free Script",
         url="https://t.me/youtubewolfmod/434"
     )
     if chat_type == "private":
@@ -276,17 +276,15 @@ def build_captcha_keyboard(user_id: int, correct_ans: int, options: list[int]) -
     ])
 
 def build_captcha_text(chat_title: str, user_id: int, user_name: str, num1: int, num2: int) -> str:
-    """Builds bilingual Vietnamese/English math captcha challenge message"""
+    """Builds English math captcha challenge message"""
     user_mention = f"<a href='tg://user?id={user_id}'>{html.escape(user_name)}</a>"
     group_name = html.escape(chat_title or "OUR GROUP")
     text = (
-        f"{emoji_mgr.shield} <b>XÁC MINH THÀNH VIÊN / MEMBER VERIFICATION</b> {emoji_mgr.shield}\n\n"
-        f"👋 Xin chào {user_mention} đến với <b>{group_name}</b>!\n"
-        f"Để xác minh bạn là người thật và mở quyền gửi tin nhắn, vui lòng chọn kết quả đúng của phép tính sau:\n\n"
+        f"{emoji_mgr.shield} <b>MEMBER VERIFICATION</b> {emoji_mgr.shield}\n\n"
+        f"👋 Welcome {user_mention} to <b>{group_name}</b>!\n"
+        f"To verify that you are human and unlock sending messages, please select the correct answer below:\n\n"
         f"👉 <b>{num1} + {num2} = ?</b>\n\n"
-        f"<i>(Chọn 1 trong 4 nút bên dưới để xác minh)</i>\n"
-        f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"<i>Please solve the simple math problem above and tap the correct button below to unlock chat permissions.</i>"
+        f"<i>(Tap 1 of the 4 buttons below to verify)</i>"
     )
     return emoji_mgr.format_msg(text)
 
@@ -364,14 +362,14 @@ async def on_captcha_callback(callback: CallbackQuery, bot: Bot):
 
     # 1. Verify if the clicking user is the user being challenged
     if callback.from_user.id != target_user_id:
-        await callback.answer("⚠️ Phép tính này không dành cho bạn! / This verification is not for you!", show_alert=True)
+        await callback.answer("⚠️ This verification is not for you!", show_alert=True)
         return
 
     chat_id = callback.message.chat.id
 
     # 2. If wrong answer, alert the user and let them retry
     if selected_ans != correct_ans:
-        await callback.answer("❌ Kết quả chưa đúng! Vui lòng tính lại. / Incorrect! Please try again.", show_alert=True)
+        await callback.answer("❌ Incorrect answer! Please try again.", show_alert=True)
         return
 
     # 3. Correct answer! Unrestrict member
@@ -391,7 +389,7 @@ async def on_captcha_callback(callback: CallbackQuery, bot: Bot):
     _pending_captchas.pop((chat_id, target_user_id), None)
 
     # 5. Answer callback with success alert
-    await callback.answer("✅ Xác minh thành công! Bạn có thể nhắn tin trong nhóm. / Verified successfully!", show_alert=False)
+    await callback.answer("✅ Verified successfully! You can now send messages.", show_alert=False)
 
     # 6. Delete the temporary captcha prompt to keep chat clean
     try:

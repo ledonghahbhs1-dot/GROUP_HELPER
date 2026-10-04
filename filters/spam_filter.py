@@ -22,7 +22,7 @@ class SpamFilter:
         self.message_history[key] = history
 
         if len(history) > config.SPAM_MESSAGE_LIMIT:
-            return True, f"Gửi quá {config.SPAM_MESSAGE_LIMIT} tin nhắn trong {config.SPAM_INTERVAL_SEC}s (Flood)"
+            return True, f"Sent more than {config.SPAM_MESSAGE_LIMIT} messages in {config.SPAM_INTERVAL_SEC}s (Flood)"
 
         # 2. Duplicate Text Flood Check
         if text and len(text.strip()) > 3:
@@ -36,14 +36,14 @@ class SpamFilter:
             # Count duplicates of the same text
             same_text_count = sum(1 for (t_text, _) in dup_hist if t_text == clean_text)
             if same_text_count >= config.SPAM_DUPLICATE_LIMIT:
-                return True, f"Spam tin nhắn trùng lặp {same_text_count} lần liên tiếp"
+                return True, f"Duplicate message spam ({same_text_count} times in a row)"
 
         # 3. Massive Character Spam (e.g. aaaaaaaaaaaaaaaaaaaaa)
         if text:
             import re
             match = re.search(r'(.)\1{25,}', text)
             if match:
-                return True, "Spam ký tự kéo dài bất thường"
+                return True, "Abnormally repeated character spam"
 
         # 4. Excessive CAPS spam (for messages >= 25 chars)
         if text and len(text) >= 25:
@@ -51,7 +51,7 @@ class SpamFilter:
             if len(alpha_chars) >= 20:
                 caps_ratio = sum(1 for c in alpha_chars if c.isupper()) / len(alpha_chars)
                 if caps_ratio >= 0.85:
-                    return True, "Spam chữ viết hoa (CAPS LOCK)"
+                    return True, "Excessive CAPS LOCK spam"
 
         return False, ""
 
