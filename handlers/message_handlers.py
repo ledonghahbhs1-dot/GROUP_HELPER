@@ -37,7 +37,7 @@ from filters.payment_filter import payment_detector
 from filters.script_filter import script_detector
 from filters.issue_filter import issue_detector
 from filters.scam_filter import scam_detector
-from handlers.member_handlers import build_buyvip_keyboard
+from handlers.member_handlers import build_buyvip_keyboard, is_pending_captcha
 import config
 
 router = Router(name="message_handlers")
@@ -434,6 +434,14 @@ async def inspect_message(message: Message, bot: Bot):
     # -------------------------------------------------------------
     # BELOW THIS LINE: MODERATION FOR REGULAR MEMBERS
     # -------------------------------------------------------------
+
+    # 4. Check if user is pending captcha verification
+    if is_pending_captcha(chat_id, user_id):
+        try:
+            await message.delete()
+        except Exception:
+            pass
+        return
 
     # 5. Check Scam/Fraud/Spam Accusation Detection (HIGHEST PRIORITY)
     if text:

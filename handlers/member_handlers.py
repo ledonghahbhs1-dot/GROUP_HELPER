@@ -1,8 +1,10 @@
 import asyncio
 import html
+import random
 import time
+from typing import Dict, Tuple, Any
 from aiogram import Router, F, Bot
-from aiogram.types import ChatMemberUpdated, Message, ChatPermissions, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import ChatMemberUpdated, Message, ChatPermissions, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from aiogram.filters.chat_member_updated import ChatMemberUpdatedFilter, MEMBER, KICKED, LEFT, RESTRICTED
 from database.db import db
 from utils.emoji_helper import emoji_mgr, safe_send_message, safe_answer, schedule_auto_delete
@@ -26,6 +28,39 @@ VIP_FEATURE_CATEGORIES = [
 
 # Prevent duplicate welcome messages for same user within 30s
 _welcomed_users = {}
+
+# Active captcha verification challenges: (chat_id, user_id) -> dict
+_pending_captchas: Dict[Tuple[int, int], Dict[str, Any]] = {}
+
+# Rate limit for initiating captcha challenge: (chat_id, user_id) -> float
+_captcha_started: Dict[Tuple[int, int], float] = {}
+
+def should_start_captcha(chat_id: int, user_id: int) -> bool:
+    now = time.time()
+    expired = [k for k, v in _captcha_started.items() if now - v > 300]
+    for k in expired:
+        _captcha_started.pop(k, None)
+
+    last_time = _captcha_started.get((chat_id, user_id), 0)
+    if now - last_time < 30:
+        return False
+    _captcha_started[(chat_id, user_id)] = now
+    return True
+
+def is_pending_captcha(chat_id: int, user_id: int) -> bool:
+    """Returns True if user has an unresolved captcha challenge in progress"""
+    if (chat_id, user_id) in _pending_captchas:
+        data = _pending_captchas[(chat_id, user_id)]
+        if time.time() - data.get("created_at", 0) > 300:
+            _pending_captchas.pop((chat_id, user_id), None)
+            return False
+        return True
+    return False
+
+def clear_pending_captcha(chat_id: int, user_id: int):
+    """Clears pending captcha state for a user (e.g. when unmuted/unbanned by admin)"""
+    _pending_captchas.pop((chat_id, user_id), None)
+    _captcha_started.pop((chat_id, user_id), None)
 
 def should_welcome(chat_id: int, user_id: int) -> bool:
     now = time.time()
@@ -125,7 +160,7 @@ async def build_welcome_keyboard(bot: Bot) -> InlineKeyboardMarkup:
 
 async def handle_welcome_for_user(bot: Bot, chat_id: int, chat_title: str, user):
     """Sends welcome message if not already sent recently"""
-    if not user or user.is_bot:
+    if not user or getattr(user, "is_bot", False):
         return
     if not should_welcome(chat_id, user.id):
         return
@@ -136,6 +171,174 @@ async def handle_welcome_for_user(bot: Bot, chat_id: int, chat_title: str, user)
         logger.info("Sent welcome message to user %s in chat %s", user.id, chat_id)
     except Exception as e:
         logger.error("Failed to send welcome message to user %s: %s", user.id, e)
+
+def generate_captcha_problem() -> tuple[int, int, int, list[int]]:
+    """Generates (num1, num2, correct_ans, options) where options has 4 unique values shuffled"""
+    num1 = random.randint(1, 20)
+    num2 = random.randint(1, 20)
+    correct_ans = num1 + num2
+
+    wrong_answers = set()
+    offsets = [-5, -4, -3, -2, -1, 1, 2, 3, 4, 5]
+    random.shuffle(offsets)
+    for off in offsets:
+        cand = correct_ans + off
+        if cand > 0 and cand != correct_ans:
+            wrong_answers.add(cand)
+        if len(wrong_answers) == 3:
+            break
+
+    cand = correct_ans + 1
+    while len(wrong_answers) < 3:
+        if cand != correct_ans and cand > 0:
+            wrong_answers.add(cand)
+        cand += 1
+
+    options = list(wrong_answers) + [correct_ans]
+    random.shuffle(options)
+    return num1, num2, correct_ans, options
+
+def build_captcha_keyboard(user_id: int, correct_ans: int, options: list[int]) -> InlineKeyboardMarkup:
+    """Builds inline keyboard with 4 buttons for user verification"""
+    buttons = [
+        InlineKeyboardButton(
+            text=str(opt),
+            callback_data=f"vcap:{user_id}:{opt}:{correct_ans}"
+        )
+        for opt in options
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [buttons[0], buttons[1]],
+        [buttons[2], buttons[3]]
+    ])
+
+def build_captcha_text(chat_title: str, user_id: int, user_name: str, num1: int, num2: int) -> str:
+    """Builds bilingual Vietnamese/English math captcha challenge message"""
+    user_mention = f"<a href='tg://user?id={user_id}'>{html.escape(user_name)}</a>"
+    group_name = html.escape(chat_title or "OUR GROUP")
+    text = (
+        f"{emoji_mgr.shield} <b>XÁC MINH THÀNH VIÊN / MEMBER VERIFICATION</b> {emoji_mgr.shield}\n\n"
+        f"👋 Xin chào {user_mention} đến với <b>{group_name}</b>!\n"
+        f"Để xác minh bạn là người thật và mở quyền gửi tin nhắn, vui lòng chọn kết quả đúng của phép tính sau:\n\n"
+        f"👉 <b>{num1} + {num2} = ?</b>\n\n"
+        f"<i>(Chọn 1 trong 4 nút bên dưới để xác minh)</i>\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"<i>Please solve the simple math problem above and tap the correct button below to unlock chat permissions.</i>"
+    )
+    return emoji_mgr.format_msg(text)
+
+async def start_captcha_verification(bot: Bot, chat_id: int, chat_title: str, user):
+    """Restricts a newly joined member and sends a math addition captcha with 4 buttons"""
+    if not user or getattr(user, "is_bot", False):
+        return
+    if not should_start_captcha(chat_id, user.id):
+        return
+
+    # Admins/owners bypass captcha
+    try:
+        if await is_admin_or_owner(chat_id, user, bot):
+            await handle_welcome_for_user(bot, chat_id, chat_title, user)
+            return
+    except Exception:
+        pass
+
+    # 1. Restrict user from sending messages until verified
+    permissions = ChatPermissions(
+        can_send_messages=False,
+        can_send_media_messages=False,
+        can_send_other_messages=False,
+        can_add_web_page_previews=False
+    )
+    try:
+        await bot.restrict_chat_member(chat_id, user.id, permissions=permissions)
+        logger.info("Restricted new member %s in chat %s pending captcha", user.id, chat_id)
+    except Exception as e:
+        logger.warning("Could not restrict new user %s in chat %s: %s", user.id, chat_id, e)
+
+    # 2. Generate addition math problem (4 buttons)
+    num1, num2, correct_ans, options = generate_captcha_problem()
+
+    # 3. Build text and keyboard
+    captcha_text = build_captcha_text(chat_title or "THE GROUP", user.id, user.full_name, num1, num2)
+    keyboard = build_captcha_keyboard(user.id, correct_ans, options)
+
+    # 4. Send captcha prompt
+    try:
+        sent_msg = await safe_send_message(bot, chat_id, captcha_text, parse_mode="HTML", reply_markup=keyboard)
+        if sent_msg:
+            _pending_captchas[(chat_id, user.id)] = {
+                "num1": num1,
+                "num2": num2,
+                "correct_ans": correct_ans,
+                "msg_id": sent_msg.message_id,
+                "created_at": time.time(),
+            }
+            # Auto-delete unresolved captcha message after 5 minutes
+            schedule_auto_delete(sent_msg, 300)
+            logger.info("Sent captcha challenge to user %s in chat %s (%d + %d = %d)", user.id, chat_id, num1, num2, correct_ans)
+    except Exception as e:
+        logger.error("Failed to send captcha message to user %s in chat %s: %s", user.id, chat_id, e)
+
+@router.callback_query(F.data.startswith("vcap:"))
+async def on_captcha_callback(callback: CallbackQuery, bot: Bot):
+    """Handles button clicks on the 4 captcha verification buttons"""
+    if not callback.data or not callback.message:
+        await callback.answer()
+        return
+
+    parts = callback.data.split(":")
+    if len(parts) != 4:
+        await callback.answer()
+        return
+
+    try:
+        target_user_id = int(parts[1])
+        selected_ans = int(parts[2])
+        correct_ans = int(parts[3])
+    except ValueError:
+        await callback.answer()
+        return
+
+    # 1. Verify if the clicking user is the user being challenged
+    if callback.from_user.id != target_user_id:
+        await callback.answer("⚠️ Phép tính này không dành cho bạn! / This verification is not for you!", show_alert=True)
+        return
+
+    chat_id = callback.message.chat.id
+
+    # 2. If wrong answer, alert the user and let them retry
+    if selected_ans != correct_ans:
+        await callback.answer("❌ Kết quả chưa đúng! Vui lòng tính lại. / Incorrect! Please try again.", show_alert=True)
+        return
+
+    # 3. Correct answer! Unrestrict member
+    try:
+        permissions = ChatPermissions(
+            can_send_messages=True,
+            can_send_media_messages=True,
+            can_send_other_messages=True,
+            can_add_web_page_previews=True
+        )
+        await bot.restrict_chat_member(chat_id, target_user_id, permissions=permissions)
+        logger.info("Unrestricted verified member %s in chat %s", target_user_id, chat_id)
+    except Exception as e:
+        logger.warning("Failed to unrestrict verified member %s in chat %s: %s", target_user_id, chat_id, e)
+
+    # 4. Remove from pending list
+    _pending_captchas.pop((chat_id, target_user_id), None)
+
+    # 5. Answer callback with success alert
+    await callback.answer("✅ Xác minh thành công! Bạn có thể nhắn tin trong nhóm. / Verified successfully!", show_alert=False)
+
+    # 6. Delete the temporary captcha prompt to keep chat clean
+    try:
+        await callback.message.delete()
+    except Exception:
+        pass
+
+    # 7. Send the full VIP welcome message
+    chat_title = callback.message.chat.title or "THE GROUP"
+    await handle_welcome_for_user(bot, chat_id, chat_title, callback.from_user)
 
 @router.chat_member(ChatMemberUpdatedFilter(member_status_changed=MEMBER))
 async def on_user_or_bot_join(event: ChatMemberUpdated, bot: Bot):
@@ -189,7 +392,7 @@ async def on_user_or_bot_join(event: ChatMemberUpdated, bot: Bot):
                     logger.error("Failed to kick unauthorized bot %s: %s", new_user.id, e)
         return
 
-    # 2. Regular human member joined -> Send Welcome & Admin Info
+    # 2. Regular human member joined -> Save user & Start Captcha
     if new_user:
         try:
             await db.save_user(new_user.id, new_user.username or "", new_user.full_name or "")
@@ -200,7 +403,7 @@ async def on_user_or_bot_join(event: ChatMemberUpdated, bot: Bot):
             await db.save_user(inviter.id, inviter.username or "", inviter.full_name or "")
         except Exception:
             pass
-    await handle_welcome_for_user(bot, chat_id, event.chat.title or "THE GROUP", new_user)
+    await start_captcha_verification(bot, chat_id, event.chat.title or "THE GROUP", new_user)
 
 @router.message(F.new_chat_members)
 async def on_new_chat_members(message: Message, bot: Bot):
@@ -250,5 +453,5 @@ async def on_new_chat_members(message: Message, bot: Bot):
                 except Exception as e:
                     logger.error("Error auto-kicking bot: %s", e)
         else:
-            # Human member joined
-            await handle_welcome_for_user(bot, chat_id, message.chat.title or "THE GROUP", member)
+            # Human member joined -> Start Captcha
+            await start_captcha_verification(bot, chat_id, message.chat.title or "THE GROUP", member)

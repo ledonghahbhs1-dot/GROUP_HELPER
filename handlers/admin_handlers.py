@@ -697,6 +697,11 @@ async def execute_unmute(message: Message, bot: Bot, command: Optional[CommandOb
     )
     try:
         await bot.restrict_chat_member(chat_id, target_id, permissions=permissions)
+        try:
+            from handlers.member_handlers import clear_pending_captcha
+            clear_pending_captcha(chat_id, target_id)
+        except Exception:
+            pass
         target_mention = f"<a href='tg://user?id={target_id}'>{html.escape(target_name)}</a>"
         await safe_answer(message, emoji_mgr.format_msg(f"{emoji_mgr.star} Unmuted {target_mention} (<code>{target_id}</code>) successfully!"), parse_mode="HTML")
     except Exception as e:

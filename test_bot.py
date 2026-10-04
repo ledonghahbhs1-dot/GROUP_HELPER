@@ -1,6 +1,7 @@
 import asyncio
 import os
 import sys
+import time
 
 if sys.stdout and hasattr(sys.stdout, "reconfigure"):
     try:
@@ -18,10 +19,11 @@ from filters.profanity_filter import profanity_filter
 from filters.link_filter import link_filter
 
 class MockUser:
-    def __init__(self, user_id, username, full_name=None):
+    def __init__(self, user_id, username, full_name=None, is_bot=False):
         self.id = user_id
         self.username = username
         self.full_name = full_name or username
+        self.is_bot = is_bot
 
 class MockBot:
     pass
@@ -78,7 +80,8 @@ async def test():
     assert payment_detector.is_payment_query("hello good morning") == False
     
     pay_text = get_payment_info_text()
-    assert "paypal.me/WolfmodYT197" in pay_text
+    assert "paypal.me/wolfmod243" in pay_text
+    assert "dameyt123@gmail.com" in pay_text
     assert "9382382864" in pay_text
     assert "rewarble.com" in pay_text
     assert "PAYMENT METHODS" in pay_text
@@ -314,6 +317,141 @@ async def test():
     assert should_welcome(-100123, 9999) == True
     assert should_welcome(-100123, 9999) == False, "Duplicate welcome within 30s should be prevented"
     print("Welcome message tests passed ✅")
+    
+    print("10.5 Testing Math Captcha Verification (Addition & 4 Buttons)...")
+    from handlers.member_handlers import (
+        generate_captcha_problem,
+        build_captcha_keyboard,
+        build_captcha_text,
+        should_start_captcha,
+        is_pending_captcha,
+        clear_pending_captcha,
+        _pending_captchas
+    )
+
+    # 1. Test generate_captcha_problem
+    for _ in range(20):
+        n1, n2, ans, opts = generate_captcha_problem()
+        assert n1 + n2 == ans, "Math addition must be correct!"
+        assert len(opts) == 4, "Must generate exactly 4 options!"
+        assert len(set(opts)) == 4, "All 4 options must be unique!"
+        assert ans in opts, "Correct answer must be present in options!"
+        assert all(isinstance(x, int) and x > 0 for x in opts), "All options must be positive integers!"
+
+    # 2. Test build_captcha_keyboard
+    kb = build_captcha_keyboard(123456, 15, [10, 15, 12, 8])
+    total_buttons = [btn for row in kb.inline_keyboard for btn in row]
+    assert len(total_buttons) == 4, "Keyboard must contain exactly 4 buttons!"
+    assert any(btn.callback_data == "vcap:123456:15:15" for btn in total_buttons), "Must have correct answer button"
+    assert any(btn.callback_data == "vcap:123456:10:15" for btn in total_buttons), "Must have option button"
+
+    # 3. Test build_captcha_text
+    cap_text = build_captcha_text("Dragon City VIP", 98765, "Test User", 8, 9)
+    assert "8 + 9 = ?" in cap_text
+    assert "XÁC MINH" in cap_text
+    assert "98765" in cap_text
+    assert "Test User" in cap_text
+
+    # 4. Test rate limiting & pending status
+    test_chat = -100987654
+    test_u = 554433
+    assert should_start_captcha(test_chat, test_u) == True
+    assert should_start_captcha(test_chat, test_u) == False, "Duplicate start should be prevented"
+
+    _pending_captchas[(test_chat, test_u)] = {"created_at": time.time(), "correct_ans": 15}
+    assert is_pending_captcha(test_chat, test_u) == True
+    clear_pending_captcha(test_chat, test_u)
+    assert is_pending_captcha(test_chat, test_u) == False
+
+    # 5. Test on_captcha_callback behavior
+    from handlers.member_handlers import on_captcha_callback
+
+    class MockCallback:
+        def __init__(self, data, from_user, chat_id, message_id=1):
+            self.data = data
+            self.from_user = from_user
+            self.message = type("MockMsg", (), {
+                "chat": type("MockChat", (), {"id": chat_id, "title": "Test Group"})(),
+                "message_id": message_id,
+                "delete": self._del,
+            })()
+            self.answered_text = None
+            self.alert = None
+            self.deleted = False
+
+        async def answer(self, text=None, show_alert=False):
+            self.answered_text = text
+            self.alert = show_alert
+
+        async def _del(self):
+            self.deleted = True
+
+    class MockRestrictBot:
+        def __init__(self):
+            self.restricted = []
+
+        async def restrict_chat_member(self, chat_id, user_id, permissions=None):
+            self.restricted.append((chat_id, user_id, permissions.can_send_messages))
+
+        async def send_message(self, *args, **kwargs):
+            return None
+
+        async def get_me(self):
+            return type("MockBotMe", (), {"id": 12345, "username": "testbot"})()
+
+    mock_bot = MockRestrictBot()
+    user_target = MockUser(777, "newguy", "New Guy")
+    user_other = MockUser(888, "otherguy", "Other Guy")
+
+    _pending_captchas[(test_chat, 777)] = {"created_at": time.time(), "correct_ans": 14}
+
+    # Case A: Other user clicks button
+    cb_other = MockCallback("vcap:777:14:14", user_other, test_chat)
+    await on_captcha_callback(cb_other, mock_bot)
+    assert cb_other.alert == True
+    assert "không dành cho bạn" in cb_other.answered_text
+    assert is_pending_captcha(test_chat, 777) == True
+
+    # Case B: Target user clicks wrong answer
+    cb_wrong = MockCallback("vcap:777:10:14", user_target, test_chat)
+    await on_captcha_callback(cb_wrong, mock_bot)
+    assert cb_wrong.alert == True
+    assert "chưa đúng" in cb_wrong.answered_text
+    assert is_pending_captcha(test_chat, 777) == True
+
+    # Case C: Target user clicks correct answer
+    cb_correct = MockCallback("vcap:777:14:14", user_target, test_chat)
+    await on_captcha_callback(cb_correct, mock_bot)
+    assert cb_correct.alert == False
+    assert "thành công" in cb_correct.answered_text
+    assert cb_correct.deleted == True
+    assert is_pending_captcha(test_chat, 777) == False
+    assert any(c == test_chat and u == 777 and can_send == True for c, u, can_send in mock_bot.restricted)
+
+    # Case D: Message blocked while pending captcha
+    from handlers.message_handlers import inspect_message
+
+    class MockPendingUserMsg:
+        def __init__(self, chat_id, user, text="hello group"):
+            self.chat = type("MockChat", (), {"id": chat_id, "type": "supergroup", "title": "Test Group"})()
+            self.from_user = user
+            self.sender_chat = None
+            self.text = text
+            self.caption = None
+            self.deleted = False
+            self.bot = mock_bot
+
+        async def delete(self):
+            self.deleted = True
+
+    _pending_captchas[(test_chat, 999)] = {"created_at": time.time(), "correct_ans": 10}
+    pending_user = MockUser(999, "pending_guy", "Pending Guy")
+    msg_pending = MockPendingUserMsg(test_chat, pending_user, "Can I chat now?")
+    await inspect_message(msg_pending, mock_bot)
+    assert msg_pending.deleted == True, "Message from user pending captcha must be deleted!"
+    clear_pending_captcha(test_chat, 999)
+
+    print("Math Captcha verification tests passed ✅")
     
     print("11. Testing Target ID Resolution & Admin Command Parser...")
     from handlers.admin_handlers import resolve_target, parse_admin_cmd

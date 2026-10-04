@@ -88,13 +88,10 @@ async def main():
     dp = Dispatcher()
 
     # 4. Register Handlers in priority order
-    # vip_router must come before callback_router: callback_handlers.py has a
-    # catch-all @router.callback_query() with no filter that would otherwise
-    # swallow the "vipbuy:"/"vipcheck:" callback buttons first.
     dp.include_router(admin_router)
     dp.include_router(vip_router)
-    dp.include_router(callback_router)
     dp.include_router(member_router)
+    dp.include_router(callback_router)
     dp.include_router(message_router)
 
     # 5. Startup Actions

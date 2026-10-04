@@ -38,7 +38,18 @@ def build_settings_keyboard(settings: dict) -> InlineKeyboardMarkup:
         ]
     ])
 
-@router.callback_query()
+SETTINGS_CALLBACKS = {
+    "close_settings",
+    "toggle_anti_spam",
+    "toggle_anti_link",
+    "toggle_anti_bot",
+    "toggle_anti_badwords",
+    "toggle_auto_del",
+    "cycle_max_warns",
+    "cycle_warn_action",
+}
+
+@router.callback_query(lambda c: bool(c.data and (c.data in SETTINGS_CALLBACKS or c.data.startswith("quick_unban:"))))
 async def on_settings_callback(callback: CallbackQuery, bot: Bot):
     if not callback.message or not callback.from_user:
         await callback.answer()
