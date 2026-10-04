@@ -166,7 +166,8 @@ async def test():
 
     print("6. Testing Script & Tool Detection (Bilingual)...")
     from filters.script_filter import script_detector
-    from utils.emoji_helper import get_script_tool_info_text
+    from utils.emoji_helper import get_script_tool_info_text, get_vip_script_text, get_free_script_text
+    from handlers.member_handlers import build_vip_script_keyboard, build_free_script_keyboard, build_all_scripts_keyboard
     
     assert script_detector.is_script_query("script") == True
     assert script_detector.is_script_query("tool") == True
@@ -176,10 +177,52 @@ async def test():
     assert script_detector.is_script_query("lay key dc o dau") == True
     assert script_detector.is_script_query("wolfmod dragon city") == True
     assert script_detector.is_script_query("hello how are you") == False
+
+    # VIP Script queries
+    assert script_detector.is_vip_script_query("script vip") == True
+    assert script_detector.is_vip_script_query("vip script") == True
+    assert script_detector.is_vip_script_query("tải script vip") == True
+    assert script_detector.is_vip_script_query("cho link script vip") == True
+    assert script_detector.is_vip_script_query("script free") == False
+
+    # Free Script queries
+    assert script_detector.is_free_script_query("script free") == True
+    assert script_detector.is_free_script_query("free script") == True
+    assert script_detector.is_free_script_query("tai script free") == True
+    assert script_detector.is_free_script_query("script mien phi") == True
+    assert script_detector.is_free_script_query("script vip") == False
     
     script_text = get_script_tool_info_text()
     assert "wolfmod.xyz/dragon-city" in script_text
     assert "DRAGON CITY TOOL AND SCRIPT" in script_text
+    assert "https://t.me/youtubewolfmod/477" in script_text
+    assert "https://t.me/youtubewolfmod/434" in script_text
+
+    vip_text = get_vip_script_text()
+    assert "https://t.me/youtubewolfmod/477" in vip_text
+    assert "DRAGON CITY VIP SCRIPT" in vip_text
+
+    free_text = get_free_script_text()
+    assert "https://t.me/youtubewolfmod/434" in free_text
+    assert "DRAGON CITY FREE SCRIPT" in free_text
+
+    # Test keyboards
+    class MockMeBot:
+        async def get_me(self):
+            return type("BotMe", (), {"username": "guard_bot"})()
+
+    mbot = MockMeBot()
+    vip_kb = await build_vip_script_keyboard(mbot, "group")
+    assert any(btn.url == "https://t.me/youtubewolfmod/477" for row in vip_kb.inline_keyboard for btn in row)
+
+    free_kb = await build_free_script_keyboard(mbot, "group")
+    assert any(btn.url == "https://t.me/youtubewolfmod/434" for row in free_kb.inline_keyboard for btn in row)
+
+    all_kb = await build_all_scripts_keyboard(mbot, "group")
+    all_urls = [btn.url for row in all_kb.inline_keyboard for btn in row if btn.url]
+    assert "https://t.me/youtubewolfmod/477" in all_urls
+    assert "https://t.me/youtubewolfmod/434" in all_urls
+
     print("Script detector tests passed ✅")
 
     print("6.5 Testing Issue / Not Working / No Effect Detector (Bilingual)...")

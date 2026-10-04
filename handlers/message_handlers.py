@@ -12,6 +12,8 @@ from utils.emoji_helper import (
     schedule_auto_delete,
     get_payment_info_text,
     get_script_tool_info_text,
+    get_vip_script_text,
+    get_free_script_text,
     get_issue_support_text,
     get_pricing_info_text,
     get_features_info_text
@@ -37,7 +39,13 @@ from filters.payment_filter import payment_detector
 from filters.script_filter import script_detector
 from filters.issue_filter import issue_detector
 from filters.scam_filter import scam_detector
-from handlers.member_handlers import build_buyvip_keyboard, is_pending_captcha
+from handlers.member_handlers import (
+    build_buyvip_keyboard,
+    is_pending_captcha,
+    build_vip_script_keyboard,
+    build_free_script_keyboard,
+    build_all_scripts_keyboard
+)
 import config
 
 router = Router(name="message_handlers")
@@ -307,10 +315,22 @@ async def handle_private_messages(message: Message):
         return
 
     # 5. Check Script / Tool query (script, tool, key, dc, etc.)
-    if text and script_detector.is_script_query(text):
-        text_script = get_script_tool_info_text()
-        await safe_answer(message, emoji_mgr.format_msg(text_script), parse_mode="HTML", disable_web_page_preview=True)
-        return
+    if text:
+        if script_detector.is_vip_script_query(text):
+            text_vip = get_vip_script_text()
+            keyboard = await build_vip_script_keyboard(message.bot, "private")
+            await safe_answer(message, emoji_mgr.format_msg(text_vip), parse_mode="HTML", disable_web_page_preview=True, reply_markup=keyboard)
+            return
+        if script_detector.is_free_script_query(text):
+            text_free = get_free_script_text()
+            keyboard = await build_free_script_keyboard(message.bot, "private")
+            await safe_answer(message, emoji_mgr.format_msg(text_free), parse_mode="HTML", disable_web_page_preview=True, reply_markup=keyboard)
+            return
+        if script_detector.is_script_query(text):
+            text_script = get_script_tool_info_text()
+            keyboard = await build_all_scripts_keyboard(message.bot, "private")
+            await safe_answer(message, emoji_mgr.format_msg(text_script), parse_mode="HTML", disable_web_page_preview=True, reply_markup=keyboard)
+            return
 
     # Check authorization for other direct bot messages
     if not is_user_allowed_private(user):
@@ -425,10 +445,22 @@ async def inspect_message(message: Message, bot: Bot):
             keyboard = await build_buyvip_keyboard(bot, "group")
             await safe_answer(message, emoji_mgr.format_msg(text_pay), parse_mode="HTML", disable_web_page_preview=True, reply_markup=keyboard)
             return
-        if text and script_detector.is_script_query(text):
-            text_script = get_script_tool_info_text()
-            await safe_answer(message, emoji_mgr.format_msg(text_script), parse_mode="HTML", disable_web_page_preview=True)
-            return
+        if text:
+            if script_detector.is_vip_script_query(text):
+                text_vip = get_vip_script_text()
+                keyboard = await build_vip_script_keyboard(bot, "group")
+                await safe_answer(message, emoji_mgr.format_msg(text_vip), parse_mode="HTML", disable_web_page_preview=True, reply_markup=keyboard)
+                return
+            if script_detector.is_free_script_query(text):
+                text_free = get_free_script_text()
+                keyboard = await build_free_script_keyboard(bot, "group")
+                await safe_answer(message, emoji_mgr.format_msg(text_free), parse_mode="HTML", disable_web_page_preview=True, reply_markup=keyboard)
+                return
+            if script_detector.is_script_query(text):
+                text_script = get_script_tool_info_text()
+                keyboard = await build_all_scripts_keyboard(bot, "group")
+                await safe_answer(message, emoji_mgr.format_msg(text_script), parse_mode="HTML", disable_web_page_preview=True, reply_markup=keyboard)
+                return
         return
 
     # -------------------------------------------------------------
@@ -731,8 +763,22 @@ async def inspect_message(message: Message, bot: Bot):
         await safe_answer(message, emoji_mgr.format_msg(text_pay), parse_mode="HTML", disable_web_page_preview=True, reply_markup=keyboard)
         return
 
-    if text and script_detector.is_script_query(text):
-        logger.info("Script query detected from member: %r", text)
-        text_script = get_script_tool_info_text()
-        await safe_answer(message, emoji_mgr.format_msg(text_script), parse_mode="HTML", disable_web_page_preview=True)
-        return
+    if text:
+        if script_detector.is_vip_script_query(text):
+            logger.info("VIP Script query detected from member: %r", text)
+            text_vip = get_vip_script_text()
+            keyboard = await build_vip_script_keyboard(bot, "group")
+            await safe_answer(message, emoji_mgr.format_msg(text_vip), parse_mode="HTML", disable_web_page_preview=True, reply_markup=keyboard)
+            return
+        if script_detector.is_free_script_query(text):
+            logger.info("Free Script query detected from member: %r", text)
+            text_free = get_free_script_text()
+            keyboard = await build_free_script_keyboard(bot, "group")
+            await safe_answer(message, emoji_mgr.format_msg(text_free), parse_mode="HTML", disable_web_page_preview=True, reply_markup=keyboard)
+            return
+        if script_detector.is_script_query(text):
+            logger.info("Script query detected from member: %r", text)
+            text_script = get_script_tool_info_text()
+            keyboard = await build_all_scripts_keyboard(bot, "group")
+            await safe_answer(message, emoji_mgr.format_msg(text_script), parse_mode="HTML", disable_web_page_preview=True, reply_markup=keyboard)
+            return

@@ -330,13 +330,16 @@ async def cmd_payment(message: Message):
 # SCRIPT & TOOL & VIP KEY COMMAND (/script, /tool, /key, /free, /dragoncity, /dc)
 # -------------------------------------------------------------
 @router.message(Command("script", "tool", "key", "free", "vipkey", "dragoncity", "dc"))
-async def cmd_script(message: Message):
+async def cmd_script(message: Message, bot: Bot):
     text = get_script_tool_info_text()
     full_text = emoji_mgr.format_msg(text)
+    chat_type = "private" if message.chat.type == "private" else "group"
+    from handlers.member_handlers import build_all_scripts_keyboard
+    keyboard = await build_all_scripts_keyboard(bot, chat_type)
     try:
-        await message.answer(full_text, parse_mode="HTML", disable_web_page_preview=True)
+        await message.answer(full_text, parse_mode="HTML", disable_web_page_preview=True, reply_markup=keyboard)
     except TelegramBadRequest:
-        await message.answer(emoji_mgr.strip_tg_emojis(full_text), parse_mode="HTML", disable_web_page_preview=True)
+        await message.answer(emoji_mgr.strip_tg_emojis(full_text), parse_mode="HTML", disable_web_page_preview=True, reply_markup=keyboard)
 
 # -------------------------------------------------------------
 # GET CHAT ID / USER ID COMMAND (/id, /chatid, /info)

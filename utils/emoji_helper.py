@@ -290,17 +290,52 @@ def get_payment_info_text() -> str:
         f"{emoji_mgr.key} <b>After sending, DM</b> {emoji_mgr.vip} :@wolfmodyt {emoji_mgr.vip} <b>with your proof to confirm.</b>"
     )
 
+def get_vip_script_text() -> str:
+    """Returns formatted VIP Script download instructions with direct link"""
+    return (
+        f"{emoji_mgr.vip} <b>DRAGON CITY VIP SCRIPT DOWNLOAD</b> {emoji_mgr.vip}\n\n"
+        f"{emoji_mgr.fire} <b>Link tải Script VIP Dragon City:</b>\n"
+        f"👉 <a href=\"https://t.me/youtubewolfmod/477\">https://t.me/youtubewolfmod/477</a>\n\n"
+        f"━━━━━━━━━━━━━━━━━━━━\n"
+        f"{emoji_mgr.star} <b>VIP Features Included:</b>\n"
+        f"• Auto Heroic Race (Skip Battle Time)\n"
+        f"• Auto Arena, Quests, Orbs, Chests & Breed Bot\n"
+        f"• Max Health, Damage, Max Star & Level\n"
+        f"• Bypass Verified Skills & Force Recall\n\n"
+        f"{emoji_mgr.warn} <i>Bấm nút bên dưới để mở bài viết tải Script VIP!</i>\n"
+        f"{emoji_mgr.key} <b>To Buy VIP Key:</b> Type <code>/pay</code> or DM {emoji_mgr.vip} :@wolfmodyt {emoji_mgr.vip}"
+    )
+
+def get_free_script_text() -> str:
+    """Returns formatted Free Script download instructions with direct link"""
+    return (
+        f"{emoji_mgr.star} <b>DRAGON CITY FREE SCRIPT DOWNLOAD</b> {emoji_mgr.star}\n\n"
+        f"{emoji_mgr.fire} <b>Link tải Script Free Dragon City:</b>\n"
+        f"👉 <a href=\"https://t.me/youtubewolfmod/434\">https://t.me/youtubewolfmod/434</a>\n\n"
+        f"━━━━━━━━━━━━━━━━━━━━\n"
+        f"{emoji_mgr.warn} <b>Free Features:</b>\n"
+        f"• Free daily key available on website\n"
+        f"• Basic battle & quest automation\n\n"
+        f"{emoji_mgr.warn} <i>Bấm nút bên dưới để mở bài viết tải Script Free!</i>\n"
+        f"{emoji_mgr.diamond} <i>Want full unlocked features with no limits? Upgrade to VIP!</i>\n"
+        f"{emoji_mgr.star} Type <code>/pay</code> or <code>/price</code> to view VIP plans."
+    )
+
 def get_script_tool_info_text() -> str:
-    """Returns formatted VIP Dragon City Tool and Script instructions in English"""
+    """Returns formatted VIP & Free Dragon City Tool and Script instructions with download links"""
     return (
         f"{emoji_mgr.vip} <b>DRAGON CITY TOOL AND SCRIPT</b> {emoji_mgr.vip}\n\n"
         f"{emoji_mgr.star} <b>Access Tools, Scripts and VIP Keys here:</b>\n"
         f"{emoji_mgr.star} <a href=\"https://www.wolfmod.xyz/dragon-city\">https://www.wolfmod.xyz/dragon-city</a>\n\n"
         f"━━━━━━━━━━━━━━━━━━━━\n"
+        f"{emoji_mgr.fire} <b>DOWNLOAD SCRIPT LINKS / LINK TẢI SCRIPT:</b>\n"
+        f"👑 <b>Script VIP:</b> <a href=\"https://t.me/youtubewolfmod/477\">https://t.me/youtubewolfmod/477</a>\n"
+        f"🎁 <b>Script Free:</b> <a href=\"https://t.me/youtubewolfmod/434\">https://t.me/youtubewolfmod/434</a>\n\n"
+        f"━━━━━━━━━━━━━━━━━━━━\n"
         f"{emoji_mgr.warn} <b>Key and VIP Features:</b>\n"
         f"{emoji_mgr.star} Get <b>Free Daily Keys</b> or activate your <b>VIP Key</b> directly.\n"
         f"{emoji_mgr.star} Auto Heroic Race, Quests, Arenas, Chests, and Breed Bot!\n"
-        f"{emoji_mgr.warn} <i>Visit the link above to get your key or purchase VIP access!</i>\n\n"
+        f"{emoji_mgr.warn} <i>Visit the links above or tap buttons below to download!</i>\n\n"
         f"{emoji_mgr.star} <b>To Buy VIP directly:</b> Type <code>/pay</code> or DM {emoji_mgr.vip} :@wolfmodyt {emoji_mgr.vip}"
     )
 

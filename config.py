@@ -53,11 +53,11 @@ LINK4M_TOKEN: str = os.getenv("LINK4M_TOKEN", "")
 # Direct download links for the Dragon City scripts delivered to buyers/free users.
 VIP_SCRIPT_URL: str = os.getenv(
     "VIP_SCRIPT_URL",
-    "https://www.mediafire.com/file/7ktpiduqz94naxk/%255BDragonCity_V9.1_VIP%255D_%25283%2529.lua/file",
+    "https://t.me/youtubewolfmod/477",
 )
 FREE_SCRIPT_URL: str = os.getenv(
     "FREE_SCRIPT_URL",
-    "https://www.mediafire.com/file/xyyl50kklt3g142/[DragonCity_2.0_FREE_ALL_SERVER.lua+(3).lua/file",
+    "https://t.me/youtubewolfmod/434",
 )
 
 # Shared secret for POST /api/bot/generate-free-key on the wolfmod.xyz backend

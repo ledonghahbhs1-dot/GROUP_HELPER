@@ -35,6 +35,23 @@ SCRIPT_KEYWORDS_RAW = [
     "share tool", "share script", "web tool", "trang web tool", "web lay key", "web lấy key"
 ]
 
+VIP_SCRIPT_KEYWORDS = [
+    "script vip", "vip script", "tai script vip", "tải script vip", "link script vip",
+    "xin script vip", "download script vip", "dc script vip", "script dragon city vip",
+    "tool vip", "vip tool", "link tai script vip", "link tải script vip",
+    "cho xin script vip", "cho link script vip", "script vip dragon city",
+    "scriptvip"
+]
+
+FREE_SCRIPT_KEYWORDS = [
+    "script free", "free script", "tai script free", "tải script free", "link script free",
+    "xin script free", "download script free", "dc script free", "script dragon city free",
+    "tool free", "free tool", "script mien phi", "script miễn phí", "tool mien phi",
+    "tool miễn phí", "link tai script free", "link tải script free", "freescript",
+    "cho xin script free", "cho link script free", "script free dragon city",
+    "scriptfree"
+]
+
 class ScriptDetector:
     def __init__(self):
         self.keywords: Set[str] = set()
@@ -43,6 +60,44 @@ class ScriptDetector:
             if clean:
                 self.keywords.add(clean)
             self.keywords.add(kw.strip().lower())
+
+        self.vip_keywords: Set[str] = set()
+        for kw in VIP_SCRIPT_KEYWORDS:
+            clean = normalize_text_for_filter(kw.strip().lower())
+            if clean:
+                self.vip_keywords.add(clean)
+            self.vip_keywords.add(kw.strip().lower())
+
+        self.free_keywords: Set[str] = set()
+        for kw in FREE_SCRIPT_KEYWORDS:
+            clean = normalize_text_for_filter(kw.strip().lower())
+            if clean:
+                self.free_keywords.add(clean)
+            self.free_keywords.add(kw.strip().lower())
+
+    def is_vip_script_query(self, text: str) -> bool:
+        """Detects if user is specifically requesting the VIP Script"""
+        if not text:
+            return False
+        text_lower = text.lower().strip()
+        normalized = normalize_text_for_filter(text_lower)
+        for kw in self.vip_keywords:
+            pattern = r'(?:\b|\s|^)' + re.escape(kw) + r'(?:\b|\s|$)'
+            if re.search(pattern, text_lower) or re.search(pattern, normalized):
+                return True
+        return False
+
+    def is_free_script_query(self, text: str) -> bool:
+        """Detects if user is specifically requesting the Free Script"""
+        if not text:
+            return False
+        text_lower = text.lower().strip()
+        normalized = normalize_text_for_filter(text_lower)
+        for kw in self.free_keywords:
+            pattern = r'(?:\b|\s|^)' + re.escape(kw) + r'(?:\b|\s|$)'
+            if re.search(pattern, text_lower) or re.search(pattern, normalized):
+                return True
+        return False
 
     def is_script_query(self, text: str) -> bool:
         """
