@@ -292,12 +292,10 @@ def get_payment_info_text() -> str:
 
 def get_vip_script_text() -> str:
     """Returns formatted VIP Script download instructions with direct link"""
-    custom_icon = '<tg-emoji emoji-id="5202132945183208703">🔥</tg-emoji>'
-    custom_arrow = '<tg-emoji emoji-id="5202132945183208703">👉</tg-emoji>'
     return (
         f"{emoji_mgr.vip} <b>DRAGON CITY VIP SCRIPT DOWNLOAD</b> {emoji_mgr.vip}\n\n"
-        f"{custom_icon} <b>Dragon City VIP Script Download Link:</b>\n"
-        f"{custom_arrow} <a href=\"https://t.me/youtubewolfmod/477\">https://t.me/youtubewolfmod/477</a>\n\n"
+        f"{emoji_mgr.fire} <b>Dragon City VIP Script Download Link:</b>\n"
+        f"{emoji_mgr.choose} <a href=\"https://t.me/youtubewolfmod/477\">https://t.me/youtubewolfmod/477</a>\n\n"
         f"━━━━━━━━━━━━━━━━━━━━\n"
         f"{emoji_mgr.star} <b>VIP Features Included:</b>\n"
         f"• Auto Heroic Race (Skip Battle Time)\n"
@@ -313,7 +311,7 @@ def get_free_script_text() -> str:
     return (
         f"{emoji_mgr.star} <b>DRAGON CITY FREE SCRIPT DOWNLOAD</b> {emoji_mgr.star}\n\n"
         f"{emoji_mgr.fire} <b>Dragon City Free Script Download Link:</b>\n"
-        f"👉 <a href=\"https://t.me/youtubewolfmod/434\">https://t.me/youtubewolfmod/434</a>\n\n"
+        f"{emoji_mgr.choose} <a href=\"https://t.me/youtubewolfmod/434\">https://t.me/youtubewolfmod/434</a>\n\n"
         f"━━━━━━━━━━━━━━━━━━━━\n"
         f"{emoji_mgr.warn} <b>Free Features:</b>\n"
         f"• Free daily key available on website\n"
@@ -331,8 +329,8 @@ def get_script_tool_info_text() -> str:
         f"{emoji_mgr.star} <a href=\"https://www.wolfmod.xyz/dragon-city\">https://www.wolfmod.xyz/dragon-city</a>\n\n"
         f"━━━━━━━━━━━━━━━━━━━━\n"
         f"{emoji_mgr.fire} <b>DOWNLOAD SCRIPT LINKS:</b>\n"
-        f"👑 <b>Script VIP:</b> <a href=\"https://t.me/youtubewolfmod/477\">https://t.me/youtubewolfmod/477</a>\n"
-        f"🎁 <b>Script Free:</b> <a href=\"https://t.me/youtubewolfmod/434\">https://t.me/youtubewolfmod/434</a>\n\n"
+        f"{emoji_mgr.vip} <b>Script VIP:</b> <a href=\"https://t.me/youtubewolfmod/477\">https://t.me/youtubewolfmod/477</a>\n"
+        f"{emoji_mgr.key} <b>Script Free:</b> <a href=\"https://t.me/youtubewolfmod/434\">https://t.me/youtubewolfmod/434</a>\n\n"
         f"━━━━━━━━━━━━━━━━━━━━\n"
         f"{emoji_mgr.warn} <b>Key and VIP Features:</b>\n"
         f"{emoji_mgr.star} Get <b>Free Daily Keys</b> or activate your <b>VIP Key</b> directly.\n"
