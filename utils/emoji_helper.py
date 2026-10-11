@@ -188,6 +188,10 @@ class EmojiManager:
     def memo(self) -> str:
         return self.get("memo", "📝")
 
+    @property
+    def free_script(self) -> str:
+        return self.get("free_script", "🎁")
+
 
 from utils.logger import logger
 
@@ -309,8 +313,8 @@ def get_vip_script_text() -> str:
 def get_free_script_text() -> str:
     """Returns formatted Free Script download instructions with direct link"""
     return (
-        f"{emoji_mgr.star} <b>DRAGON CITY FREE SCRIPT DOWNLOAD</b> {emoji_mgr.star}\n\n"
-        f"{emoji_mgr.fire} <b>Dragon City Free Script Download Link:</b>\n"
+        f"{emoji_mgr.free_script} <b>DRAGON CITY FREE SCRIPT DOWNLOAD</b> {emoji_mgr.free_script}\n\n"
+        f"{emoji_mgr.free_script} <b>Dragon City Free Script Download Link:</b>\n"
         f"{emoji_mgr.choose} <a href=\"https://t.me/youtubewolfmod/434\">https://t.me/youtubewolfmod/434</a>\n\n"
         f"━━━━━━━━━━━━━━━━━━━━\n"
         f"{emoji_mgr.warn} <b>Free Features:</b>\n"
@@ -330,7 +334,7 @@ def get_script_tool_info_text() -> str:
         f"━━━━━━━━━━━━━━━━━━━━\n"
         f"{emoji_mgr.fire} <b>DOWNLOAD SCRIPT LINKS:</b>\n"
         f"{emoji_mgr.vip} <b>Script VIP:</b> <a href=\"https://t.me/youtubewolfmod/477\">https://t.me/youtubewolfmod/477</a>\n"
-        f"{emoji_mgr.key} <b>Script Free:</b> <a href=\"https://t.me/youtubewolfmod/434\">https://t.me/youtubewolfmod/434</a>\n\n"
+        f"{emoji_mgr.free_script} <b>Script Free:</b> <a href=\"https://t.me/youtubewolfmod/434\">https://t.me/youtubewolfmod/434</a>\n\n"
         f"━━━━━━━━━━━━━━━━━━━━\n"
         f"{emoji_mgr.warn} <b>Key and VIP Features:</b>\n"
         f"{emoji_mgr.star} Get <b>Free Daily Keys</b> or activate your <b>VIP Key</b> directly.\n"

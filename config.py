@@ -110,6 +110,8 @@ BACK_ID = "5393368163628905240"  # ⬅️ "Back" button; also the "Unlock via ..
 # plain-text `text` field, which still needs its own fallback character).
 BUYVIP_BUTTON_ICON_ID = "5203915043078436374"  # shown on the "BUY VIP NOW" button
 VIP_SCRIPT_BUTTON_ICON_ID = "5202132945183208703"  # shown on the "Download VIP Script" button
+FREE_SCRIPT_BUTTON_ICON_ID = "5204334519649335950"  # shown on the "Download Free Script" button
+FREE_SCRIPT_ID = "5204334519649335950"  # 🎁 custom VIP emoji for Free Script
 
 DEFAULT_EMOJIS: Dict[str, Dict[str, str]] = {
     "tele_logo": {"id": TELE_ID, "fallback": "✈️"},
@@ -142,6 +144,7 @@ DEFAULT_EMOJIS: Dict[str, Dict[str, str]] = {
     "bank":      {"id": BANK_ID, "fallback": "🏦"},
     "card":      {"id": CARD_ID, "fallback": "💳"},
     "memo":      {"id": MEMO_ID, "fallback": "📝"},
+    "free_script": {"id": FREE_SCRIPT_ID, "fallback": "🎁"},
 }
 
 

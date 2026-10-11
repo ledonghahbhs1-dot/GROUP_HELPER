@@ -253,15 +253,18 @@ async def test():
 
     mbot = MockMeBot()
     vip_kb = await build_vip_script_keyboard(mbot, "group")
-    assert any(btn.url == "https://t.me/youtubewolfmod/477" for row in vip_kb.inline_keyboard for btn in row)
+    assert any(btn.url == config.VIP_SCRIPT_URL for row in vip_kb.inline_keyboard for btn in row)
+    assert any(btn.icon_custom_emoji_id == config.VIP_SCRIPT_BUTTON_ICON_ID for row in vip_kb.inline_keyboard for btn in row if btn.url == config.VIP_SCRIPT_URL)
 
     free_kb = await build_free_script_keyboard(mbot, "group")
-    assert any(btn.url == "https://t.me/youtubewolfmod/434" for row in free_kb.inline_keyboard for btn in row)
+    assert any(btn.url == config.FREE_SCRIPT_URL for row in free_kb.inline_keyboard for btn in row)
+    assert any(btn.icon_custom_emoji_id == config.FREE_SCRIPT_BUTTON_ICON_ID for row in free_kb.inline_keyboard for btn in row if btn.url == config.FREE_SCRIPT_URL)
 
     all_kb = await build_all_scripts_keyboard(mbot, "group")
     all_urls = [btn.url for row in all_kb.inline_keyboard for btn in row if btn.url]
-    assert "https://t.me/youtubewolfmod/477" in all_urls
-    assert "https://t.me/youtubewolfmod/434" in all_urls
+    assert config.VIP_SCRIPT_URL in all_urls
+    assert config.FREE_SCRIPT_URL in all_urls
+    assert any(btn.icon_custom_emoji_id == config.FREE_SCRIPT_BUTTON_ICON_ID for row in all_kb.inline_keyboard for btn in row if btn.url == config.FREE_SCRIPT_URL)
 
     print("Script detector tests passed ✅")
 

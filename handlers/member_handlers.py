@@ -157,8 +157,9 @@ async def build_vip_script_keyboard(bot: Bot, chat_type: str = "group") -> Inlin
 async def build_free_script_keyboard(bot: Bot, chat_type: str = "group") -> InlineKeyboardMarkup:
     """Builds inline keyboard with direct download button for Free Script (https://t.me/youtubewolfmod/434)"""
     download_btn = InlineKeyboardButton(
-        text="🎁 Download Free Script",
-        url="https://t.me/youtubewolfmod/434"
+        text="Download Free Script",
+        url=config.FREE_SCRIPT_URL,
+        icon_custom_emoji_id=config.FREE_SCRIPT_BUTTON_ICON_ID,
     )
     if chat_type == "private":
         buy_btn = InlineKeyboardButton(
@@ -182,8 +183,9 @@ async def build_all_scripts_keyboard(bot: Bot, chat_type: str = "group") -> Inli
         icon_custom_emoji_id=config.VIP_SCRIPT_BUTTON_ICON_ID,
     )
     free_btn = InlineKeyboardButton(
-        text="🎁 Download Free Script",
-        url="https://t.me/youtubewolfmod/434"
+        text="Download Free Script",
+        url=config.FREE_SCRIPT_URL,
+        icon_custom_emoji_id=config.FREE_SCRIPT_BUTTON_ICON_ID,
     )
     if chat_type == "private":
         buy_btn = InlineKeyboardButton(
