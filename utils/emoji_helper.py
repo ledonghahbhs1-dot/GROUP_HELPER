@@ -272,6 +272,38 @@ class EmojiManager:
     def pay_confirm_vip(self) -> str:
         return self.get("pay_confirm_vip", "👑")
 
+    @property
+    def price_title(self) -> str:
+        return self.get("price_title", "👑")
+
+    @property
+    def price_2days(self) -> str:
+        return self.get("price_2days", "⏳")
+
+    @property
+    def price_30days(self) -> str:
+        return self.get("price_30days", "💎")
+
+    @property
+    def price_how_to(self) -> str:
+        return self.get("price_how_to", "🛒")
+
+    @property
+    def price_online(self) -> str:
+        return self.get("price_online", "🌐")
+
+    @property
+    def price_pay_method(self) -> str:
+        return self.get("price_pay_method", "💳")
+
+    @property
+    def price_dm(self) -> str:
+        return self.get("price_dm", "📩")
+
+    @property
+    def price_admin(self) -> str:
+        return self.get("price_admin", "👑")
+
 
 from utils.logger import logger
 
@@ -449,14 +481,14 @@ def get_issue_support_text(user_id: int = 0, user_name: str = "") -> str:
 def get_pricing_info_text() -> str:
     """Returns formatted VIP Key Pricing & Subscription details with VIP custom emojis"""
     return (
-        f"{emoji_mgr.vip} <b>DRAGON CITY VIP KEY PRICING</b> {emoji_mgr.vip}\n\n"
-        f"{emoji_mgr.star} <b>2 Days VIP Access:</b> <code>$1 USD</code> (1$ / 2 Days)\n"
-        f"{emoji_mgr.star} <b>30 Days VIP Access:</b> <code>$7 USD</code> (7$ / 30 Days)\n\n"
+        f"{emoji_mgr.price_title} <b>DRAGON CITY VIP KEY PRICING</b> {emoji_mgr.price_title}\n\n"
+        f"{emoji_mgr.price_2days} <b>2 Days VIP Access:</b> <code>$1 USD</code> (1$ / 2 Days)\n"
+        f"{emoji_mgr.price_30days} <b>30 Days VIP Access:</b> <code>$7 USD</code> (7$ / 30 Days)\n\n"
         f"━━━━━━━━━━━━━━━━━━━━\n"
-        f"{emoji_mgr.diamond} <b>HOW TO PURCHASE VIP:</b>\n"
-        f"{emoji_mgr.star} <b>Buy Online:</b> <a href=\"https://www.wolfmod.xyz/dragon-city\">https://www.wolfmod.xyz/dragon-city</a>\n"
-        f"{emoji_mgr.star} <b>Payment Methods:</b> Type <code>pay</code> or <code>/pay</code>\n"
-        f"{emoji_mgr.star} <b>Direct Purchase via DM:</b> Contact Master Admin {emoji_mgr.tele_logo} :@wolfmodyt {emoji_mgr.tele_logo}"
+        f"{emoji_mgr.price_how_to} <b>HOW TO PURCHASE VIP:</b>\n"
+        f"{emoji_mgr.price_online} <b>Buy Online:</b> <a href=\"https://www.wolfmod.xyz/dragon-city\">https://www.wolfmod.xyz/dragon-city</a>\n"
+        f"{emoji_mgr.price_pay_method} <b>Payment Methods:</b> Type <code>pay</code> or <code>/pay</code>\n"
+        f"{emoji_mgr.price_dm} <b>Direct Purchase via DM:</b> Contact Master Admin {emoji_mgr.price_admin} :@wolfmodyt {emoji_mgr.price_admin}"
     )
 
 def get_features_info_text() -> str:

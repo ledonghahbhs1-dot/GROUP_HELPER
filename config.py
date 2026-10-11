@@ -135,6 +135,16 @@ PAY_GIFT_NOTE_ID = "6217550861355192234"  # 🎁 rewarble gift codes note (item 
 PAY_CONFIRM_KEY_ID = "5420094143089111506"  # 🔑 after sending DM note (item 12)
 PAY_CONFIRM_VIP_ID = "5204096174734207869"  # 👑 crown in DM :@wolfmodyt (item 13)
 
+# VIP Key Pricing (/price) Custom Emoji IDs (Part 1)
+PRICE_TITLE_ID = "5201906965478930360"  # 👑 price title (items 1 & 2)
+PRICE_2DAYS_ID = "5393178605247296631"  # ⏳ 2 days access (item 3)
+PRICE_30DAYS_ID = "5202132945183208703"  # 💎 30 days access (item 4)
+PRICE_HOW_TO_ID = "5312361253610475399"  # 🛒 how to purchase header (item 5)
+PRICE_ONLINE_ID = "5447410659077661506"  # 🌐 buy online link (item 6)
+PRICE_PAY_METHOD_ID = "5445353829304387411"  # 💳 payment methods (item 7)
+PRICE_DM_ID = "5253742260054409879"  # 📩 direct purchase via DM (item 8)
+PRICE_ADMIN_ID = "5208416409322799176"  # ✈️ / Admin badge in DM (item 9)
+
 DEFAULT_EMOJIS: Dict[str, Dict[str, str]] = {
     "tele_logo": {"id": TELE_ID, "fallback": "✈️"},
     "clock":     {"id": WARN_ID, "fallback": "⚠️"},
@@ -187,6 +197,14 @@ DEFAULT_EMOJIS: Dict[str, Dict[str, str]] = {
     "pay_gift_note":     {"id": PAY_GIFT_NOTE_ID, "fallback": "🎁"},
     "pay_confirm_key":   {"id": PAY_CONFIRM_KEY_ID, "fallback": "🔑"},
     "pay_confirm_vip":   {"id": PAY_CONFIRM_VIP_ID, "fallback": "👑"},
+    "price_title":       {"id": PRICE_TITLE_ID, "fallback": "👑"},
+    "price_2days":       {"id": PRICE_2DAYS_ID, "fallback": "⏳"},
+    "price_30days":      {"id": PRICE_30DAYS_ID, "fallback": "💎"},
+    "price_how_to":      {"id": PRICE_HOW_TO_ID, "fallback": "🛒"},
+    "price_online":      {"id": PRICE_ONLINE_ID, "fallback": "🌐"},
+    "price_pay_method":  {"id": PRICE_PAY_METHOD_ID, "fallback": "💳"},
+    "price_dm":          {"id": PRICE_DM_ID, "fallback": "📩"},
+    "price_admin":       {"id": PRICE_ADMIN_ID, "fallback": "👑"},
 }
 
 
