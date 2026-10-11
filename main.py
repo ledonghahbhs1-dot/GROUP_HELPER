@@ -33,6 +33,7 @@ async def set_bot_commands(bot: Bot):
             BotCommand(command="script", description="Dragon City Tool & Script link"),
             BotCommand(command="freescript", description="Unlock the free script (Link4M)"),
             BotCommand(command="warns", description="Check warning status"),
+            BotCommand(command="tr", description="Translate message to English (reply or /tr text)"),
         ]
         await bot.set_my_commands(user_commands, scope=BotCommandScopeDefault())
 
@@ -44,6 +45,7 @@ async def set_bot_commands(bot: Bot):
             BotCommand(command="pay", description="Payment methods info"),
             BotCommand(command="script", description="Dragon City Tool & Script link"),
             BotCommand(command="freescript", description="Unlock the free script (Link4M)"),
+            BotCommand(command="tr", description="Translate message to English (reply or /tr text)"),
             BotCommand(command="warn", description="Warn member (reply/ID/@username)"),
             BotCommand(command="unwarn", description="Remove warning (reply/ID/@username)"),
             BotCommand(command="mute", description="Mute member (reply/ID/@username)"),

@@ -97,3 +97,4 @@ Bot đã hỗ trợ sẵn các slot Custom Emoji ID cao cấp mà bạn có th�
 | `/get_emoji` | Quét mã ID của Telegram Premium Custom Emoji |
 | `/set_emoji [key] [id]` | Gán mã ID cho các icon của bot |
 | `/list_emojis` | Xem danh sách toàn bộ icon đang kích hoạt |
+| `/tr [văn bản / reply]` | Dịch tin nhắn ngôn ngữ khác sang tiếng Anh trong nhóm chat |

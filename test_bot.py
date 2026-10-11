@@ -164,6 +164,46 @@ async def test():
     assert "wolfmod.xyz/dragon-city" in feat_text
     print("Feature detector tests passed ✅")
 
+    print("5.9 Testing Bypass Verified Skill & Skill Hacks Detector (Multilingual)...")
+    from filters.bypassverify_filter import bypassverify_detector
+    assert bypassverify_detector.is_bypassverify_query("skill")[0] == True
+    assert bypassverify_detector.is_bypassverify_query("skills")[0] == True
+    assert bypassverify_detector.is_bypassverify_query("bypass skill")[0] == True
+    assert bypassverify_detector.is_bypassverify_query("skill hack")[0] == True
+    assert bypassverify_detector.is_bypassverify_query("hack skill")[0] == True
+    assert bypassverify_detector.is_bypassverify_query("kỹ năng")[0] == True
+    assert bypassverify_detector.is_bypassverify_query("habilidad")[0] == True
+    assert bypassverify_detector.is_bypassverify_query("bypass verified skill")[0] == True
+    assert bypassverify_detector.is_bypassverify_query("how to bypass skill verification")[0] == True
+    assert bypassverify_detector.is_bypassverify_query("hello friend")[0] == False
+    print("Bypass Verified Skill detector tests passed ✅")
+
+    print("5.10 Testing Buy VIP & Free Key Multilingual Detectors...")
+    from filters.buyvip_filter import buyvip_detector
+    from filters.freekey_filter import freekey_detector
+    assert buyvip_detector.is_buyvip_query("buy vip")[0] == True
+    assert buyvip_detector.is_buyvip_query("mua vip")[0] == True
+    assert buyvip_detector.is_buyvip_query("comprar vip")[0] == True
+    assert buyvip_detector.is_buyvip_query("beli vip")[0] == True
+    assert buyvip_detector.is_buyvip_query("vip satin al")[0] == True
+    assert freekey_detector.is_freekey_query("free key")[0] == True
+    assert freekey_detector.is_freekey_query("key free")[0] == True
+    assert freekey_detector.is_freekey_query("nhan key free")[0] == True
+    assert freekey_detector.is_freekey_query("clave gratis")[0] == True
+    print("Buy VIP & Free Key detector tests passed ✅")
+
+    print("5.11 Testing Multilingual Translator to English...")
+    from utils.translator import translate_to_english, is_translatable_text
+    assert is_translatable_text("/tr hello") == False
+    assert is_translatable_text("https://t.me/youtubewolfmod") == False
+    assert is_translatable_text("12345") == False
+    assert is_translatable_text("xin chao moi nguoi") == True
+    trans_vi = await translate_to_english("xin chào tất cả các bạn")
+    assert trans_vi is not None
+    assert trans_vi[0] == "vi"
+    assert "hello" in trans_vi[2].lower() or "everyone" in trans_vi[2].lower()
+    print("Multilingual translator tests passed ✅")
+
     print("6. Testing Script & Tool Detection (Bilingual)...")
     from filters.script_filter import script_detector
     from utils.emoji_helper import get_script_tool_info_text, get_vip_script_text, get_free_script_text

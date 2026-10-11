@@ -47,6 +47,7 @@ from handlers.member_handlers import (
     build_all_scripts_keyboard
 )
 import config
+from utils.translator import translate_to_english
 
 router = Router(name="message_handlers")
 
@@ -126,8 +127,20 @@ async def send_heroicrace_video(bot: Bot, message: Message):
     await forward_guide_video(bot, message, config.HEROICRACE_VIDEO_MESSAGE_ID, "https://t.me/youtubewolfmod/290", "Skip Heroic Race Battle Time")
 
 async def send_bypassverify_video(bot: Bot, message: Message):
-    """Forwards the official Bypass Verified Attack Skill guide video (t.me/youtubewolfmod/295)"""
+    """Forwards the official Bypass Verified Attack Skill guide video (t.me/youtubewolfmod/295)
+    and attaches the BUY VIP NOW button."""
     await forward_guide_video(bot, message, config.BYPASSVERIFY_VIDEO_MESSAGE_ID, "https://t.me/youtubewolfmod/295", "Bypass Verified Skill")
+    chat_type = "private" if message.chat.type == "private" else "group"
+    keyboard = await build_buyvip_keyboard(bot, chat_type)
+    text = (
+        f"{emoji_mgr.vip} <b>Bypass Verified Attack Skill</b> is an exclusive VIP feature!\n"
+        f"Get VIP now to unlock all Skill Hacks & dragon capabilities!"
+    )
+    await safe_send_message(
+        bot, message.chat.id, emoji_mgr.format_msg(text),
+        parse_mode="HTML", reply_markup=keyboard,
+        message_thread_id=message.message_thread_id
+    )
 
 async def send_notrade_video(bot: Bot, message: Message):
     """Forwards the official No-Sample Trade guide video (t.me/youtubewolfmod/298)"""
@@ -782,3 +795,23 @@ async def inspect_message(message: Message, bot: Bot):
             keyboard = await build_all_scripts_keyboard(bot, "group")
             await safe_answer(message, emoji_mgr.format_msg(text_script), parse_mode="HTML", disable_web_page_preview=True, reply_markup=keyboard)
             return
+
+    # -------------------------------------------------------------
+    # Auto-Translate non-English messages to English in Group Chat
+    # -------------------------------------------------------------
+    if text and not text.startswith("/"):
+        try:
+            trans_res = await translate_to_english(text)
+            if trans_res:
+                src_code, src_name, en_text = trans_res
+                reply_text = (
+                    f"🌐 <b>[Translated to English - {src_name}]:</b>\n"
+                    f"<i>\"{html.escape(en_text)}\"</i>"
+                )
+                await message.reply(
+                    emoji_mgr.format_msg(reply_text),
+                    parse_mode="HTML"
+                )
+                logger.info("Auto-translated message from %s in chat %s: %s -> %s", src_name, chat_id, text[:30], en_text[:30])
+        except Exception as e:
+            logger.debug("Auto-translation failed in chat %s: %s", chat_id, e)

@@ -19,6 +19,7 @@ from utils.emoji_helper import (
 )
 from utils.auth import is_user_allowed_private, is_admin_or_owner
 from utils.logger import logger
+from utils.translator import translate_to_english
 import config
 
 router = Router(name="admin_handlers")
@@ -340,6 +341,45 @@ async def cmd_script(message: Message, bot: Bot):
         await message.answer(full_text, parse_mode="HTML", disable_web_page_preview=True, reply_markup=keyboard)
     except TelegramBadRequest:
         await message.answer(emoji_mgr.strip_tg_emojis(full_text), parse_mode="HTML", disable_web_page_preview=True, reply_markup=keyboard)
+
+# -------------------------------------------------------------
+# TRANSLATE COMMAND (/tr, /translate)
+# -------------------------------------------------------------
+@router.message(Command("tr", "translate"))
+async def cmd_translate(message: Message):
+    text_to_translate = ""
+    if message.reply_to_message:
+        text_to_translate = message.reply_to_message.text or message.reply_to_message.caption or ""
+    else:
+        parts = (message.text or "").split(maxsplit=1)
+        if len(parts) > 1:
+            text_to_translate = parts[1].strip()
+
+    if not text_to_translate:
+        help_text = (
+            f"🌐 <b>Language Translator:</b>\n\n"
+            f"• Reply to any message with <code>/tr</code> to translate it into English.\n"
+            f"• Or type <code>/tr [your text]</code> to translate text into English."
+        )
+        await safe_answer(message, emoji_mgr.format_msg(help_text), parse_mode="HTML")
+        return
+
+    trans_res = await translate_to_english(text_to_translate)
+    if trans_res:
+        src_code, src_name, en_text = trans_res
+        reply_text = (
+            f"🌐 <b>[Translation - {src_name} ➡️ English]:</b>\n"
+            f"<i>\"{html.escape(en_text)}\"</i>"
+        )
+        await message.reply(
+            emoji_mgr.format_msg(reply_text),
+            parse_mode="HTML"
+        )
+    else:
+        await message.reply(
+            emoji_mgr.format_msg("🌐 <i>Message is already in English or could not be translated.</i>"),
+            parse_mode="HTML"
+        )
 
 # -------------------------------------------------------------
 # GET CHAT ID / USER ID COMMAND (/id, /chatid, /info)
