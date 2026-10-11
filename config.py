@@ -113,6 +113,14 @@ VIP_SCRIPT_BUTTON_ICON_ID = "5202132945183208703"  # shown on the "Download VIP 
 FREE_SCRIPT_BUTTON_ICON_ID = "5204334519649335950"  # shown on the "Download Free Script" button
 FREE_SCRIPT_ID = "5204334519649335950"  # 🎁 custom VIP emoji for Free Script
 
+TOOL_TITLE_ID = "5201906965478930360"  # 👑 crown title icon (items 1 & 2)
+TOOL_ACCESS_ID = "5224450179368767019"  # 🌐 tool access icon (item 3)
+DOWNLOAD_HEADER_ID = "5201778223834257724"  # 🔥 download script links header icon (item 5)
+FEATURES_HEADER_ID = "5204128919564875264"  # 💎 key and vip features header icon (item 6)
+DAILY_KEY_BULLET_ID = "5202132945183208703"  # 🚀 daily free key bullet icon (item 7)
+AUTOMATION_BULLET_ID = "5420094143089111506"  # 🤖 auto heroic race/arenas bot icon (item 8)
+DOWNLOAD_PROMPT_ID = "5416028144794617466"  # 📥 visit links/download prompt icon (item 9)
+
 DEFAULT_EMOJIS: Dict[str, Dict[str, str]] = {
     "tele_logo": {"id": TELE_ID, "fallback": "✈️"},
     "clock":     {"id": WARN_ID, "fallback": "⚠️"},
@@ -144,7 +152,15 @@ DEFAULT_EMOJIS: Dict[str, Dict[str, str]] = {
     "bank":      {"id": BANK_ID, "fallback": "🏦"},
     "card":      {"id": CARD_ID, "fallback": "💳"},
     "memo":      {"id": MEMO_ID, "fallback": "📝"},
+    "openlink":  {"id": OPENLINK_ID, "fallback": "🔗"},
     "free_script": {"id": FREE_SCRIPT_ID, "fallback": "🎁"},
+    "tool_title":        {"id": TOOL_TITLE_ID, "fallback": "👑"},
+    "tool_access":       {"id": TOOL_ACCESS_ID, "fallback": "🌐"},
+    "download_header":   {"id": DOWNLOAD_HEADER_ID, "fallback": "🔥"},
+    "features_header":   {"id": FEATURES_HEADER_ID, "fallback": "💎"},
+    "daily_key_bullet":  {"id": DAILY_KEY_BULLET_ID, "fallback": "🚀"},
+    "automation_bullet": {"id": AUTOMATION_BULLET_ID, "fallback": "🤖"},
+    "download_prompt":   {"id": DOWNLOAD_PROMPT_ID, "fallback": "📥"},
 }
 
 
