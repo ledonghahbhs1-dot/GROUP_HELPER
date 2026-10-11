@@ -52,6 +52,14 @@ FREE_SCRIPT_KEYWORDS = [
     "scriptfree"
 ]
 
+PC_TOOL_KEYWORDS = [
+    "tool pc", "pc tool", "tai tool pc", "tải tool pc", "link tool pc",
+    "xin tool pc", "download tool pc", "dc tool pc", "tool pc dragon city",
+    "dragon city tool pc", "tool máy tính", "tool may tinh", "pc dragon city",
+    "toolpc", "pctool", "dragon city pc", "tool pc link", "pc tool link",
+    "tool tren pc", "tool trên pc", "bot pc", "dc pc"
+]
+
 class ScriptDetector:
     def __init__(self):
         self.keywords: Set[str] = set()
@@ -75,6 +83,13 @@ class ScriptDetector:
                 self.free_keywords.add(clean)
             self.free_keywords.add(kw.strip().lower())
 
+        self.pc_tool_keywords: Set[str] = set()
+        for kw in PC_TOOL_KEYWORDS:
+            clean = normalize_text_for_filter(kw.strip().lower())
+            if clean:
+                self.pc_tool_keywords.add(clean)
+            self.pc_tool_keywords.add(kw.strip().lower())
+
     def is_vip_script_query(self, text: str) -> bool:
         """Detects if user is specifically requesting the VIP Script"""
         if not text:
@@ -94,6 +109,18 @@ class ScriptDetector:
         text_lower = text.lower().strip()
         normalized = normalize_text_for_filter(text_lower)
         for kw in self.free_keywords:
+            pattern = r'(?:\b|\s|^)' + re.escape(kw) + r'(?:\b|\s|$)'
+            if re.search(pattern, text_lower) or re.search(pattern, normalized):
+                return True
+        return False
+
+    def is_pc_tool_query(self, text: str) -> bool:
+        """Detects if user is specifically requesting the PC Tool"""
+        if not text:
+            return False
+        text_lower = text.lower().strip()
+        normalized = normalize_text_for_filter(text_lower)
+        for kw in self.pc_tool_keywords:
             pattern = r'(?:\b|\s|^)' + re.escape(kw) + r'(?:\b|\s|$)'
             if re.search(pattern, text_lower) or re.search(pattern, normalized):
                 return True

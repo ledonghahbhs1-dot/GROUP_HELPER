@@ -206,8 +206,8 @@ async def test():
 
     print("6. Testing Script & Tool Detection (Bilingual)...")
     from filters.script_filter import script_detector
-    from utils.emoji_helper import get_script_tool_info_text, get_vip_script_text, get_free_script_text
-    from handlers.member_handlers import build_vip_script_keyboard, build_free_script_keyboard, build_all_scripts_keyboard
+    from utils.emoji_helper import get_script_tool_info_text, get_vip_script_text, get_free_script_text, get_pc_tool_text
+    from handlers.member_handlers import build_vip_script_keyboard, build_free_script_keyboard, build_pc_tool_keyboard, build_all_scripts_keyboard
     
     assert script_detector.is_script_query("script") == True
     assert script_detector.is_script_query("tool") == True
@@ -231,12 +231,23 @@ async def test():
     assert script_detector.is_free_script_query("tai script free") == True
     assert script_detector.is_free_script_query("script mien phi") == True
     assert script_detector.is_free_script_query("script vip") == False
+
+    # PC Tool queries
+    assert script_detector.is_pc_tool_query("tool pc") == True
+    assert script_detector.is_pc_tool_query("tai tool pc") == True
+    assert script_detector.is_pc_tool_query("link tool pc") == True
+    assert script_detector.is_pc_tool_query("script vip") == False
     
     script_text = get_script_tool_info_text()
     assert "wolfmod.xyz/dragon-city" in script_text
     assert "DRAGON CITY TOOL AND SCRIPT" in script_text
+    assert "https://t.me/youtubewolfmod/492" in script_text
     assert "https://t.me/youtubewolfmod/477" in script_text
     assert "https://t.me/youtubewolfmod/434" in script_text
+
+    pc_text = get_pc_tool_text()
+    assert "https://t.me/youtubewolfmod/492" in pc_text
+    assert "DRAGON CITY TOOL PC" in pc_text
 
     vip_text = get_vip_script_text()
     assert "https://t.me/youtubewolfmod/477" in vip_text
@@ -256,6 +267,10 @@ async def test():
     assert any(btn.url == config.VIP_SCRIPT_URL for row in vip_kb.inline_keyboard for btn in row)
     assert any(btn.icon_custom_emoji_id == config.VIP_SCRIPT_BUTTON_ICON_ID for row in vip_kb.inline_keyboard for btn in row if btn.url == config.VIP_SCRIPT_URL)
 
+    pc_kb = await build_pc_tool_keyboard(mbot, "group")
+    assert any(btn.url == config.PC_TOOL_URL for row in pc_kb.inline_keyboard for btn in row)
+    assert any(btn.icon_custom_emoji_id == config.PC_TOOL_BUTTON_ICON_ID for row in pc_kb.inline_keyboard for btn in row if btn.url == config.PC_TOOL_URL)
+
     free_kb = await build_free_script_keyboard(mbot, "group")
     assert any(btn.url == config.FREE_SCRIPT_URL for row in free_kb.inline_keyboard for btn in row)
     assert any(btn.icon_custom_emoji_id == config.FREE_SCRIPT_BUTTON_ICON_ID for row in free_kb.inline_keyboard for btn in row if btn.url == config.FREE_SCRIPT_URL)
@@ -263,6 +278,7 @@ async def test():
     all_kb = await build_all_scripts_keyboard(mbot, "group")
     all_urls = [btn.url for row in all_kb.inline_keyboard for btn in row if btn.url]
     assert config.VIP_SCRIPT_URL in all_urls
+    assert config.PC_TOOL_URL in all_urls
     assert config.FREE_SCRIPT_URL in all_urls
     assert any(btn.icon_custom_emoji_id == config.FREE_SCRIPT_BUTTON_ICON_ID for row in all_kb.inline_keyboard for btn in row if btn.url == config.FREE_SCRIPT_URL)
 

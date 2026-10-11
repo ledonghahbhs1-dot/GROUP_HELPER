@@ -175,12 +175,38 @@ async def build_free_script_keyboard(bot: Bot, chat_type: str = "group") -> Inli
         )
     return InlineKeyboardMarkup(inline_keyboard=[[download_btn], [buy_btn]])
 
+async def build_pc_tool_keyboard(bot: Bot, chat_type: str = "group") -> InlineKeyboardMarkup:
+    """Builds inline keyboard with direct download button for Tool PC (https://t.me/youtubewolfmod/492)"""
+    download_btn = InlineKeyboardButton(
+        text="Download Tool PC",
+        url=config.PC_TOOL_URL,
+        icon_custom_emoji_id=config.PC_TOOL_BUTTON_ICON_ID,
+    )
+    if chat_type == "private":
+        buy_btn = InlineKeyboardButton(
+            text="BUY VIP NOW", callback_data="show_buyvip_menu",
+            icon_custom_emoji_id=config.BUYVIP_BUTTON_ICON_ID,
+        )
+    else:
+        bot_info = await bot.get_me()
+        buyvip_url = f"https://t.me/{bot_info.username}?start=buyvip"
+        buy_btn = InlineKeyboardButton(
+            text="BUY VIP NOW", url=buyvip_url,
+            icon_custom_emoji_id=config.BUYVIP_BUTTON_ICON_ID,
+        )
+    return InlineKeyboardMarkup(inline_keyboard=[[download_btn], [buy_btn]])
+
 async def build_all_scripts_keyboard(bot: Bot, chat_type: str = "group") -> InlineKeyboardMarkup:
-    """Builds inline keyboard with both VIP & Free Script download buttons"""
+    """Builds inline keyboard with VIP, Tool PC & Free Script download buttons"""
     vip_btn = InlineKeyboardButton(
         text="Download VIP Script",
         url=config.VIP_SCRIPT_URL,
         icon_custom_emoji_id=config.VIP_SCRIPT_BUTTON_ICON_ID,
+    )
+    pc_btn = InlineKeyboardButton(
+        text="Download Tool PC",
+        url=config.PC_TOOL_URL,
+        icon_custom_emoji_id=config.PC_TOOL_BUTTON_ICON_ID,
     )
     free_btn = InlineKeyboardButton(
         text="Download Free Script",
@@ -199,7 +225,7 @@ async def build_all_scripts_keyboard(bot: Bot, chat_type: str = "group") -> Inli
             text="BUY VIP NOW", url=buyvip_url,
             icon_custom_emoji_id=config.BUYVIP_BUTTON_ICON_ID,
         )
-    return InlineKeyboardMarkup(inline_keyboard=[[vip_btn, free_btn], [buy_btn]])
+    return InlineKeyboardMarkup(inline_keyboard=[[vip_btn, pc_btn], [free_btn], [buy_btn]])
 
 async def build_welcome_keyboard(bot: Bot) -> InlineKeyboardMarkup:
     """One button per VIP feature category (Bot API 9.4+ icon_custom_emoji_id

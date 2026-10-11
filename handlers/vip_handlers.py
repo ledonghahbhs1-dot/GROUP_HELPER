@@ -181,6 +181,7 @@ async def deliver_vip_key(bot: Bot, chat_id: int, dedup_key: str, license_key: s
         f"{emoji_mgr.star} <b>Plan:</b> VIP {duration}\n"
         f"{emoji_mgr.key} <b>Your VIP Key</b> (username,key - tap to reveal):\n<tg-spoiler>{activation_pair}</tg-spoiler>\n\n"
         f"{emoji_mgr.fire} <b>Download VIP Script:</b> <a href=\"{config.VIP_SCRIPT_URL}\">Click here</a>\n"
+        f"{emoji_mgr.vip} <b>Download Tool PC:</b> <a href=\"{config.PC_TOOL_URL}\">Click here</a>\n"
         f"{emoji_mgr.diamond} <b>Activate at:</b> <a href=\"https://www.wolfmod.xyz/dragon-city\">https://www.wolfmod.xyz/dragon-city</a>\n"
         f"{emoji_mgr.star} <i>Need help activating?</i> DM {emoji_mgr.vip} :@wolfmodyt"
     )

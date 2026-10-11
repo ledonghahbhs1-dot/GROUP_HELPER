@@ -59,6 +59,10 @@ FREE_SCRIPT_URL: str = os.getenv(
     "FREE_SCRIPT_URL",
     "https://t.me/youtubewolfmod/434",
 )
+PC_TOOL_URL: str = os.getenv(
+    "PC_TOOL_URL",
+    "https://t.me/youtubewolfmod/492",
+)
 
 # Shared secret for POST /api/bot/generate-free-key on the wolfmod.xyz backend
 # (that endpoint checks `secret === getSecret()`, i.e. the backend's
@@ -110,6 +114,7 @@ BACK_ID = "5393368163628905240"  # ⬅️ "Back" button; also the "Unlock via ..
 # plain-text `text` field, which still needs its own fallback character).
 BUYVIP_BUTTON_ICON_ID = "5203915043078436374"  # shown on the "BUY VIP NOW" button
 VIP_SCRIPT_BUTTON_ICON_ID = "5202132945183208703"  # shown on the "Download VIP Script" button
+PC_TOOL_BUTTON_ICON_ID = "5202132945183208703"  # shown on the "Download Tool PC" button (VIP icon)
 FREE_SCRIPT_BUTTON_ICON_ID = "5204334519649335950"  # shown on the "Download Free Script" button
 FREE_SCRIPT_ID = "5204334519649335950"  # 🎁 custom VIP emoji for Free Script
 

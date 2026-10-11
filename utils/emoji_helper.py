@@ -437,6 +437,20 @@ def get_free_script_text() -> str:
         f"{emoji_mgr.star} Type <code>/pay</code> or <code>/price</code> to view VIP plans."
     )
 
+def get_pc_tool_text() -> str:
+    """Returns formatted Tool PC download instructions with direct link"""
+    return (
+        f"{emoji_mgr.tool_title} <b>DRAGON CITY TOOL PC DOWNLOAD</b> {emoji_mgr.tool_title}\n\n"
+        f"{emoji_mgr.vip} <b>Dragon City Tool PC Download Link:</b>\n"
+        f"{emoji_mgr.choose} <a href=\"{config.PC_TOOL_URL}\">{config.PC_TOOL_URL}</a>\n\n"
+        f"━━━━━━━━━━━━━━━━━━━━\n"
+        f"{emoji_mgr.features_header} <b>Tool PC Features:</b>\n"
+        f"• Full Dragon City PC automation tool\n"
+        f"• Auto Heroic Race, Quests, Arenas, Chests & Breed Bot\n\n"
+        f"{emoji_mgr.download_prompt} <i>Tap the button below to download Tool PC!</i>\n"
+        f"{emoji_mgr.card} <b>To Buy VIP directly:</b> Type <code>/pay</code> or DM {emoji_mgr.vip} :@wolfmodyt {emoji_mgr.vip}"
+    )
+
 def get_script_tool_info_text() -> str:
     """Returns formatted VIP & Free Dragon City Tool and Script instructions with download links"""
     return (
@@ -444,7 +458,8 @@ def get_script_tool_info_text() -> str:
         f"{emoji_mgr.tool_access} <b>Access Tools, Scripts and VIP Keys here:</b>\n"
         f"{emoji_mgr.openlink} <a href=\"https://www.wolfmod.xyz/dragon-city\">https://www.wolfmod.xyz/dragon-city</a>\n\n"
         f"━━━━━━━━━━━━━━━━━━━━\n"
-        f"{emoji_mgr.download_header} <b>DOWNLOAD SCRIPT LINKS:</b>\n"
+        f"{emoji_mgr.download_header} <b>DOWNLOAD SCRIPT & TOOL LINKS:</b>\n"
+        f"{emoji_mgr.vip} <b>Tool PC:</b> <a href=\"{config.PC_TOOL_URL}\">{config.PC_TOOL_URL}</a>\n"
         f"{emoji_mgr.vip} <b>Script VIP:</b> <a href=\"https://t.me/youtubewolfmod/477\">https://t.me/youtubewolfmod/477</a>\n"
         f"{emoji_mgr.free_script} <b>Script Free:</b> <a href=\"https://t.me/youtubewolfmod/434\">https://t.me/youtubewolfmod/434</a>\n\n"
         f"━━━━━━━━━━━━━━━━━━━━\n"

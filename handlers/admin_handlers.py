@@ -14,6 +14,7 @@ from utils.emoji_helper import (
     schedule_auto_delete,
     get_payment_info_text,
     get_script_tool_info_text,
+    get_pc_tool_text,
     get_pricing_info_text,
     get_features_info_text
 )
@@ -337,6 +338,21 @@ async def cmd_script(message: Message, bot: Bot):
     chat_type = "private" if message.chat.type == "private" else "group"
     from handlers.member_handlers import build_all_scripts_keyboard
     keyboard = await build_all_scripts_keyboard(bot, chat_type)
+    try:
+        await message.answer(full_text, parse_mode="HTML", disable_web_page_preview=True, reply_markup=keyboard)
+    except TelegramBadRequest:
+        await message.answer(emoji_mgr.strip_tg_emojis(full_text), parse_mode="HTML", disable_web_page_preview=True, reply_markup=keyboard)
+
+# -------------------------------------------------------------
+# TOOL PC COMMAND (/pc, /toolpc, /pctool)
+# -------------------------------------------------------------
+@router.message(Command("pc", "toolpc", "pctool"))
+async def cmd_pc_tool(message: Message, bot: Bot):
+    text = get_pc_tool_text()
+    full_text = emoji_mgr.format_msg(text)
+    chat_type = "private" if message.chat.type == "private" else "group"
+    from handlers.member_handlers import build_pc_tool_keyboard
+    keyboard = await build_pc_tool_keyboard(bot, chat_type)
     try:
         await message.answer(full_text, parse_mode="HTML", disable_web_page_preview=True, reply_markup=keyboard)
     except TelegramBadRequest:

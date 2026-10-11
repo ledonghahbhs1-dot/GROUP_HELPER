@@ -13,6 +13,7 @@ from utils.emoji_helper import (
     get_payment_info_text,
     get_script_tool_info_text,
     get_vip_script_text,
+    get_pc_tool_text,
     get_free_script_text,
     get_issue_support_text,
     get_pricing_info_text,
@@ -43,6 +44,7 @@ from handlers.member_handlers import (
     build_buyvip_keyboard,
     is_pending_captcha,
     build_vip_script_keyboard,
+    build_pc_tool_keyboard,
     build_free_script_keyboard,
     build_all_scripts_keyboard
 )
@@ -464,6 +466,11 @@ async def inspect_message(message: Message, bot: Bot):
                 keyboard = await build_vip_script_keyboard(bot, "group")
                 await safe_answer(message, emoji_mgr.format_msg(text_vip), parse_mode="HTML", disable_web_page_preview=True, reply_markup=keyboard)
                 return
+            if script_detector.is_pc_tool_query(text):
+                text_pc = get_pc_tool_text()
+                keyboard = await build_pc_tool_keyboard(bot, "group")
+                await safe_answer(message, emoji_mgr.format_msg(text_pc), parse_mode="HTML", disable_web_page_preview=True, reply_markup=keyboard)
+                return
             if script_detector.is_free_script_query(text):
                 text_free = get_free_script_text()
                 keyboard = await build_free_script_keyboard(bot, "group")
@@ -782,6 +789,12 @@ async def inspect_message(message: Message, bot: Bot):
             text_vip = get_vip_script_text()
             keyboard = await build_vip_script_keyboard(bot, "group")
             await safe_answer(message, emoji_mgr.format_msg(text_vip), parse_mode="HTML", disable_web_page_preview=True, reply_markup=keyboard)
+            return
+        if script_detector.is_pc_tool_query(text):
+            logger.info("PC Tool query detected from member: %r", text)
+            text_pc = get_pc_tool_text()
+            keyboard = await build_pc_tool_keyboard(bot, "group")
+            await safe_answer(message, emoji_mgr.format_msg(text_pc), parse_mode="HTML", disable_web_page_preview=True, reply_markup=keyboard)
             return
         if script_detector.is_free_script_query(text):
             logger.info("Free Script query detected from member: %r", text)
