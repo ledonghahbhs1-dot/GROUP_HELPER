@@ -121,6 +121,20 @@ DAILY_KEY_BULLET_ID = "5202132945183208703"  # 🚀 daily free key bullet icon (
 AUTOMATION_BULLET_ID = "5420094143089111506"  # 🤖 auto heroic race/arenas bot icon (item 8)
 DOWNLOAD_PROMPT_ID = "5416028144794617466"  # 📥 visit links/download prompt icon (item 9)
 
+# Payment Methods (/pay) Custom Emoji IDs (Part 2)
+PAY_TITLE_ID = "5201906965478930360"  # 👑 payment title (items 1 & 2)
+PAY_INSTANT_ID = "5201778223834257724"  # 🔥 want it instantly (item 3)
+PAY_MANUAL_ID = "5202132945183208703"  # 💎 prefer to pay manually (item 4)
+PAY_PAYPAL_ID = "5393614626032217242"  # 💵 PayPal (item 5)
+PAY_BINANCE_ID = "5379773896352355687"  # 🪙 Binance ID (item 6)
+PAY_SOCIABUZZ_ID = "5366471686851933528"  # ☕ SociaBuzz TRIBE (item 7)
+PAY_VCB_ID = "5204242830687494041"  # 🏦 Vietcombank (item 8)
+PAY_CHECK_NOTE_ID = "5202101484547766658"  # ⚠️ double-check details note (item 9)
+PAY_FF_NOTE_ID = "5420323339723881652"  # ⚠️ PayPal friends & family note (item 10)
+PAY_GIFT_NOTE_ID = "6217550861355192234"  # 🎁 rewarble gift codes note (item 11)
+PAY_CONFIRM_KEY_ID = "5420094143089111506"  # 🔑 after sending DM note (item 12)
+PAY_CONFIRM_VIP_ID = "5204096174734207869"  # 👑 crown in DM :@wolfmodyt (item 13)
+
 DEFAULT_EMOJIS: Dict[str, Dict[str, str]] = {
     "tele_logo": {"id": TELE_ID, "fallback": "✈️"},
     "clock":     {"id": WARN_ID, "fallback": "⚠️"},
@@ -161,6 +175,18 @@ DEFAULT_EMOJIS: Dict[str, Dict[str, str]] = {
     "daily_key_bullet":  {"id": DAILY_KEY_BULLET_ID, "fallback": "🚀"},
     "automation_bullet": {"id": AUTOMATION_BULLET_ID, "fallback": "🤖"},
     "download_prompt":   {"id": DOWNLOAD_PROMPT_ID, "fallback": "📥"},
+    "pay_title":         {"id": PAY_TITLE_ID, "fallback": "👑"},
+    "pay_instant":       {"id": PAY_INSTANT_ID, "fallback": "🔥"},
+    "pay_manual":        {"id": PAY_MANUAL_ID, "fallback": "💎"},
+    "pay_paypal":        {"id": PAY_PAYPAL_ID, "fallback": "💵"},
+    "pay_binance":       {"id": PAY_BINANCE_ID, "fallback": "🪙"},
+    "pay_sociabuzz":     {"id": PAY_SOCIABUZZ_ID, "fallback": "☕"},
+    "pay_vcb":           {"id": PAY_VCB_ID, "fallback": "🏦"},
+    "pay_check_note":    {"id": PAY_CHECK_NOTE_ID, "fallback": "⚠️"},
+    "pay_ff_note":       {"id": PAY_FF_NOTE_ID, "fallback": "⚠️"},
+    "pay_gift_note":     {"id": PAY_GIFT_NOTE_ID, "fallback": "🎁"},
+    "pay_confirm_key":   {"id": PAY_CONFIRM_KEY_ID, "fallback": "🔑"},
+    "pay_confirm_vip":   {"id": PAY_CONFIRM_VIP_ID, "fallback": "👑"},
 }
 
 

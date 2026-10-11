@@ -224,6 +224,54 @@ class EmojiManager:
     def download_prompt(self) -> str:
         return self.get("download_prompt", "📥")
 
+    @property
+    def pay_title(self) -> str:
+        return self.get("pay_title", "👑")
+
+    @property
+    def pay_instant(self) -> str:
+        return self.get("pay_instant", "🔥")
+
+    @property
+    def pay_manual(self) -> str:
+        return self.get("pay_manual", "💎")
+
+    @property
+    def pay_paypal(self) -> str:
+        return self.get("pay_paypal", "💵")
+
+    @property
+    def pay_binance(self) -> str:
+        return self.get("pay_binance", "🪙")
+
+    @property
+    def pay_sociabuzz(self) -> str:
+        return self.get("pay_sociabuzz", "☕")
+
+    @property
+    def pay_vcb(self) -> str:
+        return self.get("pay_vcb", "🏦")
+
+    @property
+    def pay_check_note(self) -> str:
+        return self.get("pay_check_note", "⚠️")
+
+    @property
+    def pay_ff_note(self) -> str:
+        return self.get("pay_ff_note", "⚠️")
+
+    @property
+    def pay_gift_note(self) -> str:
+        return self.get("pay_gift_note", "🎁")
+
+    @property
+    def pay_confirm_key(self) -> str:
+        return self.get("pay_confirm_key", "🔑")
+
+    @property
+    def pay_confirm_vip(self) -> str:
+        return self.get("pay_confirm_vip", "👑")
+
 
 from utils.logger import logger
 
@@ -304,26 +352,26 @@ def schedule_auto_delete(msg, delay_sec: int = 30):
 def get_payment_info_text() -> str:
     """Returns formatted VIP Payment Methods message using exclusively Premium VIP custom emojis"""
     return (
-        f"{emoji_mgr.vip} <b>PAYMENT METHODS</b> {emoji_mgr.vip}\n\n"
-        f"{emoji_mgr.fire} <b>Want it instantly?</b> Tap <b>BUY VIP NOW</b> below for automated "
+        f"{emoji_mgr.pay_title} <b>PAYMENT METHODS</b> {emoji_mgr.pay_title}\n\n"
+        f"{emoji_mgr.pay_instant} <b>Want it instantly?</b> Tap <b>BUY VIP NOW</b> below for automated "
         f"checkout (USDT or bank QR) with your key delivered the moment payment is confirmed.\n"
         f"━━━━━━━━━━━━━━━━━━━━\n"
-        f"{emoji_mgr.diamond} <i>Prefer to pay manually instead? Use any of these:</i>\n\n"
-        f"{emoji_mgr.star} <b>PayPal</b> <i>[GLOBAL]</i>\n"
+        f"{emoji_mgr.pay_manual} <i>Prefer to pay manually instead? Use any of these:</i>\n\n"
+        f"{emoji_mgr.pay_paypal} <b>PayPal</b> <i>[GLOBAL]</i>\n"
         f"   ├ <code>paypal.me/wolfmod243</code>\n"
         f"   └ <code>dameyt123@gmail.com</code>\n\n"
-        f"{emoji_mgr.star} <b>Binance ID</b> <i>[GLOBAL]</i>\n"
+        f"{emoji_mgr.pay_binance} <b>Binance ID</b> <i>[GLOBAL]</i>\n"
         f"   ├ ID: <code>1158594960</code>\n"
         f"   └ Deposit <i>(BEP20)</i>: <code>0xff924e6b692567a4d9462a3bbef33f48a138dd2e</code>\n\n"
-        f"{emoji_mgr.star} <b>SociaBuzz TRIBE</b> <i>[GLOBAL]</i>\n"
+        f"{emoji_mgr.pay_sociabuzz} <b>SociaBuzz TRIBE</b> <i>[GLOBAL]</i>\n"
         f"   └ <a href=\"https://sociabuzz.com/ldh/tribe\">Tap to open</a>\n\n"
-        f"{emoji_mgr.star} <b>Vietcombank</b> <i>[VIETNAM]</i>\n"
+        f"{emoji_mgr.pay_vcb} <b>Vietcombank</b> <i>[VIETNAM]</i>\n"
         f"   └ <code>9382382864</code> — LE DONG HA\n"
         f"━━━━━━━━━━━━━━━━━━━━\n"
-        f"{emoji_mgr.warn} <i>Please double-check the details before sending.</i>\n"
-        f"{emoji_mgr.warn} <i>PayPal must be sent as <b>Friends &amp; Family</b>.</i>\n"
-        f"{emoji_mgr.star} You can also redeem gift codes via <a href=\"https://rewarble.com/\">rewarble.com</a>\n\n"
-        f"{emoji_mgr.key} <b>After sending, DM</b> {emoji_mgr.vip} :@wolfmodyt {emoji_mgr.vip} <b>with your proof to confirm.</b>"
+        f"{emoji_mgr.pay_check_note} <i>Please double-check the details before sending.</i>\n"
+        f"{emoji_mgr.pay_ff_note} <i>PayPal must be sent as <b>Friends &amp; Family</b>.</i>\n"
+        f"{emoji_mgr.pay_gift_note} You can also redeem gift codes via <a href=\"https://rewarble.com/\">rewarble.com</a>\n\n"
+        f"{emoji_mgr.pay_confirm_key} <b>After sending, DM</b> {emoji_mgr.pay_confirm_vip} :@wolfmodyt {emoji_mgr.pay_confirm_vip} <b>with your proof to confirm.</b>"
     )
 
 def get_vip_script_text() -> str:
