@@ -130,11 +130,22 @@ async def test():
     # Negative test
     assert pricing_detector.is_pricing_query("hello how are you")[0] == False
 
+    # Tool PC pricing queries
+    assert pricing_detector.is_pricing_query("tool pc price")[0] == True
+    assert pricing_detector.is_pricing_query("gia tool pc")[0] == True
+    assert pricing_detector.is_pricing_query("pc price")[0] == True
+
     pricing_text = get_pricing_info_text()
     assert "$1 USD" in pricing_text or "1$" in pricing_text
     assert "2 Days" in pricing_text or "2/ngày" in pricing_text
     assert "$7 USD" in pricing_text or "7$" in pricing_text
     assert "30 Days" in pricing_text or "30 ngày" in pricing_text
+    assert "$5 USD" in pricing_text
+    assert "$15 USD" in pricing_text
+    assert "$35 USD" in pricing_text
+    assert "7-Day Trial" in pricing_text
+    assert "1-Month Plan" in pricing_text
+    assert "3-Month Plan" in pricing_text
     assert "wolfmod.xyz/dragon-city" in pricing_text or "dragon-city" in pricing_text
     assert "pay" in pricing_text
     print("Multilingual pricing detector tests passed ✅")
@@ -248,6 +259,10 @@ async def test():
     pc_text = get_pc_tool_text()
     assert "https://t.me/youtubewolfmod/492" in pc_text
     assert "DRAGON CITY TOOL PC" in pc_text
+    assert "$5 USD" in pc_text
+    assert "$15 USD" in pc_text
+    assert "$35 USD" in pc_text
+    assert "7-Day Trial" in pc_text
 
     vip_text = get_vip_script_text()
     assert "https://t.me/youtubewolfmod/477" in vip_text

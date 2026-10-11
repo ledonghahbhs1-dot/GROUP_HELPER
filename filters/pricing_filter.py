@@ -12,6 +12,7 @@ PRICING_KEYWORDS_RAW = [
     "plan price", "package price", "price list", "price of key", "key price", "vip cost",
     "how much does it cost", "price info", "price check", "check price", "vip rate", "monthly price",
     "daily price", "subscription cost", "vip plans", "pricing plan", "pricing plans",
+    "tool pc price", "pc price", "pc tool price", "pc cost", "pc rate", "pc packages", "pc plan", "pc plans", "pc trial", "trial price", "weekly price",
 
     # 2. Vietnamese (Có dấu & Không dấu) (45+ keywords)
     "gia", "giá", "gia ca", "giá cả", "gia vip", "giá vip", "gia key", "giá key",
@@ -20,6 +21,7 @@ PRICING_KEYWORDS_RAW = [
     "gia bao nhieu", "giá bao nhiêu", "bao nhieu", "bao nhiêu", "bao nhieu tien", "bao nhiêu tiền",
     "bao nhieu 1 key", "bao nhiêu 1 key", "bao nhieu 1 thang", "bao nhiêu 1 tháng",
     "gia 1 thang", "giá 1 tháng", "gia 30 ngay", "giá 30 ngày", "gia 2 ngay", "giá 2 ngày",
+    "gia tool pc", "giá tool pc", "gia pc", "giá pc", "bang gia pc", "bảng giá pc", "goi pc", "gói pc", "goi tool pc", "gói tool pc",
     "het bao nhieu", "hết bao nhiêu", "ton bao nhieu", "tốn bao nhiêu", "gia sub", "giá sub",
     "gia the nao", "giá thế nào", "gia re", "giá rẻ", "mat bao nhieu", "mất bao nhiêu",
     "chi phi", "chi phí", "phi vip", "phí vip", "bang gia vip", "bảng giá vip",

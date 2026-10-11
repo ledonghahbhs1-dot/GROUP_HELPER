@@ -344,9 +344,9 @@ async def cmd_script(message: Message, bot: Bot):
         await message.answer(emoji_mgr.strip_tg_emojis(full_text), parse_mode="HTML", disable_web_page_preview=True, reply_markup=keyboard)
 
 # -------------------------------------------------------------
-# TOOL PC COMMAND (/pc, /toolpc, /pctool)
+# TOOL PC COMMAND (/pc, /toolpc, /pctool, /pcprice, /pricepc)
 # -------------------------------------------------------------
-@router.message(Command("pc", "toolpc", "pctool"))
+@router.message(Command("pc", "toolpc", "pctool", "pcprice", "pricepc"))
 async def cmd_pc_tool(message: Message, bot: Bot):
     text = get_pc_tool_text()
     full_text = emoji_mgr.format_msg(text)

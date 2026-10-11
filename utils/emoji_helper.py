@@ -438,17 +438,42 @@ def get_free_script_text() -> str:
     )
 
 def get_pc_tool_text() -> str:
-    """Returns formatted Tool PC download instructions with direct link"""
+    """Returns formatted Tool PC download instructions and VIP packages with direct link"""
     return (
-        f"{emoji_mgr.tool_title} <b>DRAGON CITY TOOL PC DOWNLOAD</b> {emoji_mgr.tool_title}\n\n"
+        f"{emoji_mgr.tool_title} <b>DRAGON CITY TOOL PC DOWNLOAD & VIP PACKAGES</b> {emoji_mgr.tool_title}\n\n"
         f"{emoji_mgr.vip} <b>Dragon City Tool PC Download Link:</b>\n"
         f"{emoji_mgr.choose} <a href=\"{config.PC_TOOL_URL}\">{config.PC_TOOL_URL}</a>\n\n"
+        f"━━━━━━━━━━━━━━━━━━━━\n"
+        f"{emoji_mgr.vip} <b>VIP TOOL PC PACKAGES:</b>\n"
+        f"{emoji_mgr.price_2days} <b>1. 7-Day Trial (Trial / Weekly):</b> <code>$5 USD</code>\n"
+        f"   └ <i>• For new users who want to test before full commitment.</i>\n\n"
+        f"{emoji_mgr.price_30days} <b>2. 1-Month Plan (Standard 30 Days):</b> <code>$15 USD</code>\n"
+        f"   └ <i>• Most popular plan & best seller.</i>\n\n"
+        f"{emoji_mgr.fire} <b>3. 3-Month Plan (Pro Combo):</b> <code>$35 USD</code> <i>(Save ~22%)</i>\n"
+        f"   └ <i>• Best value for long-term access & maximum savings.</i>\n\n"
         f"━━━━━━━━━━━━━━━━━━━━\n"
         f"{emoji_mgr.features_header} <b>Tool PC Features:</b>\n"
         f"• Full Dragon City PC automation tool\n"
         f"• Auto Heroic Race, Quests, Arenas, Chests & Breed Bot\n\n"
         f"{emoji_mgr.download_prompt} <i>Tap the button below to download Tool PC!</i>\n"
-        f"{emoji_mgr.card} <b>To Buy VIP directly:</b> Type <code>/pay</code> or DM {emoji_mgr.vip} :@wolfmodyt {emoji_mgr.vip}"
+        f"{emoji_mgr.card} <b>To Buy VIP:</b> Type <code>/pay</code> or DM {emoji_mgr.vip} :@wolfmodyt {emoji_mgr.vip}"
+    )
+
+def get_pc_pricing_text() -> str:
+    """Returns formatted VIP Tool PC Pricing & Packages with custom emojis"""
+    return (
+        f"{emoji_mgr.price_title} <b>DRAGON CITY VIP TOOL PC PACKAGES</b> {emoji_mgr.price_title}\n\n"
+        f"{emoji_mgr.price_2days} <b>1. 7-Day Trial (Trial / Weekly):</b> <code>$5 USD</code>\n"
+        f"   └ <i>• For new users who want to test before full commitment.</i>\n\n"
+        f"{emoji_mgr.price_30days} <b>2. 1-Month Plan (Standard 30 Days):</b> <code>$15 USD</code>\n"
+        f"   └ <i>• Most popular plan & best seller.</i>\n\n"
+        f"{emoji_mgr.fire} <b>3. 3-Month Plan (Pro Combo):</b> <code>$35 USD</code> <i>(Save ~22%)</i>\n"
+        f"   └ <i>• Best value for long-term access & maximum savings.</i>\n\n"
+        f"━━━━━━━━━━━━━━━━━━━━\n"
+        f"{emoji_mgr.price_how_to} <b>HOW TO PURCHASE VIP:</b>\n"
+        f"{emoji_mgr.price_online} <b>Tool PC Link:</b> <a href=\"{config.PC_TOOL_URL}\">{config.PC_TOOL_URL}</a>\n"
+        f"{emoji_mgr.price_pay_method} <b>Payment Methods:</b> Type <code>pay</code> or <code>/pay</code>\n"
+        f"{emoji_mgr.price_dm} <b>Direct Purchase via DM:</b> Contact Master Admin {emoji_mgr.price_admin} :@wolfmodyt {emoji_mgr.price_admin}"
     )
 
 def get_script_tool_info_text() -> str:
@@ -494,11 +519,20 @@ def get_issue_support_text(user_id: int = 0, user_name: str = "") -> str:
     )
 
 def get_pricing_info_text() -> str:
-    """Returns formatted VIP Key Pricing & Subscription details with VIP custom emojis"""
+    """Returns formatted VIP Key & Tool PC Pricing & Subscription details with VIP custom emojis"""
     return (
-        f"{emoji_mgr.price_title} <b>DRAGON CITY VIP KEY PRICING</b> {emoji_mgr.price_title}\n\n"
+        f"{emoji_mgr.price_title} <b>DRAGON CITY VIP PRICING & PACKAGES</b> {emoji_mgr.price_title}\n\n"
+        f"{emoji_mgr.fire} <b>VIP SCRIPT ACCESS (Mobile / GG):</b>\n"
         f"{emoji_mgr.price_2days} <b>2 Days VIP Access:</b> <code>$1 USD</code> (1$ / 2 Days)\n"
         f"{emoji_mgr.price_30days} <b>30 Days VIP Access:</b> <code>$7 USD</code> (7$ / 30 Days)\n\n"
+        f"━━━━━━━━━━━━━━━━━━━━\n"
+        f"{emoji_mgr.vip} <b>VIP TOOL PC PACKAGES:</b>\n"
+        f"{emoji_mgr.price_2days} <b>1. 7-Day Trial (Trial / Weekly):</b> <code>$5 USD</code>\n"
+        f"   └ <i>• For new users who want to test before full commitment.</i>\n\n"
+        f"{emoji_mgr.price_30days} <b>2. 1-Month Plan (Standard 30 Days):</b> <code>$15 USD</code>\n"
+        f"   └ <i>• Most popular plan & best seller.</i>\n\n"
+        f"{emoji_mgr.fire} <b>3. 3-Month Plan (Pro Combo):</b> <code>$35 USD</code> <i>(Save ~22%)</i>\n"
+        f"   └ <i>• Best value for long-term access & maximum savings.</i>\n\n"
         f"━━━━━━━━━━━━━━━━━━━━\n"
         f"{emoji_mgr.price_how_to} <b>HOW TO PURCHASE VIP:</b>\n"
         f"{emoji_mgr.price_online} <b>Buy Online:</b> <a href=\"https://www.wolfmod.xyz/dragon-city\">https://www.wolfmod.xyz/dragon-city</a>\n"
