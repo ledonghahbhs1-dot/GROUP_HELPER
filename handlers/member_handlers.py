@@ -106,29 +106,13 @@ def build_welcome_text(chat_title: str, user_id: int, user_name: str) -> str:
     )
     return emoji_mgr.format_msg(text)
 
-async def build_buyvip_keyboard(bot: Bot, chat_type: str = "private") -> InlineKeyboardMarkup:
-    """Shared "BUY VIP NOW" button used on the welcome message, the feature
-    list, the buy-vip keyword reply, and the payment-info reply — kept in one
-    place so all four stay in sync.
-    In a group, this is a t.me deep-link URL that switches the user into a
-    private chat with the bot (payment/plan details should never sit in a
-    group). In a private chat it's a plain callback that reveals the VIP plan
-    menu immediately, since there's no group to leak into.
-    icon_custom_emoji_id (Bot API 9.4+) puts an actual animated icon on the
-    button itself; "BUY VIP NOW" stays as plain text since the button `text`
-    field still can't carry a <tg-emoji> tag."""
-    if chat_type == "private":
-        return InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(
-                text="BUY VIP NOW", callback_data="show_buyvip_menu",
-                icon_custom_emoji_id=config.BUYVIP_BUTTON_ICON_ID,
-            )]
-        ])
-    bot_info = await bot.get_me()
-    buyvip_url = f"https://t.me/{bot_info.username}?start=buyvip"
+ADMIN_DM_URL = "https://t.me/wolfmodyt"
+
+async def build_buyvip_keyboard(bot: Bot, chat_type: str = "group") -> InlineKeyboardMarkup:
+    """Shared "BUY VIP NOW" button redirected directly to admin @wolfmodyt"""
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(
-            text="BUY VIP NOW", url=buyvip_url,
+            text="BUY VIP NOW", url=ADMIN_DM_URL,
             icon_custom_emoji_id=config.BUYVIP_BUTTON_ICON_ID,
         )]
     ])
@@ -140,18 +124,10 @@ async def build_vip_script_keyboard(bot: Bot, chat_type: str = "group") -> Inlin
         url=config.VIP_SCRIPT_URL,
         icon_custom_emoji_id=config.VIP_SCRIPT_BUTTON_ICON_ID,
     )
-    if chat_type == "private":
-        buy_btn = InlineKeyboardButton(
-            text="BUY VIP NOW", callback_data="show_buyvip_menu",
-            icon_custom_emoji_id=config.BUYVIP_BUTTON_ICON_ID,
-        )
-    else:
-        bot_info = await bot.get_me()
-        buyvip_url = f"https://t.me/{bot_info.username}?start=buyvip"
-        buy_btn = InlineKeyboardButton(
-            text="BUY VIP NOW", url=buyvip_url,
-            icon_custom_emoji_id=config.BUYVIP_BUTTON_ICON_ID,
-        )
+    buy_btn = InlineKeyboardButton(
+        text="BUY VIP NOW", url=ADMIN_DM_URL,
+        icon_custom_emoji_id=config.BUYVIP_BUTTON_ICON_ID,
+    )
     return InlineKeyboardMarkup(inline_keyboard=[[download_btn], [buy_btn]])
 
 async def build_free_script_keyboard(bot: Bot, chat_type: str = "group") -> InlineKeyboardMarkup:
@@ -161,18 +137,10 @@ async def build_free_script_keyboard(bot: Bot, chat_type: str = "group") -> Inli
         url=config.FREE_SCRIPT_URL,
         icon_custom_emoji_id=config.FREE_SCRIPT_BUTTON_ICON_ID,
     )
-    if chat_type == "private":
-        buy_btn = InlineKeyboardButton(
-            text="BUY VIP NOW", callback_data="show_buyvip_menu",
-            icon_custom_emoji_id=config.BUYVIP_BUTTON_ICON_ID,
-        )
-    else:
-        bot_info = await bot.get_me()
-        buyvip_url = f"https://t.me/{bot_info.username}?start=buyvip"
-        buy_btn = InlineKeyboardButton(
-            text="BUY VIP NOW", url=buyvip_url,
-            icon_custom_emoji_id=config.BUYVIP_BUTTON_ICON_ID,
-        )
+    buy_btn = InlineKeyboardButton(
+        text="BUY VIP NOW", url=ADMIN_DM_URL,
+        icon_custom_emoji_id=config.BUYVIP_BUTTON_ICON_ID,
+    )
     return InlineKeyboardMarkup(inline_keyboard=[[download_btn], [buy_btn]])
 
 async def build_pc_tool_keyboard(bot: Bot, chat_type: str = "group") -> InlineKeyboardMarkup:
@@ -182,18 +150,10 @@ async def build_pc_tool_keyboard(bot: Bot, chat_type: str = "group") -> InlineKe
         url=config.PC_TOOL_URL,
         icon_custom_emoji_id=config.PC_TOOL_BUTTON_ICON_ID,
     )
-    if chat_type == "private":
-        buy_btn = InlineKeyboardButton(
-            text="BUY VIP NOW", callback_data="show_buyvip_menu",
-            icon_custom_emoji_id=config.BUYVIP_BUTTON_ICON_ID,
-        )
-    else:
-        bot_info = await bot.get_me()
-        buyvip_url = f"https://t.me/{bot_info.username}?start=buyvip"
-        buy_btn = InlineKeyboardButton(
-            text="BUY VIP NOW", url=buyvip_url,
-            icon_custom_emoji_id=config.BUYVIP_BUTTON_ICON_ID,
-        )
+    buy_btn = InlineKeyboardButton(
+        text="BUY VIP NOW", url=ADMIN_DM_URL,
+        icon_custom_emoji_id=config.BUYVIP_BUTTON_ICON_ID,
+    )
     return InlineKeyboardMarkup(inline_keyboard=[[download_btn], [buy_btn]])
 
 async def build_all_scripts_keyboard(bot: Bot, chat_type: str = "group") -> InlineKeyboardMarkup:
@@ -213,39 +173,25 @@ async def build_all_scripts_keyboard(bot: Bot, chat_type: str = "group") -> Inli
         url=config.FREE_SCRIPT_URL,
         icon_custom_emoji_id=config.FREE_SCRIPT_BUTTON_ICON_ID,
     )
-    if chat_type == "private":
-        buy_btn = InlineKeyboardButton(
-            text="BUY VIP NOW", callback_data="show_buyvip_menu",
-            icon_custom_emoji_id=config.BUYVIP_BUTTON_ICON_ID,
-        )
-    else:
-        bot_info = await bot.get_me()
-        buyvip_url = f"https://t.me/{bot_info.username}?start=buyvip"
-        buy_btn = InlineKeyboardButton(
-            text="BUY VIP NOW", url=buyvip_url,
-            icon_custom_emoji_id=config.BUYVIP_BUTTON_ICON_ID,
-        )
+    buy_btn = InlineKeyboardButton(
+        text="BUY VIP NOW", url=ADMIN_DM_URL,
+        icon_custom_emoji_id=config.BUYVIP_BUTTON_ICON_ID,
+    )
     return InlineKeyboardMarkup(inline_keyboard=[[vip_btn, pc_btn], [free_btn], [buy_btn]])
 
 async def build_welcome_keyboard(bot: Bot) -> InlineKeyboardMarkup:
-    """One button per VIP feature category (Bot API 9.4+ icon_custom_emoji_id
-    puts the animated "choose" pointer on each), plus the main BUY VIP NOW
-    button - all deep-link to a private chat with the bot, since unlocking
-    any category means buying VIP. Brings back what used to be plain text
-    only, from back when buttons couldn't show a custom emoji at all."""
-    bot_info = await bot.get_me()
-    buyvip_url = f"https://t.me/{bot_info.username}?start=buyvip"
+    """One button per VIP feature category + BUY VIP NOW button -> All redirect to DM @wolfmodyt"""
     rows = []
     row = []
     for _icon, name in VIP_FEATURE_CATEGORIES:
-        row.append(InlineKeyboardButton(text=name, url=buyvip_url, icon_custom_emoji_id=config.CHOOSE_ID))
+        row.append(InlineKeyboardButton(text=name, url=ADMIN_DM_URL, icon_custom_emoji_id=config.CHOOSE_ID))
         if len(row) == 2:
             rows.append(row)
             row = []
     if row:
         rows.append(row)
     rows.append([InlineKeyboardButton(
-        text="BUY VIP NOW", url=buyvip_url,
+        text="BUY VIP NOW", url=ADMIN_DM_URL,
         icon_custom_emoji_id=config.BUYVIP_BUTTON_ICON_ID,
     )])
     return InlineKeyboardMarkup(inline_keyboard=rows)
