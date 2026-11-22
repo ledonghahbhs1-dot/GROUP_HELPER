@@ -9,6 +9,7 @@ from aiogram.types import BotCommand, BotCommandScopeDefault, BotCommandScopeAll
 from aiohttp import web
 import config
 from database.db import db
+from database.referral import referral_store
 from utils.emoji_helper import emoji_mgr
 from utils.logger import logger
 from filters.spam_filter import spam_filter
@@ -20,6 +21,7 @@ from handlers.sepay_webhook import create_sepay_app
 from handlers.member_handlers import router as member_router
 from handlers.message_handlers import router as message_router
 from handlers.flash_sale import flash_sale_loop
+from handlers.referral_handlers import router as referral_router, referral_loop
 
 async def set_bot_commands(bot: Bot):
     """Sets standard command list in Telegram menu for regular users and admins"""
@@ -34,6 +36,9 @@ async def set_bot_commands(bot: Bot):
             BotCommand(command="freescript", description="Unlock the free script (Link4M)"),
             BotCommand(command="warns", description="Check warning status"),
             BotCommand(command="tr", description="Translate message to English (reply or /tr text)"),
+            BotCommand(command="moi", description="Get your personal invite link"),
+            BotCommand(command="moi_cua_toi", description="Your successful invites & next milestone"),
+            BotCommand(command="su_kien_list", description="Events running now"),
         ]
         await bot.set_my_commands(user_commands, scope=BotCommandScopeDefault())
 
@@ -55,6 +60,11 @@ async def set_bot_commands(bot: Bot):
             BotCommand(command="unban", description="Unban member (ID/@username)"),
             BotCommand(command="stats", description="View security violation statistics"),
             BotCommand(command="get_emoji", description="Extract Custom Emoji VIP IDs"),
+            BotCommand(command="moi", description="Get your personal invite link"),
+            BotCommand(command="moi_cua_toi", description="Your successful invites & next milestone"),
+            BotCommand(command="su_kien", description="Post a group event: [2h|30m|1d] [nopin] text"),
+            BotCommand(command="su_kien_list", description="Events running now"),
+            BotCommand(command="huy_su_kien", description="Cancel an event and unpin it"),
             BotCommand(command="help", description="Full administrator commands list"),
         ]
         await bot.set_my_commands(admin_commands, scope=BotCommandScopeAllChatAdministrators())
@@ -78,6 +88,7 @@ async def main():
 
     # 1. Initialize Database
     await db.init_db()
+    await referral_store.ensure_schema()
 
     # 2. Load Custom Emojis
     await emoji_mgr.load_emojis()
@@ -91,6 +102,7 @@ async def main():
 
     # 4. Register Handlers in priority order
     dp.include_router(admin_router)
+    dp.include_router(referral_router)
     dp.include_router(vip_router)
     dp.include_router(member_router)
     dp.include_router(callback_router)
@@ -106,6 +118,8 @@ async def main():
     # VIP flash-sale announcer (polls the backend, posts to groups when a
     # discount window opens)
     asyncio.create_task(flash_sale_loop(bot))
+    # Referral confirmations (member stayed N minutes) + timed events ending
+    asyncio.create_task(referral_loop(bot))
     # VIP payment reconciler: survives restarts/deploys and delivers paid orders
     # from the persisted vip_orders table.
     asyncio.create_task(vip_reconcile_loop(bot))
