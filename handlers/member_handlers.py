@@ -9,6 +9,7 @@ from aiogram.filters.chat_member_updated import ChatMemberUpdatedFilter, MEMBER,
 from database.db import db
 from utils.emoji_helper import emoji_mgr, safe_send_message, safe_answer, schedule_auto_delete
 from utils.auth import is_admin_or_owner
+from handlers.referral_handlers import on_member_joined as referral_on_member_joined
 from utils.logger import logger
 import config
 
@@ -440,6 +441,10 @@ async def on_user_or_bot_join(event: ChatMemberUpdated, bot: Bot):
             await db.save_user(inviter.id, inviter.username or "", inviter.full_name or "")
         except Exception:
             pass
+    try:
+        await referral_on_member_joined(bot, event)  # records a pending referral when the invite link is ours
+    except Exception as e:
+        logger.warning("Referral join tracking failed: %s", e)
     await start_captcha_verification(bot, chat_id, event.chat.title or "THE GROUP", new_user)
 
 @router.message(F.new_chat_members)

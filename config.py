@@ -215,3 +215,23 @@ DEFAULT_EMOJIS: Dict[str, Dict[str, str]] = {
 
 
 
+
+
+# ---- Referral links + group events (task 102) -------------------------------------------------------------------
+def _int_list(raw: str, positive_only: bool = True) -> List[int]:
+    out: List[int] = []
+    for part in str(raw or "").replace(";", ",").split(","):
+        part = part.strip()
+        if part.isascii() and part.lstrip("-").isdigit():
+            value = int(part)
+            if (value > 0 or not positive_only) and value not in out:
+                out.append(value)
+    return out
+
+
+# A referred member only counts after staying this many minutes (stops join-then-leave farming).
+REFERRAL_CONFIRM_MINUTES: int = max(1, int(os.getenv("REFERRAL_CONFIRM_MINUTES", "10") or 10)) if os.getenv("REFERRAL_CONFIRM_MINUTES", "10").strip().isdigit() else 10
+# Milestones (successful invites) that trigger a congratulation + a private note to the admin(s), e.g. "5,10,25".
+REFERRAL_MILESTONES: List[int] = sorted(_int_list(os.getenv("REFERRAL_MILESTONES", "5,10"))) or [5, 10]
+# Who gets the private "please review the reward by hand" note. Defaults to OWNER_IDS. Rewards are NEVER granted automatically.
+REFERRAL_ADMIN_IDS: List[int] = _int_list(os.getenv("REFERRAL_ADMIN_IDS", "")) or [i for i in OWNER_IDS if i > 0]
