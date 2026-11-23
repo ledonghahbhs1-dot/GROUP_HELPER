@@ -28,7 +28,7 @@ router = Router(name="vip_handlers")
 # Must match the exact "plan" values / VND tiers the wolfmod.xyz backend expects
 # (api/index.ts: POST /api/vip/purchase-usdt, POST /api/buy-vip/vietqr-create)
 VIP_PLANS: Dict[str, Dict[str, str]] = {
-    "2day": {"label": "💎 2 Days - $1 USD", "usd": "1", "vnd": 25000, "duration": "2 Days"},
+    "2day": {"label": "2 Days - $1 USD", "usd": "1", "vnd": 25000, "duration": "2 Days"},
     "1month": {"label": "30 Days - $7 USD", "usd": "7", "vnd": 150000, "duration": "30 Days"},
 }
 
@@ -720,8 +720,8 @@ async def send_free_script_prompt(bot: Bot, chat_id: int, user_id: int):
         f"{emoji_mgr.warn} <i>Make sure pop-ups aren't blocked so the redirect can complete.</i>"
     )
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="Unlock via Link4M", url=link4m_url, icon_custom_emoji_id=config.BACK_ID)],
-        [InlineKeyboardButton(text="Unlock via Linkvertise", url=linkvertise_url, icon_custom_emoji_id=config.BACK_ID)],
+        [InlineKeyboardButton(text="Unlock via Link4M", url=link4m_url, icon_custom_emoji_id=config.OPENLINK_ID)],
+        [InlineKeyboardButton(text="Unlock via Linkvertise", url=linkvertise_url, icon_custom_emoji_id=config.OPENLINK_ID)],
     ])
     await safe_send_message(bot, chat_id, emoji_mgr.format_msg(text), parse_mode="HTML", reply_markup=keyboard)
 

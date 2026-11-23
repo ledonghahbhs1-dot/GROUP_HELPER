@@ -459,35 +459,8 @@ async def cmd_settings(message: Message, bot: Bot):
         return
 
     settings = await db.get_chat_settings(chat_id)
-
-    spam_status = "ON ✅" if settings.get("anti_spam", 1) else "OFF ❌"
-    link_status = "ON ✅" if settings.get("anti_link", 1) else "OFF ❌"
-    bot_status = "ON ✅" if settings.get("anti_bot", 1) else "OFF ❌"
-    badwords_status = "ON ✅" if settings.get("anti_badwords", 1) else "OFF ❌"
-    auto_del_status = "ON (30s) ✅" if settings.get("auto_delete_logs", 1) else "OFF ❌"
-    max_warns = settings.get("max_warns", config.DEFAULT_MAX_WARNS)
-    warn_action = settings.get("warn_action", config.DEFAULT_WARN_ACTION).upper()
-
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [
-            InlineKeyboardButton(text=f"🔥 Anti-Spam: {spam_status}", callback_data="toggle_anti_spam"),
-            InlineKeyboardButton(text=f"🔗 Anti-Link: {link_status}", callback_data="toggle_anti_link")
-        ],
-        [
-            InlineKeyboardButton(text=f"🤖 Anti-Bot: {bot_status}", callback_data="toggle_anti_bot"),
-            InlineKeyboardButton(text=f"🤬 Anti-Profanity: {badwords_status}", callback_data="toggle_anti_badwords")
-        ],
-        [
-            InlineKeyboardButton(text=f"⚠️ Max Warnings: [{max_warns}]", callback_data="cycle_max_warns"),
-            InlineKeyboardButton(text=f"⚡ Punishment: [{warn_action}]", callback_data="cycle_warn_action")
-        ],
-        [
-            InlineKeyboardButton(text=f"🗑️ Auto-delete 30s: {auto_del_status}", callback_data="toggle_auto_del")
-        ],
-        [
-            InlineKeyboardButton(text="❌ Close Settings", callback_data="close_settings")
-        ]
-    ])
+    from handlers.callback_handlers import build_settings_keyboard
+    keyboard = build_settings_keyboard(settings)
 
     text = (
         f"{emoji_mgr.settings} <b>GROUP SECURITY SETTINGS PANEL</b> {emoji_mgr.vip}\n\n"
