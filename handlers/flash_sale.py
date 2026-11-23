@@ -22,11 +22,11 @@ async def _broadcast_sale_start(bot: Bot, price_usd: str):
     keyboard = await build_buyvip_keyboard(bot, "group")
     original_usd = VIP_PLANS["1month"]["usd"]
     text = (
-        f"{emoji_mgr.sale} <b>FLASH SALE - 2 HOURS ONLY!</b> {emoji_mgr.sale}\n\n"
+        f"{emoji_mgr.sale} <b>FLASH SALE - 2 HOURS ONLY! / GIẢM GIÁ 2 GIỜ DUY NHẤT!</b> {emoji_mgr.sale}\n\n"
         f"{emoji_mgr.fire} <b>30-Day VIP Key:</b> <s>${original_usd}</s> <b>${price_usd}</b>\n"
-        f"{emoji_mgr.warn} <i>Ends in 2 hours - grab it before it's gone!</i> "
-        f"<i>(2-Day plan not included)</i>\n\n"
-        f"{emoji_mgr.choose} Tap below to buy now at this price."
+        f"{emoji_mgr.warn} <i>Ends in 2 hours - grab it before it's gone! (Kết thúc sau 2 giờ)</i>\n"
+        f"<i>(2-Day plan not included / Không áp dụng gói 2 ngày)</i>\n\n"
+        f"{emoji_mgr.choose} Tap below to buy now at this price / Bấm bên dưới để mua ngay."
     )
     sent = 0
     for chat_id in chat_ids:
