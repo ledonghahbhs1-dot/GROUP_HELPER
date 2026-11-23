@@ -288,7 +288,13 @@ async def cmd_help(message: Message):
         f"{emoji_mgr.vip} <b>VIP CUSTOM EMOJIS:</b>\n"
         f"{emoji_mgr.star} <code>/get_emoji</code> - Extract Telegram Premium Custom Emoji IDs\n"
         f"{emoji_mgr.star} <code>/set_emoji [key] [id]</code> - Configure custom emoji icon\n"
-        f"{emoji_mgr.star} <code>/list_emojis</code> - View active custom emoji IDs"
+        f"{emoji_mgr.star} <code>/list_emojis</code> - View active custom emoji IDs\n\n"
+        f"{emoji_mgr.fire} <b>REFERRALS & GROUP EVENTS:</b>\n"
+        f"{emoji_mgr.star} <code>/moi</code> - Get your personal invite link\n"
+        f"{emoji_mgr.star} <code>/moi_cua_toi</code> - View your successful invites & next milestone\n"
+        f"{emoji_mgr.star} <code>/su_kien [2h|30m|1d] [nopin] &lt;text&gt;</code> - Post a pinned group event\n"
+        f"{emoji_mgr.star} <code>/su_kien_list</code> - View currently active events\n"
+        f"{emoji_mgr.star} <code>/huy_su_kien [id]</code> - Cancel and unpin an event"
     )
     await safe_answer(message, emoji_mgr.format_msg(text), parse_mode="HTML")
 
