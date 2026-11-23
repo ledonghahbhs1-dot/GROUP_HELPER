@@ -345,12 +345,12 @@ async def on_vip_menu_back(callback: CallbackQuery, bot: Bot):
 @router.callback_query(F.data.startswith("vipbuy:"))
 async def on_vip_plan_selected(callback: CallbackQuery, bot: Bot):
     if not callback.message or callback.message.chat.type != "private":
-        await callback.answer("Please use this button in a private chat with the bot!", show_alert=True)
+        await callback.answer("⚠️ Please open a private chat with the bot to choose a plan! / Vui lòng nhắn tin riêng với bot để chọn gói!", show_alert=True)
         return
 
     plan = callback.data.split(":", 1)[1]
     if plan not in VIP_PLANS:
-        await callback.answer("Invalid plan.", show_alert=True)
+        await callback.answer("⚠️ Invalid plan selected. Please choose a valid plan from the menu. / Gói không hợp lệ. Vui lòng chọn lại gói từ menu.", show_alert=True)
         return
 
     plan_info = await get_plan_pricing(plan)
@@ -368,12 +368,12 @@ async def on_vip_plan_selected(callback: CallbackQuery, bot: Bot):
 @router.callback_query(F.data.startswith("vippay:"))
 async def on_vip_method_selected(callback: CallbackQuery, bot: Bot):
     if not callback.message or callback.message.chat.type != "private":
-        await callback.answer("Please use this button in a private chat with the bot!", show_alert=True)
+        await callback.answer("⚠️ Please open a private chat with the bot to choose a plan! / Vui lòng nhắn tin riêng với bot để chọn gói!", show_alert=True)
         return
 
     _, plan, method = callback.data.split(":", 2)
     if plan not in VIP_PLANS:
-        await callback.answer("Invalid plan.", show_alert=True)
+        await callback.answer("⚠️ Invalid plan selected. Please choose a valid plan from the menu. / Gói không hợp lệ. Vui lòng chọn lại gói từ menu.", show_alert=True)
         return
     plan_info = await get_plan_pricing(plan)
 
@@ -526,26 +526,26 @@ async def on_vip_check(callback: CallbackQuery, bot: Bot):
         order = await db.get_vip_order_by_order_id(order_id, chat_id)
         dedup_key = f"usdt:{order_id}"
         if dedup_key in _delivered_orders or (order and order.get("delivered_at")):
-            await callback.answer("✅ Key already delivered, please check the message above!", show_alert=True)
+            await callback.answer("✅ Key already delivered, please check the message above! / Key đã được gửi, vui lòng kiểm tra tin nhắn ở trên!", show_alert=True)
             return
 
-        await callback.answer("🔍 Checking payment...")
+        await callback.answer("🔍 Checking payment... / Đang kiểm tra thanh toán...")
         if order:
             outcome = await check_and_deliver_vip_order(bot, order)
             if outcome == "delivered":
                 return
             if outcome == "paid_no_key":
-                await callback.answer("✅ Payment found, but key was not returned. Please contact @wolfmodyt.", show_alert=True)
+                await callback.answer("✅ Payment found, but key was not returned. Please contact @wolfmodyt. / Đã nhận thanh toán! Vui lòng liên hệ @wolfmodyt để nhận key ngay.", show_alert=True)
                 return
             if outcome == "error":
-                await callback.answer("❌ Could not check status right now, please try again later.", show_alert=True)
+                await callback.answer("❌ Could not check status right now, please try again later. / Hệ thống bận, vui lòng thử lại sau giây lát.", show_alert=True)
                 return
-            await callback.answer("⏳ Payment not received yet. Please wait a few minutes after paying and try again.", show_alert=True)
+            await callback.answer("⏳ Payment not received yet. Please wait a few minutes after paying and try again. / Chưa nhận được thanh toán. Vui lòng đợi 1-2 phút rồi kiểm tra lại.", show_alert=True)
             return
 
         result = await check_vip_order(order_id)
         if not result:
-            await callback.answer("❌ Could not check status right now, please try again later.", show_alert=True)
+            await callback.answer("❌ Could not check status right now, please try again later. / Hệ thống bận, vui lòng thử lại sau giây lát.", show_alert=True)
             return
 
         if _is_paid_status(result):
@@ -554,38 +554,38 @@ async def on_vip_check(callback: CallbackQuery, bot: Bot):
                 await deliver_vip_key(bot, chat_id, dedup_key, license_key, "VIP")
             else:
                 logger.error("USDT order %s is paid but response has no key: %s", order_id, result)
-                await callback.answer("✅ Payment found, but key was not returned. Please contact @wolfmodyt.", show_alert=True)
+                await callback.answer("✅ Payment found, but key was not returned. Please contact @wolfmodyt. / Đã nhận thanh toán! Vui lòng liên hệ @wolfmodyt để nhận key ngay.", show_alert=True)
         else:
-            await callback.answer("⏳ Payment not received yet. Please wait a few minutes after paying and try again.", show_alert=True)
+            await callback.answer("⏳ Payment not received yet. Please wait a few minutes after paying and try again. / Chưa nhận được thanh toán. Vui lòng đợi 1-2 phút rồi kiểm tra lại.", show_alert=True)
 
     elif method == "vietqr":
         pending_id, transfer_code = parts[2].split(":", 1)
         order = await db.get_vip_order_by_transfer_code(transfer_code, chat_id)
         dedup_key = f"vietqr:{pending_id}"
         if dedup_key in _delivered_orders or (order and order.get("delivered_at")):
-            await callback.answer("✅ Key already delivered, please check the message above!", show_alert=True)
+            await callback.answer("✅ Key already delivered, please check the message above! / Key đã được gửi, vui lòng kiểm tra tin nhắn ở trên!", show_alert=True)
             return
 
-        await callback.answer("🔍 Checking payment...")
+        await callback.answer("🔍 Checking payment... / Đang kiểm tra thanh toán...")
         if order:
             outcome = await check_and_deliver_vip_order(bot, order)
             if outcome == "delivered":
                 return
             if outcome == "paid_no_key":
-                await callback.answer("✅ Payment found, but key was not returned. Please contact @wolfmodyt.", show_alert=True)
+                await callback.answer("✅ Payment found, but key was not returned. Please contact @wolfmodyt. / Đã nhận thanh toán! Vui lòng liên hệ @wolfmodyt để nhận key ngay.", show_alert=True)
                 return
             if outcome == "expired":
-                await callback.answer("⌛ This order has expired. Please create a new one with /start buyvip.", show_alert=True)
+                await callback.answer("⌛ This order has expired. Please create a new one with /start buyvip. / Đơn hàng đã hết hạn. Vui lòng tạo đơn mới với /start buyvip.", show_alert=True)
                 return
             if outcome == "error":
-                await callback.answer("❌ Could not check status right now, please try again later.", show_alert=True)
+                await callback.answer("❌ Could not check status right now, please try again later. / Hệ thống bận, vui lòng thử lại sau giây lát.", show_alert=True)
                 return
-            await callback.answer("⏳ Payment not received yet. Please wait a few minutes after transferring and try again.", show_alert=True)
+            await callback.answer("⏳ Payment not received yet. Please wait a few minutes after transferring and try again. / Chưa nhận được thanh toán. Vui lòng đợi 1-2 phút rồi kiểm tra lại.", show_alert=True)
             return
 
         result = await check_vietqr_order(pending_id, transfer_code)
         if not result:
-            await callback.answer("❌ Could not check status right now, please try again later.", show_alert=True)
+            await callback.answer("❌ Could not check status right now, please try again later. / Hệ thống bận, vui lòng thử lại sau giây lát.", show_alert=True)
             return
 
         status = result.get("status")
@@ -595,11 +595,11 @@ async def on_vip_check(callback: CallbackQuery, bot: Bot):
                 await deliver_vip_key(bot, chat_id, dedup_key, license_key, "VIP")
             else:
                 logger.error("VietQR order %s is paid but response has no key: %s", pending_id, result)
-                await callback.answer("✅ Payment found, but key was not returned. Please contact @wolfmodyt.", show_alert=True)
+                await callback.answer("✅ Payment found, but key was not returned. Please contact @wolfmodyt. / Đã nhận thanh toán! Vui lòng liên hệ @wolfmodyt để nhận key ngay.", show_alert=True)
         elif status == "expired":
-            await callback.answer("⌛ This order has expired. Please create a new one with /start buyvip.", show_alert=True)
+            await callback.answer("⌛ This order has expired. Please create a new one with /start buyvip. / Đơn hàng đã hết hạn. Vui lòng tạo đơn mới với /start buyvip.", show_alert=True)
         else:
-            await callback.answer("⏳ Payment not received yet. Please wait a few minutes after transferring and try again.", show_alert=True)
+            await callback.answer("⏳ Payment not received yet. Please wait a few minutes after transferring and try again. / Chưa nhận được thanh toán. Vui lòng đợi 1-2 phút rồi kiểm tra lại.", show_alert=True)
 
 
 async def check_vip_by_transfer_code(message: Message, bot: Bot, transfer_code: str):

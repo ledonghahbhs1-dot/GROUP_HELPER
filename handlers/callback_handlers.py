@@ -58,7 +58,7 @@ async def on_settings_callback(callback: CallbackQuery, bot: Bot):
     chat_id = callback.message.chat.id
 
     if not await is_admin_or_owner(chat_id, callback.from_user, bot):
-        await callback.answer("❌ You are not an Administrator of this group!", show_alert=True)
+        await callback.answer("❌ You are not an Administrator of this group! / Bạn không phải là Quản trị viên nhóm!", show_alert=True)
         return
 
     data = callback.data
@@ -72,7 +72,7 @@ async def on_settings_callback(callback: CallbackQuery, bot: Bot):
                 await bot.unban_chat_member(chat_id, target_user_id)
                 await db.reset_warns(chat_id, target_user_id)
                 await db.remove_banned_user(chat_id, target_user_id)
-                await callback.answer(f"✅ Member {target_user_id} unbanned successfully!", show_alert=True)
+                await callback.answer(f"✅ Member {target_user_id} unbanned successfully! / Đã gỡ cấm thành viên {target_user_id} thành công!", show_alert=True)
                 # Refresh banned list message
                 banned_list = await db.get_banned_users(chat_id, limit=30)
                 if not banned_list:
@@ -88,11 +88,11 @@ async def on_settings_callback(callback: CallbackQuery, bot: Bot):
                         reason = u.get("reason") or "Rule violation"
                         lines.append(f"<b>{idx}.</b> {u_name} {u_uname}\n└ <code>{u_id}</code> | Reason: <i>{reason}</i>")
                         btn_label = f"🔓 Unban {u['username'] or u_id}"[:30]
-                        buttons.append([InlineKeyboardButton(text=btn_label, callback_data=f"quick_unban:{u_id}")])
+                        buttons.append([InlineKeyboardButton(text=btn_label, callback_data=f"quick_unban:{u_id}", icon_custom_emoji_id=config.WARN_ID)])
                     lines.append(f"\n💡 <i>Click buttons below to unban or type:</i> <code>/unban &lt;ID or @username&gt;</code>")
                     await callback.message.edit_text(emoji_mgr.format_msg("\n".join(lines)), reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons), parse_mode="HTML")
             except Exception as e:
-                await callback.answer(f"❌ Error unbanning user: {e}", show_alert=True)
+                await callback.answer(f"❌ Error unbanning user: {e} / Lỗi gỡ cấm: {e}", show_alert=True)
         return
 
     if data == "close_settings":

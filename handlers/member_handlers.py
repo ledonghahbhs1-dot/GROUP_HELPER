@@ -340,14 +340,14 @@ async def on_captcha_callback(callback: CallbackQuery, bot: Bot):
 
     # 1. Verify if the clicking user is the user being challenged
     if callback.from_user.id != target_user_id:
-        await callback.answer("⚠️ This verification is not for you!", show_alert=True)
+        await callback.answer("⚠️ This verification is not for you! / Xác minh này không dành cho bạn!", show_alert=True)
         return
 
     chat_id = callback.message.chat.id
 
     # 2. If wrong answer, alert the user and let them retry
     if selected_ans != correct_ans:
-        await callback.answer("❌ Incorrect answer! Please try again.", show_alert=True)
+        await callback.answer("❌ Incorrect answer! Please try again. / Kết quả chưa đúng! Vui lòng thử lại.", show_alert=True)
         return
 
     # 3. Correct answer! Unrestrict member
@@ -367,7 +367,7 @@ async def on_captcha_callback(callback: CallbackQuery, bot: Bot):
     _pending_captchas.pop((chat_id, target_user_id), None)
 
     # 5. Answer callback with success alert
-    await callback.answer("✅ Verified successfully! You can now send messages.", show_alert=False)
+    await callback.answer("✅ Verified successfully! You can now send messages. / Xác minh thành công!", show_alert=False)
 
     # 6. Delete the temporary captcha prompt to keep chat clean
     try:
