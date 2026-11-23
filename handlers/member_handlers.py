@@ -9,6 +9,7 @@ from aiogram.filters.chat_member_updated import ChatMemberUpdatedFilter, MEMBER,
 from database.db import db
 from utils.emoji_helper import emoji_mgr, safe_send_message, safe_answer, schedule_auto_delete
 from utils.auth import is_admin_or_owner
+from utils.shop_link import with_ai_products_button
 from handlers.referral_handlers import on_member_joined as referral_on_member_joined
 from utils.logger import logger
 import config
@@ -111,7 +112,7 @@ ADMIN_DM_URL = "https://t.me/wolfmodyt"
 
 async def build_buyvip_keyboard(bot: Bot, chat_type: str = "group") -> InlineKeyboardMarkup:
     """Shared "BUY VIP NOW" button redirected directly to admin @wolfmodyt"""
-    return InlineKeyboardMarkup(inline_keyboard=[
+    return with_ai_products_button([
         [InlineKeyboardButton(
             text="BUY VIP NOW", url=ADMIN_DM_URL,
             icon_custom_emoji_id=config.BUYVIP_BUTTON_ICON_ID,
@@ -129,7 +130,7 @@ async def build_vip_script_keyboard(bot: Bot, chat_type: str = "group") -> Inlin
         text="BUY VIP NOW", url=ADMIN_DM_URL,
         icon_custom_emoji_id=config.BUYVIP_BUTTON_ICON_ID,
     )
-    return InlineKeyboardMarkup(inline_keyboard=[[download_btn], [buy_btn]])
+    return with_ai_products_button([[download_btn], [buy_btn]])
 
 async def build_free_script_keyboard(bot: Bot, chat_type: str = "group") -> InlineKeyboardMarkup:
     """Builds inline keyboard with direct download button for Free Script (https://t.me/youtubewolfmod/434)"""
@@ -142,7 +143,7 @@ async def build_free_script_keyboard(bot: Bot, chat_type: str = "group") -> Inli
         text="BUY VIP NOW", url=ADMIN_DM_URL,
         icon_custom_emoji_id=config.BUYVIP_BUTTON_ICON_ID,
     )
-    return InlineKeyboardMarkup(inline_keyboard=[[download_btn], [buy_btn]])
+    return with_ai_products_button([[download_btn], [buy_btn]])
 
 async def build_pc_tool_keyboard(bot: Bot, chat_type: str = "group") -> InlineKeyboardMarkup:
     """Builds inline keyboard with direct download button for Tool PC (https://t.me/youtubewolfmod/492)"""
@@ -155,7 +156,7 @@ async def build_pc_tool_keyboard(bot: Bot, chat_type: str = "group") -> InlineKe
         text="BUY VIP NOW", url=ADMIN_DM_URL,
         icon_custom_emoji_id=config.BUYVIP_BUTTON_ICON_ID,
     )
-    return InlineKeyboardMarkup(inline_keyboard=[[download_btn], [buy_btn]])
+    return with_ai_products_button([[download_btn], [buy_btn]])
 
 async def build_all_scripts_keyboard(bot: Bot, chat_type: str = "group") -> InlineKeyboardMarkup:
     """Builds inline keyboard with VIP, Tool PC & Free Script download buttons"""
@@ -178,7 +179,7 @@ async def build_all_scripts_keyboard(bot: Bot, chat_type: str = "group") -> Inli
         text="BUY VIP NOW", url=ADMIN_DM_URL,
         icon_custom_emoji_id=config.BUYVIP_BUTTON_ICON_ID,
     )
-    return InlineKeyboardMarkup(inline_keyboard=[[vip_btn, pc_btn], [free_btn], [buy_btn]])
+    return with_ai_products_button([[vip_btn, pc_btn], [free_btn], [buy_btn]])
 
 async def build_welcome_keyboard(bot: Bot) -> InlineKeyboardMarkup:
     """One button per VIP feature category + BUY VIP NOW button -> All redirect to DM @wolfmodyt"""
@@ -195,7 +196,7 @@ async def build_welcome_keyboard(bot: Bot) -> InlineKeyboardMarkup:
         text="BUY VIP NOW", url=ADMIN_DM_URL,
         icon_custom_emoji_id=config.BUYVIP_BUTTON_ICON_ID,
     )])
-    return InlineKeyboardMarkup(inline_keyboard=rows)
+    return with_ai_products_button(rows)
 
 
 async def handle_welcome_for_user(bot: Bot, chat_id: int, chat_title: str, user):
