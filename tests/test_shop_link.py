@@ -45,6 +45,7 @@ class ShopLinkTests(unittest.TestCase):
         self.assertEqual(button.text, "Mua AI Products (Gemini/ChatGPT)")
         self.assertEqual(button.url, "https://t.me/my_shop_bot")
         self.assertIsNone(button.callback_data)
+        self.assertEqual(button.icon_custom_emoji_id, "5420094143089111506")
 
     def test_with_ai_products_button_adds_a_last_row_only_when_set(self):
         base = [[sl.InlineKeyboardButton(text="A", url="https://x.y/a")]]

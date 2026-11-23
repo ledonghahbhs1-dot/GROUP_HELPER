@@ -117,6 +117,7 @@ VIP_SCRIPT_BUTTON_ICON_ID = "5202132945183208703"  # shown on the "Download VIP 
 PC_TOOL_BUTTON_ICON_ID = "5202132945183208703"  # shown on the "Download Tool PC" button (VIP icon)
 FREE_SCRIPT_BUTTON_ICON_ID = "5204334519649335950"  # shown on the "Download Free Script" button
 FREE_SCRIPT_ID = "5204334519649335950"  # 🎁 custom VIP emoji for Free Script
+AI_PRODUCTS_BUTTON_ICON_ID = "5420094143089111506"  # 🤖 custom emoji for "Mua AI Products" button
 
 TOOL_TITLE_ID = "5201906965478930360"  # 👑 crown title icon (items 1 & 2)
 TOOL_ACCESS_ID = "5224450179368767019"  # 🌐 tool access icon (item 3)

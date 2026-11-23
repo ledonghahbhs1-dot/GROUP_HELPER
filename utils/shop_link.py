@@ -10,6 +10,8 @@ from typing import List, Optional
 
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
+import config
+
 AI_PRODUCTS_BUTTON_TEXT = "Mua AI Products (Gemini/ChatGPT)"
 # TELE_SHOPS /start ignores payloads today, so no ?start=ai_products. Set to e.g. "ai_products" once it supports it.
 SHOP_START_PAYLOAD = ""
@@ -33,7 +35,10 @@ def shop_bot_url() -> Optional[str]:
 
 def ai_products_button() -> Optional[InlineKeyboardButton]:
     url = shop_bot_url()
-    return InlineKeyboardButton(text=AI_PRODUCTS_BUTTON_TEXT, url=url) if url else None
+    if not url:
+        return None
+    icon_id = getattr(config, "AI_PRODUCTS_BUTTON_ICON_ID", None)
+    return InlineKeyboardButton(text=AI_PRODUCTS_BUTTON_TEXT, url=url, icon_custom_emoji_id=icon_id)
 
 
 def with_ai_products_button(rows: List[List[InlineKeyboardButton]]) -> InlineKeyboardMarkup:
