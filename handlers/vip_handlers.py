@@ -101,7 +101,7 @@ async def get_plan_pricing(plan: str) -> Dict[str, Any]:
 def format_plan_button_label(plan: str, info: Dict[str, Any]) -> str:
     if info.get("on_sale"):
         original = VIP_PLANS[plan]["usd"]
-        return f"🔥 30 Days - ${original}→${info['usd']} FLASH SALE!"
+        return f"30 Days - ${original}→${info['usd']} FLASH SALE!"
     return info["label"]
 
 

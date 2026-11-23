@@ -1,6 +1,6 @@
 import html
 from aiogram import Router, F, Bot
-from aiogram.types import Message, User
+from aiogram.types import Message, User, InlineKeyboardMarkup, InlineKeyboardButton
 from database.db import db
 from utils.emoji_helper import emoji_mgr, safe_answer, safe_send_message, schedule_auto_delete
 from utils.auth import is_admin_or_owner
@@ -17,7 +17,7 @@ async def handle_scam_message(
 ):
     """
     Handles detected scam/fraud messages:
-    1. Reply to user with evidence request (English) - DO NOT DELETE user message
+    1. Reply to user with evidence request (Bilingual English / Vietnamese) - DO NOT DELETE user message
     2. Include user ID in the message
     3. Forward to admin if OWNER_IDS valid
     """
@@ -29,27 +29,37 @@ async def handle_scam_message(
 
     user_mention = f"<a href='tg://user?id={user_id}'>{html.escape(user_name)}</a>"
 
-    # Evidence request message - ENGLISH with VIP emoji icons (do NOT delete user message)
+    # Evidence request message - Bilingual with VIP emoji icons (do NOT delete user message)
     evidence_text = (
-        f"{emoji_mgr.shield} <b>SECURITY ALERT - EVIDENCE REQUIRED</b> {emoji_mgr.vip}\n\n"
-        f"{emoji_mgr.bell} <b>User:</b> {user_mention} (<code>{user_id}</code>)\n"
-        f"{emoji_mgr.warn} <b>Detected Keyword:</b> <code>{html.escape(matched_keyword)}</code>\n\n"
+        f"{emoji_mgr.shield} <b>SECURITY ALERT - EVIDENCE REQUIRED / YÊU CẦU BẰNG CHỨNG</b> {emoji_mgr.vip}\n\n"
+        f"{emoji_mgr.bell} <b>User / Thành viên:</b> {user_mention} (<code>{user_id}</code>)\n"
+        f"{emoji_mgr.warn} <b>Detected Keyword / Từ khóa:</b> <code>{html.escape(matched_keyword)}</code>\n\n"
         f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"{emoji_mgr.star} <b>PLEASE PROVIDE EVIDENCE</b>\n\n"
+        f"{emoji_mgr.star} <b>PLEASE PROVIDE EVIDENCE / VUI LÒNG CUNG CẤP BẰNG CHỨNG</b>\n\n"
         f"• If you are reporting scam, spam, or abuse, please reply to this message with <b>screenshots, transaction IDs, links, or proof</b>.\n"
+        f"• Nếu bạn đang báo cáo lừa đảo, gian lận hoặc vi phạm, hãy trả lời tin nhắn này kèm <b>ảnh chụp màn hình, mã giao dịch hoặc bằng chứng cụ thể</b>.\n"
         f"• Describe what happened in detail so administrators can review.\n\n"
-        f"{emoji_mgr.diamond} <b>If this is a false alarm / normal conversation:</b>\n"
-        f"• Please clarify the context.\n\n"
+        f"{emoji_mgr.diamond} <b>If this is a false alarm / normal conversation (Nếu là nhầm lẫn):</b>\n"
+        f"• Please clarify the context / Hãy phản hồi giải thích rõ ngữ cảnh.\n\n"
         f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"{emoji_mgr.vip} <b>Contact Admin:</b> @wolfmodyt"
+        f"{emoji_mgr.vip} <b>Contact Admin / Liên hệ Admin:</b> @wolfmodyt"
     )
+
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(
+            text="Contact Admin",
+            url="https://t.me/wolfmodyt",
+            icon_custom_emoji_id=config.OPENLINK_ID,
+        )]
+    ])
 
     try:
         # Reply to user's message (do NOT delete user message)
         await safe_answer(
             message,
             emoji_mgr.format_msg(evidence_text),
-            parse_mode="HTML"
+            parse_mode="HTML",
+            reply_markup=keyboard,
         )
         logger.info(f"Scam alert replied to user {user_id} in chat {chat_id} with keyword '{matched_keyword}'")
     except Exception as e:
